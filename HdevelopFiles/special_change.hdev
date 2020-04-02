@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<l>read_image (Image, 'C:/DeVisionProject/sample0319/r2.bmp')</l>
+<l>get_image_size (Image, Width, Height)</l>
+<c></c>
+<l>* for i:=2000 to 2005 by 1</l>
+<l>*     for j:=2000 to 2005 by 1        </l>
+<l>*         set_grayval (Image, i, j, 225)</l>
+<l>*     endfor</l>
+<l>* endfor</l>
+<c></c>
+<l>for i:=4000 to 4005 by 1</l>
+<l>    for j:=4000 to 4005 by 1        </l>
+<l>        set_grayval (Image, i, j, 225)</l>
+<l>    endfor</l>
+<l>endfor</l>
+<c></c>
+<l>* for i:=6000 to 6005 by 1</l>
+<l>*     for j:=6000 to 6005 by 1        </l>
+<l>*         set_grayval (Image, i, j, 225)</l>
+<l>*     endfor</l>
+<l>* endfor</l>
+<c></c>
+<l>* for i:=8000 to 8005 by 1</l>
+<l>*     for j:=7000 to 7005 by 1        </l>
+<l>*         set_grayval (Image, i, j, 225)</l>
+<l>*     endfor</l>
+<l>* endfor</l>
+<c></c>
+<l>* for ii:=4000 to 4005 by 1</l>
+<l>*     for jj:=6000 to 6005 by 1        </l>
+<l>*         set_grayval (Image, ii, jj, 15)</l>
+<l>*     endfor</l>
+<l>* endfor</l>
+<c></c>
+<l>* copy_image (Image, DupImage)</l>
+<c></c>
+<l>write_image (Image, 'bmp', 0, 'C:/DeVisionProject/sample0319/c2.bmp')</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

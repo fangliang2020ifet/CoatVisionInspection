@@ -1,0 +1,270 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Table">
+      <UniqueIdentifier>{5aadad52-af7e-4b86-b9a5-5e76e573e1ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DeVision.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DeVisionDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CInspectDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CAnalysisDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CHistoryDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CTableDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CSetupDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CCameraDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CAlgorithmDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="iUart.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SerialPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Text.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CProductInfo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PictureEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CImageProcess.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CMyDocument.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CMyView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="wcharUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="logResource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CLoad.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CFont0.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CApplication.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CRange.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CWorkbook.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CWorkbooks.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CWorksheet.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CWorksheets.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CShape.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CShapes.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CShapeRange.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DeVision.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DeVisionDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CInspectDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CAnalysisDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CHistoryDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CTableDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CSetupDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CCameraDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CAlgorithmDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="iUart.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SerialPort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Text.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CProductInfo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PictureEx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CImageProcess.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CMyDocument.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CMyView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="wcharUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CLoad.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DeVision.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="log.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\DeVision.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\logo32.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\logo128.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\start.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\stop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\pause.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\online.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\go_up.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\go_down.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\start_ss.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="start.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\process.gif">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="source.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\offline.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\lock.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\unlock.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\..\..\ImageTest\11.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\exit.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\loading.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\load.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\DeVision.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+</Project>

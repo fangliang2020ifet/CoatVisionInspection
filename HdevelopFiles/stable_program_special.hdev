@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<l>dev_update_off()</l>
+<l>dev_close_window()</l>
+<c></c>
+<c>*读取参考图像</c>
+<l>read_image (Image_ref, 'C:/DeVisionProject/sample0319/reference_image_1.bmp')</l>
+<l>get_image_size (Image_ref, Width_ref, Height_ref)</l>
+<l>median_image (Image_ref, ImageMedian_ref, 'circle', 1, 'mirrored')</l>
+<c></c>
+<l>dev_open_window (0, 0, 0.06*Width_ref, 0.06*Height_ref, 'black', WindowHandle)</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<l>dev_set_draw ('margin')</l>
+<l>dev_set_line_width (3)</l>
+<l>dev_set_color ('red')</l>
+<c></c>
+<l>count_seconds (Seconds)</l>
+<c>*读取待检测图像</c>
+<l>read_image (Image_def, 'C:/DeVisionProject/sample0319/c1.bmp')</l>
+<l>threshold (Image_def, Region_defth, 1, 255)</l>
+<l>connection (Region_defth, ConnectedRegions_defth)</l>
+<l>smallest_rectangle1 (ConnectedRegions_defth, Row_origin_def, Column_origin_def, Row_end_def, Column_end_def)</l>
+<l>reduce_domain (Image_def, ConnectedRegions_defth, ImageReduced_def)</l>
+<l>crop_domain (ImageReduced_def, ImagePart_def)</l>
+<l>median_image (ImagePart_def, ImageMedian_def, 'circle', 1, 'mirrored')</l>
+<l>get_image_size (ImageMedian_def, Width_def, Height_def)</l>
+<c>*判断图像是否有黑边</c>
+<l>if( Width_ref != Width_def or Height_ref != Height_def)    </l>
+<l>    reduce_domain (ImageMedian_ref, ConnectedRegions_defth, ImageReduced_ref)     </l>
+<l>    crop_domain (ImageReduced_ref, ImagePart_ref)</l>
+<l>    abs_diff_image (ImageMedian_def, ImagePart_ref, ImageAbsDiff, 5)    </l>
+<l>    median_image (ImageAbsDiff, ImageMedian_absdiff, 'square', 2, 'mirrored')</l>
+<l>else    </l>
+<c>    *参考图像减去待检测图像，结果取绝对值</c>
+<c>    *可利用放大倍数设置检测的精度和等级  </c>
+<l>    abs_diff_image (ImageMedian_def, ImageMedian_ref, ImageAbsDiff, 5)    </l>
+<l>    median_image (ImageAbsDiff, ImageMedian_absdiff, 'square', 2, 'mirrored')</l>
+<l>endif</l>
+<c></c>
+<c>*参考图像像素平均值</c>
+<l>get_domain (ImageMedian_ref, Domain_ref)</l>
+<l>intensity (Domain_ref, ImageMedian_ref, Mean_ref, Deviation_ref)</l>
+<c>*差值图像的像素最大值</c>
+<l>min_max_gray (Domain_ref, ImageMedian_absdiff, 0, Min_ref, Max_ref, Range_ref)</l>
+<c></c>
+<l>count_seconds (Seconds)</l>
+<c></c>
+<l>row_scale := Height_def / 256</l>
+<l>if(Height_def % 256 != 0)</l>
+<l>    row_scale := row_scale + 1</l>
+<l>endif</l>
+<l>column_scale := Width_def / 256</l>
+<l>if(Width_def % 256 != 0)</l>
+<l>    column_scale := column_scale + 1</l>
+<l>endif</l>
+<c></c>
+<l>for rownum:=0 to row_scale-1 by 1    </l>
+<l>    for colnum:=0 to column_scale-1 by 1 </l>
+<c>        *重定义图像的定义域，分切图像         </c>
+<l>        gen_rectangle1 (Rectangle, rownum*256 + Row_origin_def, colnum*256 + Column_origin_def, (rownum+1)*256+ Row_origin_def, (colnum+1)*256 + Column_origin_def)          </l>
+<l>        reduce_domain (ImageMedian_absdiff, Rectangle, ImageReduced_defsmall)  </l>
+<c>        *帧相减后的图像在缩减区域的像素平均值</c>
+<l>        intensity (Rectangle, ImageReduced_defsmall, Mean_small_abs_diff, Deviation_small_abs_diff)</l>
+<l>        between_mean := abs(Mean_ref - Mean_small_abs_diff)        </l>
+<c>        *求区域内像素的最大最小值</c>
+<l>        *reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)        </l>
+<l>        min_max_gray (Rectangle, ImageReduced_defsmall, 25, Min_defsmall, Max_defsmall, Range_defsmall)</l>
+<c>        *分切后的图像动态阈值化        </c>
+<l>        *threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)         </l>
+<l>        *threshold (ImageReduced_defsmall, Region, min([Mean_ref*0.5, 255]), 255)</l>
+<l>        threshold (ImageReduced_defsmall, Region, min([128, 255]), 255)</l>
+<c>        </c>
+<c>        *连接区域</c>
+<l>        connection (Region, ConnectedRegions)         </l>
+<c>        *选择ROI</c>
+<l>        select_shape (ConnectedRegions, SelectedRegions, 'contlength', 'and', 5, 999999) </l>
+<l>       dev_set_color ('red')</l>
+<l>        dev_display(Image_def)</l>
+<l>       dev_display(Rectangle)</l>
+<l>       dev_display(SelectedRegions)</l>
+<l>       stop()</l>
+<c>        *对单张小图进行处理</c>
+<c>        *计算ROI数量</c>
+<l>        count_obj (SelectedRegions, Number)</l>
+<l>        if(Number)</l>
+<l>            total_Row := 0</l>
+<l>            total_Column := 0</l>
+<l>            for i:=1 to Number by 1                </l>
+<l>                select_obj (SelectedRegions, ObjectSelected, i)                </l>
+<l>                smallest_circle (ObjectSelected, Row, Column, Radius)</l>
+<c>                *区域内有多个瑕疵则需要对位置进行平均</c>
+<l>                total_Row := total_Row + Row</l>
+<l>                total_Column := total_Column + Column</l>
+<l>            endfor</l>
+<l>            average_Row := total_Row / Number</l>
+<l>            average_Column := total_Column / Number</l>
+<c>            *缺陷在大图中的实际坐标</c>
+<l>            if(average_Row &lt; 127)</l>
+<l>                average_Row := 127</l>
+<l>            elseif(average_Row &gt; 8065)</l>
+<l>                average_Row := 8065</l>
+<l>            endif</l>
+<l>            if(average_Column &lt; 127)</l>
+<l>                average_Column := 127</l>
+<l>            elseif(average_Column &gt; 8065)</l>
+<l>                average_Column := 8065</l>
+<l>            endif  </l>
+<c>            *保存瑕疵区域图片</c>
+<l>            gen_rectangle1 (Rectangle1, average_Row - 127, average_Column - 127, average_Row + 128, average_Column + 128)                 </l>
+<l>            reduce_domain (Image_def, Rectangle1, ImageReduced1)</l>
+<l>            crop_domain (ImageReduced1, ImagePart)             </l>
+<l>            par_start&lt;ThreadID&gt; : write_image (ImagePart, 'bmp', 0, 'C:/DeVisionProject/sample0319/deffect_image/X' + average_Column$'02' + '_Y' + average_Row$'02')</l>
+<l>*             dev_display(Image_def)</l>
+<l>*             dev_set_color ('blue')</l>
+<l>*             dev_display(Rectangle1)</l>
+<l>*             dev_set_color('red')</l>
+<l>*             dev_display(SelectedRegions)</l>
+<l>*             stop()</l>
+<l>        else</l>
+<l>            ResultMessage :='OK'</l>
+<l>            Color := 'forest green'</l>
+<l>            *disp_message (WindowHandle, ResultMessage, 'window', 12, 12, Color, 'true')</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>endfor</l>
+<c></c>
+<l>count_seconds (Seconds1)</l>
+<l>Time := Seconds1 -Seconds    </l>
+<l>disp_message (WindowHandle, Time, 'window', 12, 12, 'red', 'true')</l>
+<l>stop()</l>
+<c></c>
+<c></c>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>
