@@ -10,6 +10,11 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread3);
 	InitializeCriticalSection(&m_csCalculateThread4);
 
+	m_camera1_reference_image_acquired = FALSE;
+	m_camera2_reference_image_acquired = FALSE;
+	m_camera3_reference_image_acquired = FALSE;
+	m_camera4_reference_image_acquired = FALSE;
+
 }
 
 CImageProcess::~CImageProcess()
@@ -102,6 +107,7 @@ BOOL CImageProcess::BeginProcess()
 		Win::log("创建图像处理线程1_1失败");
 		return FALSE;
 	}
+	
 	if (!(m_CalculateThread1_2 = AfxBeginThread(ImageCalculate1_2, this))) {
 		Win::log("创建图像处理线程1_2失败");
 		return FALSE;
@@ -181,7 +187,7 @@ BOOL CImageProcess::BeginProcess()
 		Win::log("创建图像处理线程4_5失败");
 		return FALSE;
 	}
-
+	
 
 	Win::log("创建图像处理线程");
 
@@ -287,7 +293,7 @@ void CImageProcess::RestartProcess()
 	m_NO_produced4 = 0;
 	m_current_position = 0.0f;
 	NO_dft = 0;
-	m_vFileName.clear();
+	//m_vFileName.clear();
 
 
 	return;
@@ -457,16 +463,21 @@ BOOL CImageProcess::LoadSingleImage(std::string image_name)
 
 	HTuple hv_image_name1, hv_image_name2, hv_image_name3, hv_image_name4;
 	hv_image_name1 = (HTuple)((image_name+temp1).c_str());
-	ReadImage(&ho_test1, hv_image_name1);
+	//ReadImage(&ho_test1, hv_image_name1);
+	m_hi_test1.ReadImage(hv_image_name1);
 
 	hv_image_name2 = (HTuple)((image_name + temp2).c_str());
-	ReadImage(&ho_test2, hv_image_name2);
+	//ReadImage(&ho_test2, hv_image_name2);
+	m_hi_test2.ReadImage(hv_image_name2);
 
 	hv_image_name3 = (HTuple)((image_name + temp3).c_str());
-	ReadImage(&ho_test3, hv_image_name3);
+	//ReadImage(&ho_test3, hv_image_name3);
+	m_hi_test3.ReadImage(hv_image_name3);
 
 	hv_image_name4 = (HTuple)((image_name + temp4).c_str());
-	ReadImage(&ho_test4, hv_image_name4);
+	//ReadImage(&ho_test4, hv_image_name4);
+	m_hi_test4.ReadImage(hv_image_name4);
+
 	Win::log("读取test图像完成");
 
 	return TRUE;
@@ -480,70 +491,11 @@ HObject CImageProcess::CopyHobject(HObject ho_image)
 	return copy;
 }
 
-/*
-BOOL CImageProcess::GenerateRefImg(int cameraNo, HObject &ho_ref)
+BOOL CImageProcess::GenerateRefImg(int cameraNo, std::string save_path, HObject &ho_ref)
 {
-	//获取 5 张图像，相加平均后得到参考图像
-	HObject ho_img;	
-	LinkQueue<HObject> *queue = NULL;
-	switch (cameraNo)
-	{
-	case 1:
-		queue = &m_Queue1_1;
-		break;
-	case 2:
-		queue = &m_Queue2_1;
-		break;
-	case 3:
-		queue = &m_Queue3_1;
-		break;
-	case 4:
-		queue = &m_Queue4_1;
-		break;
-	default:
-		break;
-	}
-
-	if (queue->GetLength() < 5) {
-		Win::log("获取参考图像失败，请重试");
-		return FALSE;
-	}
-	else {
-		queue->DelQueue(ho_ref);
-		for (int i = 0; i < 4; i++)
-		{
-			queue->DelQueue(ho_img);
-			AddImage(ho_ref, ho_img, &ho_ref, 0.5, 0);
-		}
-	}
-
-	HTuple name = (HTuple)m_strPath.c_str() + "reference_image_" + (HTuple)cameraNo;
-	//WriteImage(ho_ref, "bmp", 0, name);
-
-	// +++ Threading variables 
-	HDevThread*         hcppthread_handle;
-	HDevThreadContext   hcppthread_context; // <-signals begin of procedure
-
-	// Create a thread instance
-	hcppthread_handle = new HDevThread(hcppthread_context, (void*)HDevExportCpp::_hcppthread_write_image, 4, 0);
-	// Set thread procedure call arguments 
-	hcppthread_handle->SetInputIconicParamObject(0, ho_ref);
-	hcppthread_handle->SetInputCtrlParamTuple(1, "bmp");
-	hcppthread_handle->SetInputCtrlParamTuple(2, 0);
-	hcppthread_handle->SetInputCtrlParamTuple(3, name);
-
-	// Start proc line in thread
-	HTuple hv_ThreadID;
-	hcppthread_handle->ParStart(&hv_ThreadID);
-
-	return TRUE;
-}
-*/
-
-BOOL CImageProcess::GenerateRefImg(int cameraNo, HObject &ho_ref, int list)
-{
-	//获取 5 张图像，相加平均后得到参考图像
-	HObject ho_img;
+	//获取 3 张图像，相加平均后得到参考图像
+	HImage hi_img;
+	HImage hi_added_img;
 	ImgList *plist = NULL;
 	switch (cameraNo)
 	{
@@ -563,23 +515,27 @@ BOOL CImageProcess::GenerateRefImg(int cameraNo, HObject &ho_ref, int list)
 		break;
 	}
 
-	if (plist->size() < 5) {
+	if (plist->size() < 3) {
 		Win::log("获取参考图像失败，请重试");
 		return FALSE;
 	}
 	else {
-		ho_ref = plist->front();
+		hi_added_img = plist->front();
 		plist->pop_front();
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < 2; i++)
 		{
-			ho_img = plist->front();
+			hi_img = plist->front();
 			plist->pop_front();
-			AddImage(ho_ref, ho_img, &ho_ref, 0.5, 0);
+			AddImage(hi_added_img, hi_img, &hi_added_img, 0.5, 0);
 		}
 	}
 
-	HTuple name = (HTuple)m_strPath.c_str() + "reference_image_" + (HTuple)cameraNo;
-	//WriteImage(ho_ref, "bmp", 0, name);
+	//中值滤波
+	MedianImage(hi_added_img, &ho_ref, "circle", 1, "mirrored");
+
+	HTuple name = (HTuple)save_path.c_str() + "reference_image_" + (HTuple)cameraNo + ".tiff";
+	if(m_save_reference_image)
+		WriteImage(ho_ref, "tiff", 0, name);
 
 	// +++ Threading variables 
 	HDevThread*         hcppthread_handle;
@@ -589,7 +545,7 @@ BOOL CImageProcess::GenerateRefImg(int cameraNo, HObject &ho_ref, int list)
 	hcppthread_handle = new HDevThread(hcppthread_context, (void*)HDevExportCpp::_hcppthread_write_image, 4, 0);
 	// Set thread procedure call arguments 
 	hcppthread_handle->SetInputIconicParamObject(0, ho_ref);
-	hcppthread_handle->SetInputCtrlParamTuple(1, "bmp");
+	hcppthread_handle->SetInputCtrlParamTuple(1, "tiff");
 	hcppthread_handle->SetInputCtrlParamTuple(2, 0);
 	hcppthread_handle->SetInputCtrlParamTuple(3, name);
 
@@ -598,7 +554,209 @@ BOOL CImageProcess::GenerateRefImg(int cameraNo, HObject &ho_ref, int list)
 	hcppthread_handle->ParStart(&hv_ThreadID);
 
 	return TRUE;
+}
 
+BOOL CImageProcess::GenerateReferenceImage1()
+{
+	HImage result;
+	HImage img1, img2, img3, img4, img5;
+	if (!m_ImgList1_1.empty()) {
+		img1 = m_ImgList1_1.front();
+		m_ImgList1_1.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList1_2.empty()) {
+		img2 = m_ImgList1_2.front();
+		m_ImgList1_2.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList1_3.empty()) {
+		img3 = m_ImgList1_3.front();
+		m_ImgList1_3.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList1_4.empty()) {
+		img4 = m_ImgList1_4.front();
+		m_ImgList1_4.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList1_5.empty()) {
+		img5 = m_ImgList1_5.front();
+		m_ImgList1_5.pop_front();
+	}
+	else return FALSE;
+
+	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	ho_Image_ref1 = result;
+	return TRUE;
+}
+
+BOOL CImageProcess::GenerateReferenceImage2()
+{
+	HImage result;
+	HImage img1, img2, img3, img4, img5;
+	if (!m_ImgList2_1.empty()) {
+		img1 = m_ImgList2_1.front();
+		m_ImgList2_1.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList2_2.empty()) {
+		img2 = m_ImgList2_2.front();
+		m_ImgList2_2.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList2_3.empty()) {
+		img3 = m_ImgList2_3.front();
+		m_ImgList2_3.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList2_4.empty()) {
+		img4 = m_ImgList2_4.front();
+		m_ImgList2_4.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList2_5.empty()) {
+		img5 = m_ImgList2_5.front();
+		m_ImgList2_5.pop_front();
+	}
+	else return FALSE;
+
+	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	ho_Image_ref2 = result;
+	return TRUE;
+}
+
+BOOL CImageProcess::GenerateReferenceImage3()
+{
+	HImage result;
+	HImage img1, img2, img3, img4, img5;
+	if (!m_ImgList3_1.empty()) {
+		img1 = m_ImgList3_1.front();
+		m_ImgList3_1.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList3_2.empty()) {
+		img2 = m_ImgList3_2.front();
+		m_ImgList3_2.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList3_3.empty()) {
+		img3 = m_ImgList3_3.front();
+		m_ImgList3_3.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList3_4.empty()) {
+		img4 = m_ImgList3_4.front();
+		m_ImgList3_4.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList3_5.empty()) {
+		img5 = m_ImgList3_5.front();
+		m_ImgList3_5.pop_front();
+	}
+	else return FALSE;
+
+	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	ho_Image_ref3 = result;
+	return TRUE;
+}
+
+BOOL CImageProcess::GenerateReferenceImage4()
+{
+	HImage result;
+	HImage img1, img2, img3, img4, img5;
+	if (!m_ImgList4_1.empty()) {
+		img1 = m_ImgList4_1.front();
+		m_ImgList4_1.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList4_2.empty()) {
+		img2 = m_ImgList4_2.front();
+		m_ImgList4_2.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList4_3.empty()) {
+		img3 = m_ImgList4_3.front();
+		m_ImgList4_3.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList4_4.empty()) {
+		img4 = m_ImgList4_4.front();
+		m_ImgList4_4.pop_front();
+	}
+	else return FALSE;
+
+	if (!m_ImgList4_5.empty()) {
+		img5 = m_ImgList4_5.front();
+		m_ImgList4_5.pop_front();
+	}
+	else return FALSE;
+
+	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	ho_Image_ref4 = result;
+	return TRUE;
+}
+
+BOOL CImageProcess::SaveReferenceImage()
+{
+	SaveDefectImage(ho_Image_ref1, "D:/SaveImage/ref1.bmp");
+	SaveDefectImage(ho_Image_ref2, "D:/SaveImage/ref2.bmp");
+	SaveDefectImage(ho_Image_ref3, "D:/SaveImage/ref3.bmp");
+	SaveDefectImage(ho_Image_ref4, "D:/SaveImage/ref4.bmp");
+
+	return TRUE;
+}
+
+BOOL CImageProcess::GenerateAndSaveRefImage()
+{
+	if (!GenerateReferenceImage1())
+		return FALSE;
+	else
+		HalconCpp::WriteImage(ho_Image_ref1, "bmp", 0, "D:/SaveImage/ref1.bmp");
+
+	if (!GenerateReferenceImage2())
+		return FALSE;
+	else
+		HalconCpp::WriteImage(ho_Image_ref2, "bmp", 0, "D:/SaveImage/ref2.bmp");
+
+	if (!GenerateReferenceImage3())
+		return FALSE;
+	else
+		HalconCpp::WriteImage(ho_Image_ref3, "bmp", 0, "D:/SaveImage/ref3.bmp");
+
+	if (!GenerateReferenceImage4())
+		return FALSE;
+	else
+		HalconCpp::WriteImage(ho_Image_ref4, "bmp", 0, "D:/SaveImage/ref4.bmp");
+
+	return TRUE;
 }
 
 BOOL CImageProcess::GetSavePath(std::string &path)
@@ -828,7 +986,7 @@ DefectType CImageProcess::LocateDefectPosition(int camera_number, std::string sa
 
 	SaveDefectImage(ho_ImageCroped, hv_path + hv_img_name);
 
-	std::string file_name = hv_img_name.S();
+	//std::string file_name = hv_img_name.S();
 	//m_vFileName.push_back(file_name);
 
 
@@ -889,19 +1047,23 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	if (!pImgProc->TEST_MODEL) {
+		while(1)
+		{
+			if (pImgProc->GenerateReferenceImage1()) {
+				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref1, (HTuple)str_path.c_str() + "ref\\reference_image1.bmp");
+				pImgProc->m_camera1_reference_image_acquired = TRUE;
+				Win::log("获取1#参考图像");
+				break;
+			}
+			else
+				Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
 
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue1.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(1, pImgProc->ho_Image_ref1);
-	//		Win::log("获取1#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref1, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread1_1_alive)
 	{
@@ -1067,19 +1229,15 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera1_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
 
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue1.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(1, pImgProc->ho_Image_ref1);
-	//		Win::log("获取1#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref1, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread1_2_alive)
 	{
@@ -1090,7 +1248,7 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 			//pImgProc->m_Queue1_2.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList1_2.front();
 			pImgProc->m_ImgList1_2.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);  //阈值应该设多少？
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -1241,19 +1399,16 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera1_reference_image_acquired) {
 
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue1.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(1, pImgProc->ho_Image_ref1);
-	//		Win::log("获取1#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref1, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread1_3_alive)
 	{
@@ -1264,7 +1419,7 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 			//pImgProc->m_Queue1_3.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList1_3.front();
 			pImgProc->m_ImgList1_3.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -1415,19 +1570,16 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera1_reference_image_acquired) {
 
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue1.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(1, pImgProc->ho_Image_ref1);
-	//		Win::log("获取1#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref1, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread1_4_alive)
 	{
@@ -1438,7 +1590,7 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 			//pImgProc->m_Queue1_4.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList1_4.front();
 			pImgProc->m_ImgList1_4.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -1589,19 +1741,16 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera1_reference_image_acquired) {
 
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue1.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(1, pImgProc->ho_Image_ref1);
-	//		Win::log("获取1#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref1, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread1_5_alive)
 	{
@@ -1612,7 +1761,7 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 			//pImgProc->m_Queue1_5.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList1_5.front();
 			pImgProc->m_ImgList1_5.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -1764,18 +1913,23 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue2.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(2, pImgProc->ho_Image_ref2);
-	//		Win::log("获取2#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref2, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (1)
+		{
+			if (pImgProc->GenerateReferenceImage2()) {
+				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref2, (HTuple)str_path.c_str() + "ref\\reference_image2.bmp");
+				pImgProc->m_camera2_reference_image_acquired = TRUE;
+				Win::log("获取2#参考图像");
+				break;
+			}
+			else
+				Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread2_1_alive)
 	{
@@ -1786,7 +1940,7 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 			//pImgProc->m_Queue2_1.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList2_1.front();
 			pImgProc->m_ImgList2_1.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -1933,18 +2087,16 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue2.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(2, pImgProc->ho_Image_ref2);
-	//		Win::log("获取2#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref2, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera2_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread2_2_alive)
 	{
@@ -1955,7 +2107,7 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 			//pImgProc->m_Queue2_2.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList2_2.front();
 			pImgProc->m_ImgList2_2.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2103,18 +2255,16 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue2.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(2, pImgProc->ho_Image_ref2);
-	//		Win::log("获取2#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref2, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera2_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread2_3_alive)
 	{
@@ -2125,7 +2275,7 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 			//pImgProc->m_Queue2_3.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList2_3.front();
 			pImgProc->m_ImgList2_3.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2273,18 +2423,16 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue2.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(2, pImgProc->ho_Image_ref2);
-	//		Win::log("获取2#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref2, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera2_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread2_4_alive)
 	{
@@ -2295,7 +2443,7 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 			//pImgProc->m_Queue2_4.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList2_4.front();
 			pImgProc->m_ImgList2_4.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2443,18 +2591,16 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue2.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(2, pImgProc->ho_Image_ref2);
-	//		Win::log("获取2#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref2, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera2_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread2_5_alive)
 	{
@@ -2465,7 +2611,7 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 			//pImgProc->m_Queue2_5.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList2_5.front();
 			pImgProc->m_ImgList2_5.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2614,18 +2760,23 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue3.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(3, pImgProc->ho_Image_ref3);
-	//		Win::log("获取3#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref3, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (1)
+		{
+			if (pImgProc->GenerateReferenceImage3()) {
+				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref3, (HTuple)str_path.c_str() + "ref\\reference_image3.bmp");
+				pImgProc->m_camera3_reference_image_acquired = TRUE;
+				Win::log("获取3#参考图像");
+				break;
+			}
+			else
+				Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread3_1_alive)
 	{
@@ -2636,7 +2787,7 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 			//pImgProc->m_Queue3_1.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList3_1.front();
 			pImgProc->m_ImgList3_1.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2785,18 +2936,16 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue3.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(3, pImgProc->ho_Image_ref3);
-	//		Win::log("获取3#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref3, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera3_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread3_2_alive)
 	{
@@ -2807,7 +2956,7 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 			//pImgProc->m_Queue3_2.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList3_2.front();
 			pImgProc->m_ImgList3_2.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -2956,18 +3105,16 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue3.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(3, pImgProc->ho_Image_ref3);
-	//		Win::log("获取3#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref3, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera3_reference_image_acquired) {
+
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread3_3_alive)
 	{
@@ -2978,7 +3125,7 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 			//pImgProc->m_Queue3_3.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList3_3.front();
 			pImgProc->m_ImgList3_3.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3127,18 +3274,15 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue3.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(3, pImgProc->ho_Image_ref3);
-	//		Win::log("获取3#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref3, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera3_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread3_4_alive)
 	{
@@ -3149,7 +3293,7 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 			//pImgProc->m_Queue3_4.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList3_4.front();
 			pImgProc->m_ImgList3_4.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3298,18 +3442,15 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue3.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(3, pImgProc->ho_Image_ref3);
-	//		Win::log("获取3#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref3, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera3_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread3_5_alive)
 	{
@@ -3320,7 +3461,7 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 			//pImgProc->m_Queue3_5.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList3_5.front();
 			pImgProc->m_ImgList3_5.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3470,18 +3611,23 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue4.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(4, pImgProc->ho_Image_ref4);
-	//		Win::log("获取4#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref4, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (1)
+		{
+			if (pImgProc->GenerateReferenceImage4()) {
+				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref4, (HTuple)str_path.c_str() + "ref\\reference_image4.bmp");
+				pImgProc->m_camera4_reference_image_acquired = TRUE;
+				Win::log("获取4#参考图像");
+				break;
+			}
+			else
+				Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread4_1_alive)
 	{
@@ -3492,7 +3638,7 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 			//pImgProc->m_Queue4_1.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList4_1.front();
 			pImgProc->m_ImgList4_1.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3643,18 +3789,15 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue4.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(4, pImgProc->ho_Image_ref4);
-	//		Win::log("获取4#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref4, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera4_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread4_2_alive)
 	{
@@ -3665,7 +3808,7 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 			//pImgProc->m_Queue4_2.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList4_2.front();
 			pImgProc->m_ImgList4_2.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3814,18 +3957,15 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue4.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(4, pImgProc->ho_Image_ref4);
-	//		Win::log("获取4#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref4, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera4_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread4_3_alive)
 	{
@@ -3836,7 +3976,7 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 			//pImgProc->m_Queue4_3.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList4_3.front();
 			pImgProc->m_ImgList4_3.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -3985,18 +4125,15 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue4.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(4, pImgProc->ho_Image_ref4);
-	//		Win::log("获取4#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref4, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera4_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread4_4_alive)
 	{
@@ -4007,7 +4144,7 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 			//pImgProc->m_Queue4_4.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList4_4.front();
 			pImgProc->m_ImgList4_4.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);
@@ -4156,18 +4293,15 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
-	//for (;;)
-	//{
-	//	if (pImgProc->m_Queue4.GetLength() > 5) {
-	//		pImgProc->GenerateRefImg(4, pImgProc->ho_Image_ref4);
-	//		Win::log("获取4#参考图像");
-	//		break;
-	//	}
-	//	else
-	//		Sleep(50);
-	//}
-	GetImageSize(pImgProc->ho_Image_ref4, &hv_Width_ref, &hv_Height_ref);
-	MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	if (!pImgProc->TEST_MODEL) {
+		while (!pImgProc->m_camera4_reference_image_acquired) {
+			Sleep(50);
+		}
+	}
+	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
+
+	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
+	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
 
 	while (pImgProc->is_thread4_5_alive)
 	{
@@ -4178,7 +4312,7 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 			//pImgProc->m_Queue4_5.DelQueue(ho_Image_def);
 			ho_Image_def = pImgProc->m_ImgList4_5.front();
 			pImgProc->m_ImgList4_5.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
+   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
 			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 				&hv_Row_end_def, &hv_Column_end_def);

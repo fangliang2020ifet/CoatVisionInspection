@@ -14,6 +14,8 @@ IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_INSPECT, pParent)
 {
+	m_freerun = FALSE;
+
 	m_Acq1 = NULL;
 	m_Acq2 = NULL;
 	m_Acq3 = NULL;
@@ -348,7 +350,7 @@ void CInspectDlg::ClearImgProcQueue()
 	m_pImgProc.m_Sorted_DFTList.clear();
 
 	//m_pImgProc.m_SortDefectQueue.Clear();
-	m_pImgProc.m_vFileName.clear();
+	//m_pImgProc.m_vFileName.clear();
 	m_pImgProc.m_NO_IMG = 0;
 	m_pImgProc.m_current_position = 0;
 
@@ -571,14 +573,16 @@ BOOL CInspectDlg::InitialAllBoards()
 	if (!CreateObjects()) { EndDialog(TRUE); return FALSE; }
 
 	//外部触发时无需设置以下参数
-	m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
-	m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 60000);//设定触发频率
-	m_AcqDevice2->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-	m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", 60000);//设定曝光时间
-	m_AcqDevice3->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-	m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", 60000);//设定曝光时间
-	m_AcqDevice4->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-	m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 50000);//设定曝光时间
+	if (m_pImgProc.TEST_MODEL || m_freerun) {
+		m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
+		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 20000);//设定触发频率
+		m_AcqDevice2->SetFeatureValue("TriggerMode", "Off");//触发模式打开
+		m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice3->SetFeatureValue("TriggerMode", "Off");//触发模式打开
+		m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice4->SetFeatureValue("TriggerMode", "Off");//触发模式打开
+		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+	}
 
 	m_ImageWnd1.AttachEventHandler(this);
 	m_ImageWnd1.CenterImage(true);
@@ -1080,6 +1084,8 @@ void CInspectDlg::Grab()
 
 	if (!m_is_system_pause) {
 		m_pImgProc.RestartProcess();
+
+
 		if (!m_pImgProc.BeginProcess()) {
 			Win::log("图像处理线程启动失败");
 			RecordWarning(L"图像处理线程启动失败，请检查程序运行日志");
@@ -1216,11 +1222,11 @@ void CInspectDlg::GenerateHImage(SapBuffer* m_Buffer, int index, HImage &m_HImag
 {
 	BYTE pData;
 	void* pDataAddr = &pData;
+
 	m_Buffer->GetAddress(index, &pDataAddr);
 	int width = m_Buffer->GetWidth();
 	int height = m_Buffer->GetHeight();
 	m_HImage.GenImage1("byte", width, height, pDataAddr);
-
 	m_Buffer->ReleaseAddress(pDataAddr);
 }
 
@@ -1228,12 +1234,37 @@ void CInspectDlg::GenerateHObject(SapBuffer* m_Buffer, int index, HObject &ho_im
 {
 	BYTE pData;
 	void* pDataAddr = &pData;
-	m_Buffer->GetAddress(index, &pDataAddr);
+
+	int selected_index;
+	switch (index)
+	{
+	case 0:
+		selected_index = 0;
+		break;
+	case 1:
+		selected_index = 1;
+		break;
+	case 2:
+		selected_index = 0;
+		break;
+	case 3:
+		selected_index = 1;
+		break;
+	case 4:
+		selected_index = 0;
+		break;
+	default:
+		break;
+	}
+	m_Buffer->GetAddress(selected_index, &pDataAddr);
 	int width = m_Buffer->GetWidth();
 	int height = m_Buffer->GetHeight();
-	GenImage1(&ho_image, "byte", width, height, pData);
+	GenImage1(&ho_image, "byte", width, height, pData);	
+	//HImage m_himage;
+	//m_himage.GenImage1("byte", width, height, pDataAddr);
 
 	m_Buffer->ReleaseAddress(pDataAddr);
+	return;
 }
 
 void CInspectDlg::SaveImageFromBuffer(SapBuffer* m_Buffer, int index)
@@ -1279,57 +1310,54 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 		{
 			pDlg->m_View1->Show();
 		}
-		//HImage hImage;
-		//pDlg->GenerateHImage(pDlg->m_Buffers1, static_count,hImage);
+		HImage ho_image;
+		pDlg->GenerateHImage(pDlg->m_Buffers1, static_count,ho_image);
 		//HObject ho_image;
-		//pDlg->GenerateHObject(pDlg->m_Buffers1, static_count, ho_image);
-		//压入队列
-		//pDlg->m_pImgProc.m_Queue1.EnQueue(hImage);
-	
-		//测试：内存复制
-		//HObject current_image = pDlg->CopyHobject(pDlg->m_pImgProc.ho_test1);
-		//pDlg->m_pImgProc.m_Queue1_1.EnQueue(current_image);
-
-		switch (static_count)
+		//pDlg->GenerateHObject(pDlg->m_Buffers1, static_count, ho_image);	
+		int change_index = pDlg->camera1_frame_count % 5;
+		switch (change_index)
 		{
 		case 0:
-			//pDlg->m_pImgProc.m_Queue1_1.EnQueue(pDlg->m_pImgProc.ho_test1);
-			pDlg->m_pImgProc.m_ImgList1_1.push_back(pDlg->m_pImgProc.ho_test1);
+			if(pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList1_1.push_back(pDlg->m_pImgProc.m_hi_test1);
+			else
+				pDlg->m_pImgProc.m_ImgList1_1.push_back(ho_image);			
 			break;
 		case 1:
-			//pDlg->m_pImgProc.m_Queue1_2.EnQueue(pDlg->m_pImgProc.ho_test1);
-			pDlg->m_pImgProc.m_ImgList1_2.push_back(pDlg->m_pImgProc.ho_test1);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList1_2.push_back(pDlg->m_pImgProc.m_hi_test1);
+			else
+				pDlg->m_pImgProc.m_ImgList1_2.push_back(ho_image);
 			break;
 		case 2:
-			//pDlg->m_pImgProc.m_Queue1_3.EnQueue(pDlg->m_pImgProc.ho_test1);
-			pDlg->m_pImgProc.m_ImgList1_3.push_back(pDlg->m_pImgProc.ho_test1);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList1_3.push_back(pDlg->m_pImgProc.m_hi_test1);
+			else
+				pDlg->m_pImgProc.m_ImgList1_3.push_back(ho_image);
 			break;
 		case 3:
-			//pDlg->m_pImgProc.m_Queue1_4.EnQueue(pDlg->m_pImgProc.ho_test1);
-			pDlg->m_pImgProc.m_ImgList1_4.push_back(pDlg->m_pImgProc.ho_test1);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList1_4.push_back(pDlg->m_pImgProc.m_hi_test1);
+			else
+				pDlg->m_pImgProc.m_ImgList1_4.push_back(ho_image);
 			break;
 		case 4:
-			//pDlg->m_pImgProc.m_Queue1_5.EnQueue(pDlg->m_pImgProc.ho_test1);
-			pDlg->m_pImgProc.m_ImgList1_5.push_back(pDlg->m_pImgProc.ho_test1);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList1_5.push_back(pDlg->m_pImgProc.m_hi_test1);
+			else
+				pDlg->m_pImgProc.m_ImgList1_5.push_back(ho_image);
 			break;
-
 		default:
 			break;
 		}
 		if (static_count == 0) {
 			pDlg->m_static_count1 = 1;
+			//HalconCpp::WriteImage(ho_image, "bmp", 0, "D:/SaveImage/save1.bmp");
 		}
-		if (static_count == 1) {
-			pDlg->m_static_count1 = 2;
-		}
-		if (static_count == 2) {
-			pDlg->m_static_count1 = 3;
-		}
-		if (static_count == 3) {
-			pDlg->m_static_count1 = 4;
-		}
-		if (static_count == 4) {
+		else if(static_count == 1){
 			pDlg->m_static_count1 = 0;
+			//HalconCpp::WriteImage(ho_image, "bmp", 0, "D:/SaveImage/save2.bmp");
+
 		}
 	}
 }
@@ -1351,59 +1379,53 @@ void CInspectDlg::AcqCallback2(SapXferCallbackInfo *pInfo)
 		{
 			pDlg->m_View2->Show();
 		}
-		//HImage hImage;
-		//pDlg->GenerateHImage(pDlg->m_Buffers2, static_count, hImage);
+		HImage ho_image;
+		pDlg->GenerateHImage(pDlg->m_Buffers2, static_count, ho_image);
 		//HObject ho_image;
 		//pDlg->GenerateHObject(pDlg->m_Buffers2, static_count, ho_image);
-
-		//压入队列
-		//pDlg->m_pImgProc.m_Queue2.EnQueue(hImage);
-
-		switch (static_count)
+		int change_index = pDlg->camera2_frame_count % 5;
+		switch (change_index)
 		{
 		case 0:
-			//pDlg->m_pImgProc.m_Queue2_1.EnQueue(pDlg->m_pImgProc.ho_test2);
-			pDlg->m_pImgProc.m_ImgList2_1.push_back(pDlg->m_pImgProc.ho_test2);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList2_1.push_back(pDlg->m_pImgProc.m_hi_test2);
+			else
+				pDlg->m_pImgProc.m_ImgList2_1.push_back(ho_image);
 			break;
 		case 1:
-			//pDlg->m_pImgProc.m_Queue2_2.EnQueue(pDlg->m_pImgProc.ho_test2);
-			pDlg->m_pImgProc.m_ImgList2_2.push_back(pDlg->m_pImgProc.ho_test2);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList2_2.push_back(pDlg->m_pImgProc.m_hi_test2);
+			else
+				pDlg->m_pImgProc.m_ImgList2_2.push_back(ho_image);
 			break;
 		case 2:
-			//pDlg->m_pImgProc.m_Queue2_3.EnQueue(pDlg->m_pImgProc.ho_test2);
-			pDlg->m_pImgProc.m_ImgList2_3.push_back(pDlg->m_pImgProc.ho_test2);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList2_3.push_back(pDlg->m_pImgProc.m_hi_test2);
+			else
+				pDlg->m_pImgProc.m_ImgList2_3.push_back(ho_image);
 			break;
 		case 3:
-			//pDlg->m_pImgProc.m_Queue2_4.EnQueue(pDlg->m_pImgProc.ho_test2);
-			pDlg->m_pImgProc.m_ImgList2_4.push_back(pDlg->m_pImgProc.ho_test2);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList2_4.push_back(pDlg->m_pImgProc.m_hi_test2);
+			else
+				pDlg->m_pImgProc.m_ImgList2_4.push_back(ho_image);
 			break;
 		case 4:
-			//pDlg->m_pImgProc.m_Queue2_5.EnQueue(pDlg->m_pImgProc.ho_test2);
-			pDlg->m_pImgProc.m_ImgList2_5.push_back(pDlg->m_pImgProc.ho_test2);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList2_5.push_back(pDlg->m_pImgProc.m_hi_test2);
+			else
+				pDlg->m_pImgProc.m_ImgList2_5.push_back(ho_image);
 			break;
-
 		default:
 			break;
 		}
 		if (static_count == 0) {
 			pDlg->m_static_count2 = 1;
 		}
-		if (static_count == 1) {
-			pDlg->m_static_count2 = 2;
-		}
-		if (static_count == 2) {
-			pDlg->m_static_count2 = 3;
-		}
-		if (static_count == 3) {
-			pDlg->m_static_count2 = 4;
-		}
-		if (static_count == 4) {
+		else if (static_count == 1) {
 			pDlg->m_static_count2 = 0;
 		}
-
-
 	}
-
 }
 
 void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
@@ -1423,53 +1445,50 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 		{
 			pDlg->m_View3->Show();
 		}
-		//HImage hImage;
-		//pDlg->GenerateHImage(pDlg->m_Buffers3, static_count, hImage);
+		HImage ho_image;
+		pDlg->GenerateHImage(pDlg->m_Buffers3, static_count, ho_image);
 		//HObject ho_image;
 		//pDlg->GenerateHObject(pDlg->m_Buffers3, static_count, ho_image);
-
-		//压入队列
-		//pDlg->m_pImgProc.m_Queue3.EnQueue(hImage);
-
-		switch (static_count)
+		int change_index = pDlg->camera3_frame_count % 5;
+		switch (change_index)
 		{
 		case 0:
-			//pDlg->m_pImgProc.m_Queue3_1.EnQueue(pDlg->m_pImgProc.ho_test3);
-			pDlg->m_pImgProc.m_ImgList3_1.push_back(pDlg->m_pImgProc.ho_test3);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList3_1.push_back(pDlg->m_pImgProc.m_hi_test3);
+			else
+				pDlg->m_pImgProc.m_ImgList3_1.push_back(ho_image);
 			break;
 		case 1:
-			//pDlg->m_pImgProc.m_Queue3_2.EnQueue(pDlg->m_pImgProc.ho_test3);
-			pDlg->m_pImgProc.m_ImgList3_2.push_back(pDlg->m_pImgProc.ho_test3);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList3_2.push_back(pDlg->m_pImgProc.m_hi_test3);
+			else
+				pDlg->m_pImgProc.m_ImgList3_2.push_back(ho_image);
 			break;
 		case 2:
-			//pDlg->m_pImgProc.m_Queue3_3.EnQueue(pDlg->m_pImgProc.ho_test3);
-			pDlg->m_pImgProc.m_ImgList3_3.push_back(pDlg->m_pImgProc.ho_test3);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList3_3.push_back(pDlg->m_pImgProc.m_hi_test3);
+			else
+				pDlg->m_pImgProc.m_ImgList3_3.push_back(ho_image);
 			break;
 		case 3:
-			//pDlg->m_pImgProc.m_Queue3_4.EnQueue(pDlg->m_pImgProc.ho_test3);
-			pDlg->m_pImgProc.m_ImgList3_4.push_back(pDlg->m_pImgProc.ho_test3);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList3_4.push_back(pDlg->m_pImgProc.m_hi_test3);
+			else
+				pDlg->m_pImgProc.m_ImgList3_4.push_back(ho_image);
 			break;
 		case 4:
-			//pDlg->m_pImgProc.m_Queue3_5.EnQueue(pDlg->m_pImgProc.ho_test3);
-			pDlg->m_pImgProc.m_ImgList3_5.push_back(pDlg->m_pImgProc.ho_test3);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList3_5.push_back(pDlg->m_pImgProc.m_hi_test3);
+			else
+				pDlg->m_pImgProc.m_ImgList3_5.push_back(ho_image);
 			break;
-
 		default:
 			break;
 		}
 		if (static_count == 0) {
 			pDlg->m_static_count3 = 1;
 		}
-		if (static_count == 1) {
-			pDlg->m_static_count3 = 2;
-		}
-		if (static_count == 2) {
-			pDlg->m_static_count3 = 3;
-		}
-		if (static_count == 3) {
-			pDlg->m_static_count3 = 4;
-		}
-		if (static_count == 4) {
+		else if (static_count == 1) {
 			pDlg->m_static_count3 = 0;
 		}
 
@@ -1493,56 +1512,52 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		{
 			pDlg->m_View4->Show();
 		}
-		//HImage hImage;
-		//pDlg->GenerateHImage(pDlg->m_Buffers4, static_count, hImage);
+		HImage ho_image;
+		pDlg->GenerateHImage(pDlg->m_Buffers4, static_count, ho_image);
 		//HObject ho_image;
 		//pDlg->GenerateHObject(pDlg->m_Buffers4, static_count, ho_image);
-
-		//压入队列
-		//pDlg->m_pImgProc.m_Queue4.EnQueue(hImage);
-
-		switch (static_count)
+		int change_index = pDlg->camera4_frame_count % 5;
+		switch (change_index)
 		{
 		case 0:
-			//pDlg->m_pImgProc.m_Queue4_1.EnQueue(pDlg->m_pImgProc.ho_test4);
-			pDlg->m_pImgProc.m_ImgList4_1.push_back(pDlg->m_pImgProc.ho_test4);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList4_1.push_back(pDlg->m_pImgProc.m_hi_test4);
+			else
+				pDlg->m_pImgProc.m_ImgList4_1.push_back(ho_image);
 			break;
 		case 1:
-			//pDlg->m_pImgProc.m_Queue4_2.EnQueue(pDlg->m_pImgProc.ho_test4);
-			pDlg->m_pImgProc.m_ImgList4_2.push_back(pDlg->m_pImgProc.ho_test4);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList4_2.push_back(pDlg->m_pImgProc.m_hi_test4);
+			else
+				pDlg->m_pImgProc.m_ImgList4_2.push_back(ho_image);
 			break;
 		case 2:
-			//pDlg->m_pImgProc.m_Queue4_3.EnQueue(pDlg->m_pImgProc.ho_test4);
-			pDlg->m_pImgProc.m_ImgList4_3.push_back(pDlg->m_pImgProc.ho_test4);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList4_3.push_back(pDlg->m_pImgProc.m_hi_test4);
+			else
+				pDlg->m_pImgProc.m_ImgList4_3.push_back(ho_image);
 			break;
 		case 3:
-			//pDlg->m_pImgProc.m_Queue4_4.EnQueue(pDlg->m_pImgProc.ho_test4);
-			pDlg->m_pImgProc.m_ImgList4_4.push_back(pDlg->m_pImgProc.ho_test4);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList4_4.push_back(pDlg->m_pImgProc.m_hi_test4);
+			else
+				pDlg->m_pImgProc.m_ImgList4_4.push_back(ho_image);
 			break;
 		case 4:
-			//pDlg->m_pImgProc.m_Queue4_5.EnQueue(pDlg->m_pImgProc.ho_test4);
-			pDlg->m_pImgProc.m_ImgList4_5.push_back(pDlg->m_pImgProc.ho_test4);
+			if (pDlg->m_pImgProc.TEST_MODEL)
+				pDlg->m_pImgProc.m_ImgList4_5.push_back(pDlg->m_pImgProc.m_hi_test4);
+			else
+				pDlg->m_pImgProc.m_ImgList4_5.push_back(ho_image);
 			break;
-
 		default:
 			break;
 		}
 		if (static_count == 0) {
 			pDlg->m_static_count4 = 1;
 		}
-		if (static_count == 1) {
-			pDlg->m_static_count4 = 2;
-		}
-		if (static_count == 2) {
-			pDlg->m_static_count4 = 3;
-		}
-		if (static_count == 3) {
-			pDlg->m_static_count4 = 4;
-		}
-		if (static_count == 4) {
+		else if (static_count == 1) {
 			pDlg->m_static_count4 = 0;
 		}
-
 	}
 }
 

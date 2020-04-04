@@ -93,7 +93,7 @@ struct DefectType
 };
 
 
-typedef std::list<HObject> ImgList;
+typedef std::list<HImage> ImgList;
 typedef std::list<DefectType> DFTList;
 
 
@@ -104,6 +104,8 @@ public:
 	~CImageProcess();
 
 public:
+	BOOL TEST_MODEL = FALSE;
+	BOOL m_save_reference_image = TRUE;
 	BOOL BeginProcess();
 	BOOL StopProcess();
 	void RestartProcess();
@@ -115,8 +117,13 @@ public:
 	BOOL LoadSingleImage(std::string image_name);
 	HObject CopyHobject(HObject ho_image);
 	BOOL GetSavePath(std::string &path);
-	//BOOL GenerateRefImg(int cameraNo, HObject &ho_ref);
-	BOOL GenerateRefImg(int cameraNo, HObject &ho_ref, int list);
+	BOOL GenerateRefImg(int cameraNo, std::string save_path, HObject &ho_ref);
+	BOOL GenerateReferenceImage1();
+	BOOL GenerateReferenceImage2();
+	BOOL GenerateReferenceImage3();
+	BOOL GenerateReferenceImage4();
+	BOOL SaveReferenceImage();
+	BOOL GenerateAndSaveRefImage();
 	DefectType LocateDefectPosition(int camera_number, std::string save_path, HObject ho_selectedregion,
 									HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
@@ -134,7 +141,7 @@ public:
 	//è¦´ÃÐòºÅ
 	int NO_dft = 0;
 
-	std::vector<std::string> m_vFileName;           //¼ÇÂ¼è¦´ÃÍ¼ÏñÃû³Æ µÄ vector
+	//std::vector<std::string> m_vFileName;           //¼ÇÂ¼è¦´ÃÍ¼ÏñÃû³Æ µÄ vector
 
 	ImgList m_ImgList1_1;
 	ImgList m_ImgList1_2;
@@ -168,8 +175,19 @@ public:
 	HObject ho_test2;
 	HObject ho_test3;
 	HObject ho_test4;
+	HImage m_hi_test1;
+	HImage m_hi_test2;
+	HImage m_hi_test3;
+	HImage m_hi_test4;
+	HObject ho_Image_ref1;       //²Î¿¼Í¼Ïñ
+	HObject ho_Image_ref2;
+	HObject ho_Image_ref3;
+	HObject ho_Image_ref4;
+
 
 protected:
+
+	enum{ CAMERA_1 = 1, CAMERA_2, CAMERA_3, CAMERA_4};
 	//ÒìÎï£¬ °¼Í¹£¬ ²ÁÉË£¬ ¾§µã£¬ Â©Í¿
 	enum { DFT_MATTER = 0, DFT_BUMP, DFT_GRAZE, DFT_CRYSTAL, DFT_COATING};
 
@@ -223,6 +241,7 @@ private:
 	BOOL is_thread4_3_alive;
 	BOOL is_thread4_4_alive;
 	BOOL is_thread4_5_alive;
+
 	static UINT ImageCalculate1_1(LPVOID pParam);
 	static UINT ImageCalculate1_2(LPVOID pParam);
 	static UINT ImageCalculate1_3(LPVOID pParam);
@@ -244,10 +263,9 @@ private:
 	static UINT ImageCalculate4_4(LPVOID pParam);
 	static UINT ImageCalculate4_5(LPVOID pParam);
 
-	HObject ho_Image_ref1;       //²Î¿¼Í¼Ïñ
-	HObject ho_Image_ref2;
-	HObject ho_Image_ref3;
-	HObject ho_Image_ref4;
-
+	BOOL m_camera1_reference_image_acquired;
+	BOOL m_camera2_reference_image_acquired;
+	BOOL m_camera3_reference_image_acquired;
+	BOOL m_camera4_reference_image_acquired;
 
 };

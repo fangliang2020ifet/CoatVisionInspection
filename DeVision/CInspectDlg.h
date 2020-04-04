@@ -34,7 +34,7 @@ public:
 
 public:
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
-
+	BOOL m_freerun;
 	CFont m_font;
 	BOOL m_bUpdateUserInfo = FALSE;
 	BOOL m_is_system_pause;
