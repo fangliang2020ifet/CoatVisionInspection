@@ -118,30 +118,28 @@ public:
 	HObject CopyHobject(HObject ho_image);
 	BOOL GetSavePath(std::string &path);
 	BOOL GenerateRefImg(int cameraNo, std::string save_path, HObject &ho_ref);
-	BOOL GenerateReferenceImage1();
-	BOOL GenerateReferenceImage2();
-	BOOL GenerateReferenceImage3();
-	BOOL GenerateReferenceImage4();
+	BOOL GenerateReferenceImage1(HImage &hi_ref);
+	BOOL GenerateReferenceImage2(HImage &hi_ref);
+	BOOL GenerateReferenceImage3(HImage &hi_ref);
+	BOOL GenerateReferenceImage4(HImage &hi_ref);
 	BOOL SaveReferenceImage();
 	BOOL GenerateAndSaveRefImage();
-	DefectType LocateDefectPosition(int camera_number, std::string save_path, HObject ho_selectedregion,
+	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
 									HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
 	void ReSortDefectQueue();
 
 	std::string m_strPath;                  //保存路径
 	int m_NO_IMG;                          //已处理的图像总数
-	int m_NO_produced1;
-	int m_NO_produced2;
-	int m_NO_produced3;
-	int m_NO_produced4;
+	int m_NO_produced1 = 0;
+	int m_NO_produced2 = 0;
+	int m_NO_produced3 = 0;
+	int m_NO_produced4 = 0;
 	int FindMaxProducedNO();                       //找到已处理最多图像的线程
 
 	float m_current_position = 0.0f;
 	//瑕疵序号
-	int NO_dft = 0;
-
-	//std::vector<std::string> m_vFileName;           //记录瑕疵图像名称 的 vector
+	int m_NO_dft = 0;
 
 	ImgList m_ImgList1_1;
 	ImgList m_ImgList1_2;
@@ -171,19 +169,25 @@ public:
 
 	//测试变量
 	std::string file_path;    //文件路径,参考图像
-	HObject ho_test1;
-	HObject ho_test2;
-	HObject ho_test3;
-	HObject ho_test4;
+	//HObject ho_test1;
+	//HObject ho_test2;
+	//HObject ho_test3;
+	//HObject ho_test4;
 	HImage m_hi_test1;
 	HImage m_hi_test2;
 	HImage m_hi_test3;
 	HImage m_hi_test4;
-	HObject ho_Image_ref1;       //参考图像
-	HObject ho_Image_ref2;
-	HObject ho_Image_ref3;
-	HObject ho_Image_ref4;
+	//HObject ho_Image_ref1;       //参考图像
+	//HObject ho_Image_ref2;
+	//HObject ho_Image_ref3;
+	//HObject ho_Image_ref4;
+	HImage m_hi_ref1;
+	HImage m_hi_ref2;
+	HImage m_hi_ref3;
+	HImage m_hi_ref4;
 
+private:
+	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 
 protected:
 
@@ -219,7 +223,7 @@ private:
 	CRITICAL_SECTION m_csCalculateThread2;
 	CRITICAL_SECTION m_csCalculateThread3;
 	CRITICAL_SECTION m_csCalculateThread4;
-	CRITICAL_SECTION m_csCalculateThread5;
+	CRITICAL_SECTION m_csNO_dft;
 
 	BOOL is_thread1_1_alive;
 	BOOL is_thread1_2_alive;

@@ -354,6 +354,19 @@ bool cmp(const std::string &str1, const std::string &str2)
 	return NO1 < NO2;
 }
 
+bool cmp2(const std::string &str1, const std::string &str2)
+{
+	auto pos1 = str1.find_first_of("_");
+	std::string sub1 = str1.substr(1, pos1 - 1);
+	double NO1 = std::stod(sub1);
+
+	auto pos2 = str2.find_first_of("_");
+	std::string sub2 = str2.substr(1, pos2 - 1);
+	double NO2 = std::stod(sub2);
+
+	return NO1 < NO2;
+}
+
 BOOL CHistoryDlg::LoadHistoryImage(std::string path)
 {
 	//std::string file_path = m_strPath.substr(0, m_strPath.length() - 2);
@@ -363,7 +376,7 @@ BOOL CHistoryDlg::LoadHistoryImage(std::string path)
 	//排序
 	std::vector<std::string> vstring;
 	getFiles(_path, vstring);
-	sort(vstring.begin(), vstring.end(), cmp);
+	sort(vstring.begin(), vstring.end(), cmp2);
 	m_vImage_name = vstring;
 
 	m_pages = 0;

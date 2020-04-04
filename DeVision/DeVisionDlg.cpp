@@ -1235,6 +1235,7 @@ void CDeVisionDlg::ReStartPrepare()
 
 	//创建工作目录
 	CreateWorkPath(m_work_path);
+	//获取瑕疵图像保存路径
 	m_inspectDlg.m_pImgProc.m_strPath = m_work_path;
 	Win::log("工作目录已创建");
 	m_inspectDlg.RecordLogList(L"工作目录已创建");

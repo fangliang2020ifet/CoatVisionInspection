@@ -9,6 +9,7 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread2);
 	InitializeCriticalSection(&m_csCalculateThread3);
 	InitializeCriticalSection(&m_csCalculateThread4);
+	//InitializeCriticalSection(&m_csNO_dft);
 
 	m_camera1_reference_image_acquired = FALSE;
 	m_camera2_reference_image_acquired = FALSE;
@@ -23,41 +24,10 @@ CImageProcess::~CImageProcess()
 	DeleteCriticalSection(&m_csCalculateThread2);
 	DeleteCriticalSection(&m_csCalculateThread3);
 	DeleteCriticalSection(&m_csCalculateThread4);
+	//DeleteCriticalSection(&m_csNO_dft);
+
 	try
 	{
-		//if (!m_Queue1_1.isEmpty())
-		//	m_Queue1_1.Clear();
-		//if (!m_Queue1_2.isEmpty())
-		//	m_Queue1_2.Clear();
-		//if (!m_Queue1_3.isEmpty())
-		//	m_Queue1_3.Clear();
-		//if (!m_Queue1_4.isEmpty())
-		//	m_Queue1_4.Clear();
-		//if (!m_Queue2_1.isEmpty())
-		//	m_Queue2_1.Clear();
-		//if (!m_Queue2_2.isEmpty())
-		//	m_Queue2_2.Clear();
-		//if (!m_Queue2_3.isEmpty())
-		//	m_Queue2_3.Clear();
-		//if (!m_Queue2_4.isEmpty())
-		//	m_Queue2_4.Clear();
-		//if (!m_Queue3_1.isEmpty())
-		//	m_Queue3_1.Clear();
-		//if (!m_Queue3_2.isEmpty())
-		//	m_Queue3_2.Clear();
-		//if (!m_Queue3_3.isEmpty())
-		//	m_Queue3_3.Clear();
-		//if (!m_Queue3_4.isEmpty())
-		//	m_Queue3_4.Clear();
-		//if (!m_Queue4_1.isEmpty())
-		//	m_Queue4_1.Clear();
-		//if (!m_Queue4_2.isEmpty())
-		//	m_Queue4_2.Clear();
-		//if (!m_Queue4_3.isEmpty())
-		//	m_Queue4_3.Clear();
-		//if (!m_Queue4_4.isEmpty())
-		//	m_Queue4_4.Clear();
-
 		m_ImgList1_1.clear();
 		m_ImgList1_2.clear();
 		m_ImgList1_3.clear();
@@ -84,16 +54,6 @@ CImageProcess::~CImageProcess()
 		m_DFTList4.clear();
 		m_Sorted_DFTList.clear();
 
-		//if (!m_DefectQueue1.isEmpty())
-		//	m_DefectQueue1.Clear();
-		//if (!m_DefectQueue2.isEmpty())
-		//	m_DefectQueue2.Clear();
-		//if (!m_DefectQueue3.isEmpty())
-		//	m_DefectQueue3.Clear();
-		//if (!m_DefectQueue4.isEmpty())
-		//	m_DefectQueue4.Clear();
-		//if (!m_SortDefectQueue.isEmpty())
-		//	m_SortDefectQueue.Clear();
 	}
 	catch (...){}
 	   
@@ -102,6 +62,9 @@ CImageProcess::~CImageProcess()
 
 BOOL CImageProcess::BeginProcess()
 {
+	std::string str_path;
+	if (!GetSavePath(str_path)) return FALSE;
+	
 	//创建线程
 	if (!(m_CalculateThread1_1 = AfxBeginThread(ImageCalculate1_1, this))) {
 		Win::log("创建图像处理线程1_1失败");
@@ -234,57 +197,11 @@ BOOL CImageProcess::StopProcess()
 
 void CImageProcess::RestartProcess()
 {
-	//if (!m_Queue1_1.isEmpty())
-	//	m_Queue1_1.Clear();
-	//if (!m_Queue1_2.isEmpty())
-	//	m_Queue1_2.Clear();
-	//if (!m_Queue1_3.isEmpty())
-	//	m_Queue1_3.Clear();
-	//if (!m_Queue1_4.isEmpty())
-	//	m_Queue1_4.Clear();
-	//if (!m_Queue2_1.isEmpty())
-	//	m_Queue2_1.Clear();
-	//if (!m_Queue2_2.isEmpty())
-	//	m_Queue2_2.Clear();
-	//if (!m_Queue2_3.isEmpty())
-	//	m_Queue2_3.Clear();
-	//if (!m_Queue2_4.isEmpty())
-	//	m_Queue2_4.Clear();
-	//if (!m_Queue3_1.isEmpty())
-	//	m_Queue3_1.Clear();
-	//if (!m_Queue3_2.isEmpty())
-	//	m_Queue3_2.Clear();
-	//if (!m_Queue3_3.isEmpty())
-	//	m_Queue3_3.Clear();
-	//if (!m_Queue3_4.isEmpty())
-	//	m_Queue3_4.Clear();
-	//if (!m_Queue4_1.isEmpty())
-	//	m_Queue4_1.Clear();
-	//if (!m_Queue4_2.isEmpty())
-	//	m_Queue4_2.Clear();
-	//if (!m_Queue4_3.isEmpty())
-	//	m_Queue4_3.Clear();
-	//if (!m_Queue4_4.isEmpty())
-	//	m_Queue4_4.Clear();
-
-	//if (!m_DefectQueue1.isEmpty())
-	//	m_DefectQueue1.Clear();
-	//if (!m_DefectQueue2.isEmpty())
-	//	m_DefectQueue2.Clear();
-	//if (!m_DefectQueue3.isEmpty())
-	//	m_DefectQueue3.Clear();
-	//if (!m_DefectQueue4.isEmpty())
-	//	m_DefectQueue4.Clear();
-
 	m_DFTList1.clear();
 	m_DFTList2.clear();
 	m_DFTList3.clear();
 	m_DFTList4.clear();
 	m_Sorted_DFTList.clear();
-
-
-	//if (!m_SortDefectQueue.isEmpty())
-	//	m_SortDefectQueue.Clear();
 
 	m_NO_IMG = 0;
 	m_NO_produced1 = 0;
@@ -292,9 +209,7 @@ void CImageProcess::RestartProcess()
 	m_NO_produced3 = 0;
 	m_NO_produced4 = 0;
 	m_current_position = 0.0f;
-	NO_dft = 0;
-	//m_vFileName.clear();
-
+	m_NO_dft = 0;
 
 	return;
 }
@@ -348,7 +263,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		Win::log("参考图像1不存在");
 		return FALSE;
 	}
-	ReadImage(&ho_Image_ref1, hv_ref_image_name1);
+	HImage img1;
+	ReadImage(&img1, hv_ref_image_name1);
+	HalconCpp::MedianImage(img1, &m_hi_ref1, "circle", 1, "mirrored");
+
 
 	//读取参考图像2
 	std::string ref_image_name2 = "reference_image2.bmp";
@@ -357,7 +275,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		Win::log(L"参考图像2不存在");
 		return FALSE;
 	}
-	ReadImage(&ho_Image_ref2, hv_ref_image_name2);
+	HImage img2;
+	ReadImage(&img2, hv_ref_image_name2);
+	HalconCpp::MedianImage(img2, &m_hi_ref2, "circle", 1, "mirrored");
+
 
 	//读取参考图像3
 	std::string ref_image_name3 = "reference_image3.bmp";
@@ -366,7 +287,9 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		Win::log(L"参考图像3不存在");
 		return FALSE;
 	}
-	ReadImage(&ho_Image_ref3, hv_ref_image_name3);
+	HImage img3;
+	ReadImage(&img3, hv_ref_image_name3);
+	HalconCpp::MedianImage(img3, &m_hi_ref3, "circle", 1, "mirrored");
 
 	//读取参考图像4
 	std::string ref_image_name4 = "reference_image4.bmp";
@@ -375,7 +298,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		Win::log(L"参考图像4不存在");
 		return FALSE;
 	}
-	ReadImage(&ho_Image_ref4, hv_ref_image_name4);
+	HImage img4;
+	ReadImage(&img4, hv_ref_image_name4);
+	HalconCpp::MedianImage(img4, &m_hi_ref4, "circle", 1, "mirrored");
+
 
 	return TRUE;
 }
@@ -397,7 +323,7 @@ BOOL CImageProcess::LoadImageToQueue(std::string folder_path, int numbers)
 		AfxMessageBox(L"参考图像不存在");
 		return FALSE;
 	}
-	ReadImage(&ho_Image_ref1, hv_ref_image_name);
+	ReadImage(&m_hi_ref1, hv_ref_image_name);
 
 	//读取待检图像
 	folder_path = folder_path + "0";
@@ -556,7 +482,7 @@ BOOL CImageProcess::GenerateRefImg(int cameraNo, std::string save_path, HObject 
 	return TRUE;
 }
 
-BOOL CImageProcess::GenerateReferenceImage1()
+BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_ref)
 {
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
@@ -594,11 +520,14 @@ BOOL CImageProcess::GenerateReferenceImage1()
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	ho_Image_ref1 = result;
+	//ho_Image_ref1 = result;
+	//中值滤波
+	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+
 	return TRUE;
 }
 
-BOOL CImageProcess::GenerateReferenceImage2()
+BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_ref)
 {
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
@@ -636,11 +565,13 @@ BOOL CImageProcess::GenerateReferenceImage2()
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	ho_Image_ref2 = result;
+	//ho_Image_ref2 = result;
+	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+
 	return TRUE;
 }
 
-BOOL CImageProcess::GenerateReferenceImage3()
+BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_ref)
 {
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
@@ -678,11 +609,13 @@ BOOL CImageProcess::GenerateReferenceImage3()
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	ho_Image_ref3 = result;
+	//ho_Image_ref3 = result;
+	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+
 	return TRUE;
 }
 
-BOOL CImageProcess::GenerateReferenceImage4()
+BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_ref)
 {
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
@@ -720,41 +653,43 @@ BOOL CImageProcess::GenerateReferenceImage4()
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	ho_Image_ref4 = result;
+	//ho_Image_ref4 = result;
+	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+
 	return TRUE;
 }
 
 BOOL CImageProcess::SaveReferenceImage()
 {
-	SaveDefectImage(ho_Image_ref1, "D:/SaveImage/ref1.bmp");
-	SaveDefectImage(ho_Image_ref2, "D:/SaveImage/ref2.bmp");
-	SaveDefectImage(ho_Image_ref3, "D:/SaveImage/ref3.bmp");
-	SaveDefectImage(ho_Image_ref4, "D:/SaveImage/ref4.bmp");
+	SaveDefectImage(m_hi_ref1, "D:/SaveImage/ref1.bmp");
+	SaveDefectImage(m_hi_ref2, "D:/SaveImage/ref2.bmp");
+	SaveDefectImage(m_hi_ref3, "D:/SaveImage/ref3.bmp");
+	SaveDefectImage(m_hi_ref4, "D:/SaveImage/ref4.bmp");
 
 	return TRUE;
 }
 
 BOOL CImageProcess::GenerateAndSaveRefImage()
 {
-	if (!GenerateReferenceImage1())
+	if (!GenerateReferenceImage1(m_hi_ref1))
 		return FALSE;
 	else
-		HalconCpp::WriteImage(ho_Image_ref1, "bmp", 0, "D:/SaveImage/ref1.bmp");
+		HalconCpp::WriteImage(m_hi_ref1, "bmp", 0, "D:/SaveImage/ref1.bmp");
 
-	if (!GenerateReferenceImage2())
+	if (!GenerateReferenceImage2(m_hi_ref2))
 		return FALSE;
 	else
-		HalconCpp::WriteImage(ho_Image_ref2, "bmp", 0, "D:/SaveImage/ref2.bmp");
+		HalconCpp::WriteImage(m_hi_ref2, "bmp", 0, "D:/SaveImage/ref2.bmp");
 
-	if (!GenerateReferenceImage3())
+	if (!GenerateReferenceImage3(m_hi_ref3))
 		return FALSE;
 	else
-		HalconCpp::WriteImage(ho_Image_ref3, "bmp", 0, "D:/SaveImage/ref3.bmp");
+		HalconCpp::WriteImage(m_hi_ref3, "bmp", 0, "D:/SaveImage/ref3.bmp");
 
-	if (!GenerateReferenceImage4())
+	if (!GenerateReferenceImage4(m_hi_ref4))
 		return FALSE;
 	else
-		HalconCpp::WriteImage(ho_Image_ref4, "bmp", 0, "D:/SaveImage/ref4.bmp");
+		HalconCpp::WriteImage(m_hi_ref4, "bmp", 0, "D:/SaveImage/ref4.bmp");
 
 	return TRUE;
 }
@@ -862,7 +797,7 @@ int CImageProcess::FindMaxProducedNO()
 }
 
 //分割后的瑕疵图像处理
-DefectType CImageProcess::LocateDefectPosition(int camera_number, std::string save_path, HObject ho_selectedregion, 
+DefectType CImageProcess::LocateDefectPosition(int camera_number, HObject ho_selectedregion, 
 	                                          HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image)
 {
 	DefectType dtype;   //保存检测到的瑕疵信息
@@ -926,7 +861,6 @@ DefectType CImageProcess::LocateDefectPosition(int camera_number, std::string sa
 	}
 
 	//瑕疵信息写入
-	//dtype.image_order = m_NO_produced1;
 	dtype.center_x = (hv_average_Column.TupleInt() + IMAGE_WIDTH * (camera_number - 1))*HORIZON_PRECISION;     //单位：毫米
 	//dtype.center_y = hv_average_Row.TupleInt();
 	dtype.area = 0.255f;
@@ -976,9 +910,8 @@ DefectType CImageProcess::LocateDefectPosition(int camera_number, std::string sa
 	HalconCpp::CropDomain(ho_ImageReduced, &ho_ImageCroped);
 
 	//瑕疵图像的名称
-	HTuple hv_path = (HTuple)save_path.c_str();
-	HTuple hv_img_name = (HTuple)NO_dft
-		+ "_P" + hv_position
+	HTuple hv_path = (HTuple)m_strPath.c_str();
+	HTuple hv_img_name = "P" + hv_position
 		+ "_X" + hv_X
 		+ "_R" + hv_radius
 		+ "_A" + hv_harea
@@ -987,6 +920,7 @@ DefectType CImageProcess::LocateDefectPosition(int camera_number, std::string sa
 	SaveDefectImage(ho_ImageCroped, hv_path + hv_img_name);
 
 	//std::string file_name = hv_img_name.S();
+
 	//m_vFileName.push_back(file_name);
 
 
@@ -1015,21 +949,10 @@ void CImageProcess::SaveDefectImage(HObject &ho_img, HTuple name)
 	return;
 }
 
-//  1# 相机处理线程
-UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
+int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
 {
-	CImageProcess *pImgProc = (CImageProcess *)pParam;
-	pImgProc->is_thread1_1_alive = TRUE;
-	pImgProc->m_NO_produced1 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread1_1_alive = FALSE;
-		return 1;
-	}
-	pImgProc->NO_dft = 0;
-    // Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
+	// Local iconic variables
+	//HObject  ho_ImageMedian_ref, ho_Image_def;
 	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
 	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
 	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
@@ -1039,162 +962,165 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 	HObject  ho_ImagePart;
 
 	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def , hv_Height_def;
+	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
 	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
 	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
 	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
 	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
 	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
-	//处理参考图像
-	if (!pImgProc->TEST_MODEL) {
-		while(1)
+	GetImageSize(hi_ref, &hv_Width_ref, &hv_Height_ref);
+
+	Threshold(hi_img, &ho_Region_defth, 1, 255);
+	Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
+	SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
+		&hv_Row_end_def, &hv_Column_end_def);
+	ReduceDomain(hi_img, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
+	CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
+	MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
+	GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
+
+	//判断待检图像是否有黑边
+	if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
+		ReduceDomain(hi_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
+		CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
+		AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
+		MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
+	}
+	else {
+		//参考图像减去待检测图像，结果取绝对值
+		//可利用放大倍数设置检测的精度和等级
+		AbsDiffImage(ho_ImageMedian_def, hi_ref, &ho_ImageAbsDiff, 5);
+		MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
+	}
+
+	//参考图像像素平均值
+	GetDomain(hi_ref, &ho_Domain_ref);
+	Intensity(ho_Domain_ref, hi_ref, &hv_Mean_ref, &hv_Deviation_ref);
+	//差值图像的像素最大值
+	//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
+
+	//判断是整除还是取模
+	hv_row_scale = hv_Height_def / 256;
+	if (0 != ((hv_Height_def % 256) != 0))
+	{
+		hv_row_scale += 1;
+	}
+	hv_column_scale = hv_Width_def / 256;
+	if (0 != ((hv_Width_def % 256) != 0))
+	{
+		hv_column_scale += 1;
+	}
+
+	// vector 暂存瑕疵位置信息，排序后放入队列
+	//std::vector<DefectType> vdef;
+	HTuple end_val41 = hv_row_scale - 1;
+	HTuple step_val41 = 1;
+	for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
+	{
+		HTuple end_val42 = hv_column_scale - 1;
+		HTuple step_val42 = 1;
+		for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
 		{
-			if (pImgProc->GenerateReferenceImage1()) {
-				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref1, (HTuple)str_path.c_str() + "ref\\reference_image1.bmp");
+			//重定义图像的定义域，分切图像
+			GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
+				((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
+
+			ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
+			//帧相减后的图像在缩减区域的像素平均值
+			//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
+			//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
+			//求区域内像素的最大最小值
+			//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
+			//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
+			//分切后的图像动态阈值化
+			//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+
+			Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
+
+			//连接区域
+			Connection(ho_Region, &ho_ConnectedRegions);
+			//选择ROI
+			SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
+
+			//对单张小图进行处理, 计算ROI数量
+			CountObj(ho_SelectedRegions, &hv_Number);
+			if (hv_Number != 0) {
+
+				//保存瑕疵图片
+				DefectType temp_def = LocateDefectPosition(cameraNO, ho_SelectedRegions,
+					hv_Number, hv_Column_origin_def, ho_ImagePart_def);
+				//保存瑕疵信息
+				vDFT.push_back(temp_def);
+			}
+		}
+	}
+
+	return 0;
+}
+
+//  1# 相机处理线程
+UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
+{
+	CImageProcess *pImgProc = (CImageProcess *)pParam;
+	pImgProc->is_thread1_1_alive = TRUE;
+
+	//处理参考图像
+	HImage hi_ref;
+	if (!pImgProc->TEST_MODEL) {
+		while (1)
+		{
+			if (pImgProc->GenerateReferenceImage1(hi_ref)) {
+				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image1.bmp");
+				pImgProc->m_hi_ref1 = hi_ref;
 				pImgProc->m_camera1_reference_image_acquired = TRUE;
 				Win::log("获取1#参考图像");
 				break;
 			}
-			else
-				Sleep(50);
+			else Sleep(50);
 		}
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref1;
 
 	while (pImgProc->is_thread1_1_alive)
 	{
-		//if (!pImgProc->m_Queue1_1.isEmpty())
 		if(!pImgProc->m_ImgList1_1.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue1_1 = %d\n", pImgProc->m_Queue1_1.GetLength());
-			//pImgProc->m_Queue1_1.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList1_1.front();
-			pImgProc->m_ImgList1_1.pop_front();
-			Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))){
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
 
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//帧相减后的图像在缩减区域的像素平均值
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					//求区域内像素的最大最小值
-					//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					//分切后的图像动态阈值化
-					//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
-					
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList1_1.front();
+			pImgProc->m_ImgList1_1.pop_front();
 
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 
-					//对单张小图进行处理, 计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(1, str_path, ho_SelectedRegions,
-											hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//保存瑕疵信息
-						vdef.push_back(temp_def);
-					}
-				}
-			}
-			
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
-					//pImgProc->m_DefectQueue1.EnQueue(*it);
 					pImgProc->m_DFTList1.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
-
-			}
-			
+			}			
 			//已处理的图像总数
 			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
 			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-			//TRACE("ImageProcess->current position ------------= %f\n", pImgProc->m_current_position);
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 
 	//清空图像队列
-	//pImgProc->m_Queue1_1.Clear();
 	pImgProc->m_ImgList1_1.clear();
 
 	pImgProc->is_thread1_1_alive = FALSE;
+	Win::log("1#相机处理线程 1 结束");
 	return 0;
 }
 
@@ -1202,169 +1128,56 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread1_2_alive = TRUE;
-	pImgProc->m_NO_produced1 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread1_2_alive = FALSE;
-		return 1;
-	}
-	pImgProc->NO_dft = 0;
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera1_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref1;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref1;
 
 	while (pImgProc->is_thread1_2_alive)
 	{
 		if (!pImgProc->m_ImgList1_2.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue1_2 = %d\n", pImgProc->m_Queue1_2.GetLength());
-			//pImgProc->m_Queue1_2.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList1_2.front();
-			pImgProc->m_ImgList1_2.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);  //阈值应该设多少？
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
 
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//帧相减后的图像在缩减区域的像素平均值
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					//求区域内像素的最大最小值
-					//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					//分切后的图像动态阈值化
-					//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList1_2.front();
+			pImgProc->m_ImgList1_2.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理, 计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(1, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//保存瑕疵信息
-						vdef.push_back(temp_def);
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList1.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
 			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-			//TRACE("ImageProcess->current position ------------= %f\n", pImgProc->m_current_position);
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
-
-		}
-		else
-		{
+		} else {
 			Sleep(5);
 		}
 	}
-
 	//清空图像队列
 	pImgProc->m_ImgList1_2.clear();
 
 	pImgProc->is_thread1_2_alive = FALSE;
+	Win::log("1#相机处理线程 2 结束");
+
 	return 0;
 }
 
@@ -1372,162 +1185,48 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread1_3_alive = TRUE;
-	pImgProc->m_NO_produced1 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread1_3_alive = FALSE;
-		return 1;
-	}
-	pImgProc->NO_dft = 0;
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera1_reference_image_acquired) {
-
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref1;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref1;
 
 	while (pImgProc->is_thread1_3_alive)
 	{
 		if (!pImgProc->m_ImgList1_3.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue1_3 = %d\n", pImgProc->m_Queue1_3.GetLength());
-			//pImgProc->m_Queue1_3.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList1_3.front();
-			pImgProc->m_ImgList1_3.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
 
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//帧相减后的图像在缩减区域的像素平均值
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					//求区域内像素的最大最小值
-					//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					//分切后的图像动态阈值化
-					//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList1_3.front();
+			pImgProc->m_ImgList1_3.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理, 计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(1, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//保存瑕疵信息
-						vdef.push_back(temp_def);
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList1.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
 			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-			//TRACE("ImageProcess->current position ------------= %f\n", pImgProc->m_current_position);
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 
-		}
-		else
-		{
+		} else {
 			Sleep(5);
 		}
 	}
@@ -1536,6 +1235,8 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 	pImgProc->m_ImgList1_3.clear();
 
 	pImgProc->is_thread1_3_alive = FALSE;
+	Win::log("1#相机处理线程 3 结束");
+
 	return 0;
 }
 
@@ -1543,162 +1244,47 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread1_4_alive = TRUE;
-	pImgProc->m_NO_produced1 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread1_4_alive = FALSE;
-		return 1;
-	}
-	pImgProc->NO_dft = 0;
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera1_reference_image_acquired) {
-
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref1;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref1;
 
 	while (pImgProc->is_thread1_4_alive)
 	{
 		if (!pImgProc->m_ImgList1_4.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue1_4 = %d\n", pImgProc->m_Queue1_4.GetLength());
-			//pImgProc->m_Queue1_4.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList1_4.front();
-			pImgProc->m_ImgList1_4.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
 
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//帧相减后的图像在缩减区域的像素平均值
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					//求区域内像素的最大最小值
-					//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					//分切后的图像动态阈值化
-					//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList1_4.front();
+			pImgProc->m_ImgList1_4.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理, 计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(1, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//保存瑕疵信息
-						vdef.push_back(temp_def);
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList1.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
 			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-			//TRACE("ImageProcess->current position ------------= %f\n", pImgProc->m_current_position);
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
-
-		}
-		else
-		{
+		} else {
 			Sleep(5);
 		}
 	}
@@ -1707,6 +1293,8 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 	pImgProc->m_ImgList1_4.clear();
 
 	pImgProc->is_thread1_4_alive = FALSE;
+	Win::log("1#相机处理线程 4 结束");
+
 	return 0;
 }
 
@@ -1714,162 +1302,48 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread1_5_alive = TRUE;
-	pImgProc->m_NO_produced1 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread1_5_alive = FALSE;
-		return 1;
-	}
-	pImgProc->NO_dft = 0;
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera1_reference_image_acquired) {
-
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref1;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref1;
+	else hi_ref = pImgProc->m_hi_ref1;
 
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref1, &ho_ImageMedian_ref, "circle", 1, "mirrored");
-
+	std::vector<DefectType> vdef;
 	while (pImgProc->is_thread1_5_alive)
 	{
 		if (!pImgProc->m_ImgList1_5.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue1_5 = %d\n", pImgProc->m_Queue1_5.GetLength());
-			//pImgProc->m_Queue1_5.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList1_5.front();
-			pImgProc->m_ImgList1_5.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
 
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//帧相减后的图像在缩减区域的像素平均值
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					//求区域内像素的最大最小值
-					//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					//分切后的图像动态阈值化
-					//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList1_5.front();
+			pImgProc->m_ImgList1_5.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理, 计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(1, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//保存瑕疵信息
-						vdef.push_back(temp_def);
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList1.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
 			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-			//TRACE("ImageProcess->current position ------------= %f\n", pImgProc->m_current_position);
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
-
-		}
-		else
-		{
+		} else {
 			Sleep(5);
 		}
 	}
@@ -1878,6 +1352,8 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 	pImgProc->m_ImgList1_5.clear();
 
 	pImgProc->is_thread1_5_alive = FALSE;
+	Win::log("1#相机处理线程 5 结束");
+
 	return 0;
 }
 
@@ -1886,149 +1362,37 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread2_1_alive = TRUE;
-	pImgProc->m_NO_produced2 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread2_1_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (1)
 		{
-			if (pImgProc->GenerateReferenceImage2()) {
-				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref2, (HTuple)str_path.c_str() + "ref\\reference_image2.bmp");
+			if (pImgProc->GenerateReferenceImage2(hi_ref)) {
+				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image2.bmp");
+				pImgProc->m_hi_ref2 = hi_ref;
 				pImgProc->m_camera2_reference_image_acquired = TRUE;
 				Win::log("获取2#参考图像");
 				break;
-			}
-			else
-				Sleep(50);
+			} else	Sleep(50);
 		}
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_1_alive)
 	{
 		if (!pImgProc->m_ImgList2_1.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue2_1 = %d\n", pImgProc->m_Queue2_1.GetLength());
-			//pImgProc->m_Queue2_1.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList2_1.front();
-			pImgProc->m_ImgList2_1.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
-					
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(2, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-			}
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList2_1.front();
+			pImgProc->m_ImgList2_1.pop_front();
 			
-			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 
+			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
@@ -2036,23 +1400,21 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList2.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-
-		}
-		else
-		{
+		} else {
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList2_1.clear();
 
 	pImgProc->is_thread2_1_alive = FALSE;
+	Win::log("2#相机处理线程 1 结束");
+
 	return 0;
 }
 
@@ -2060,167 +1422,53 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread2_2_alive = TRUE;
-	pImgProc->m_NO_produced2 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread2_2_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera2_reference_image_acquired) {
-
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref2;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_2_alive)
 	{
 		if (!pImgProc->m_ImgList2_2.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue2_2 = %d\n", pImgProc->m_Queue2_2.GetLength());
-			//pImgProc->m_Queue2_2.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList2_2.front();
-			pImgProc->m_ImgList2_2.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList2_2.front();
+			pImgProc->m_ImgList2_2.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(2, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList2.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList2_2.clear();
 
 	pImgProc->is_thread2_2_alive = FALSE;
+	Win::log("2#相机处理线程 2 结束");
+
 	return 0;
 }
 
@@ -2228,167 +1476,54 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread2_3_alive = TRUE;
-	pImgProc->m_NO_produced2 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread2_3_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera2_reference_image_acquired) {
 
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref2;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_3_alive)
 	{
 		if (!pImgProc->m_ImgList2_3.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue2_3 = %d\n", pImgProc->m_Queue2_3.GetLength());
-			//pImgProc->m_Queue2_3.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList2_3.front();
-			pImgProc->m_ImgList2_3.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList2_3.front();
+			pImgProc->m_ImgList2_3.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(2, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList2.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList2_3.clear();
 
 	pImgProc->is_thread2_3_alive = FALSE;
+	Win::log("2#相机处理线程 3 结束");
+
 	return 0;
 }
 
@@ -2396,167 +1531,54 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread2_4_alive = TRUE;
-	pImgProc->m_NO_produced2 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread2_4_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera2_reference_image_acquired) {
 
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref2;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_4_alive)
 	{
 		if (!pImgProc->m_ImgList2_4.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue2_4 = %d\n", pImgProc->m_Queue2_4.GetLength());
-			//pImgProc->m_Queue2_4.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList2_4.front();
-			pImgProc->m_ImgList2_4.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList2_4.front();
+			pImgProc->m_ImgList2_4.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(2, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList2.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList2_4.clear();
 
 	pImgProc->is_thread2_4_alive = FALSE;
+	Win::log("2#相机处理线程 4 结束");
+
 	return 0;
 }
 
@@ -2564,167 +1586,55 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread2_5_alive = TRUE;
-	pImgProc->m_NO_produced2 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread2_5_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera2_reference_image_acquired) {
 
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref2;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref2;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref2, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_5_alive)
 	{
 		if (!pImgProc->m_ImgList2_5.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue2_5 = %d\n", pImgProc->m_Queue2_5.GetLength());
-			//pImgProc->m_Queue2_5.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList2_5.front();
-			pImgProc->m_ImgList2_5.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList2_5.front();
+			pImgProc->m_ImgList2_5.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(2, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList2.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList2_5.clear();
 
 	pImgProc->is_thread2_5_alive = FALSE;
+	Win::log("2#相机处理线程 5 结束");
+
 	return 0;
 }
 
@@ -2733,38 +1643,15 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread3_1_alive = TRUE;
-	pImgProc->m_NO_produced3 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread3_1_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (1)
 		{
-			if (pImgProc->GenerateReferenceImage3()) {
-				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref3, (HTuple)str_path.c_str() + "ref\\reference_image3.bmp");
+			if (pImgProc->GenerateReferenceImage3(hi_ref)) {
+				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image3.bmp");
+				pImgProc->m_hi_ref3 = hi_ref;
 				pImgProc->m_camera3_reference_image_acquired = TRUE;
 				Win::log("获取3#参考图像");
 				break;
@@ -2773,135 +1660,44 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 				Sleep(50);
 		}
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_1_alive)
 	{
 		if (!pImgProc->m_ImgList3_1.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue3_1 = %d\n", pImgProc->m_Queue3_1.GetLength());
-			//pImgProc->m_Queue3_1.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList3_1.front();
-			pImgProc->m_ImgList3_1.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
-					
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList3_1.front();
+			pImgProc->m_ImgList3_1.pop_front();
 
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(3, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList3.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList3_1.clear();
 
 	pImgProc->is_thread3_1_alive = FALSE;
+	Win::log("3#相机处理线程 1 结束");
+
 	return 0;
 }
 
@@ -2909,168 +1705,54 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread3_2_alive = TRUE;
-	pImgProc->m_NO_produced3 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread3_2_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera3_reference_image_acquired) {
 
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref3;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_2_alive)
 	{
 		if (!pImgProc->m_ImgList3_2.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue3_2 = %d\n", pImgProc->m_Queue3_2.GetLength());
-			//pImgProc->m_Queue3_2.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList3_2.front();
-			pImgProc->m_ImgList3_2.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList3_2.front();
+			pImgProc->m_ImgList3_2.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(3, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList3.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList3_2.clear();
 
 	pImgProc->is_thread3_2_alive = FALSE;
+	Win::log("3#相机处理线程 2 结束");
+
 	return 0;
 }
 
@@ -3080,166 +1762,54 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 	pImgProc->is_thread3_3_alive = TRUE;
 	pImgProc->m_NO_produced3 = 0;
 
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread3_3_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera3_reference_image_acquired) {
 
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref3;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_3_alive)
 	{
 		if (!pImgProc->m_ImgList3_3.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue3_3 = %d\n", pImgProc->m_Queue3_3.GetLength());
-			//pImgProc->m_Queue3_3.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList3_3.front();
-			pImgProc->m_ImgList3_3.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList3_3.front();
+			pImgProc->m_ImgList3_3.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(3, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList3.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList3_3.clear();
 
 	pImgProc->is_thread3_3_alive = FALSE;
+	Win::log("3#相机处理线程 3 结束");
+
 	return 0;
 }
 
@@ -3247,167 +1817,53 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread3_4_alive = TRUE;
-	pImgProc->m_NO_produced3 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread3_4_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera3_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref3;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_4_alive)
 	{
 		if (!pImgProc->m_ImgList3_4.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue3_4 = %d\n", pImgProc->m_Queue3_4.GetLength());
-			//pImgProc->m_Queue3_4.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList3_4.front();
-			pImgProc->m_ImgList3_4.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList3_4.front();
+			pImgProc->m_ImgList3_4.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(3, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList3.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList3_4.clear();
 
 	pImgProc->is_thread3_4_alive = FALSE;
+	Win::log("3#相机处理线程 4 结束");
+
 	return 0;
 }
 
@@ -3415,167 +1871,53 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread3_5_alive = TRUE;
-	pImgProc->m_NO_produced3 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread3_5_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera3_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref3;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref3;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref3, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_5_alive)
 	{
 		if (!pImgProc->m_ImgList3_5.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue3_5 = %d\n", pImgProc->m_Queue3_5.GetLength());
-			//pImgProc->m_Queue3_5.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList3_5.front();
-			pImgProc->m_ImgList3_5.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList3_5.front();
+			pImgProc->m_ImgList3_5.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(3, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList3.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList3_5.clear();
 
 	pImgProc->is_thread3_5_alive = FALSE;
+	Win::log("3#相机处理线程 5 结束");
+
 	return 0;
 }
 
@@ -3584,177 +1926,59 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread4_1_alive = TRUE;
-	pImgProc->m_NO_produced4 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread4_1_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (1)
 		{
-			if (pImgProc->GenerateReferenceImage4()) {
-				pImgProc->SaveDefectImage(pImgProc->ho_Image_ref4, (HTuple)str_path.c_str() + "ref\\reference_image4.bmp");
+			if (pImgProc->GenerateReferenceImage4(hi_ref)) {
+				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image4.bmp");
+				pImgProc->m_hi_ref4 = hi_ref;
 				pImgProc->m_camera4_reference_image_acquired = TRUE;
 				Win::log("获取4#参考图像");
 				break;
-			}
-			else
-				Sleep(50);
+			} else Sleep(50);
 		}
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref4;
 
 	while (pImgProc->is_thread4_1_alive)
 	{
 		if (!pImgProc->m_ImgList4_1.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue4_1 = %d\n", pImgProc->m_Queue4_1.GetLength());
-			//pImgProc->m_Queue4_1.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList4_1.front();
-			pImgProc->m_ImgList4_1.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
-					
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList4_1.front();
+			pImgProc->m_ImgList4_1.pop_front();
 
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(4, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList4.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
-
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList4_1.clear();
 
 	pImgProc->is_thread4_1_alive = FALSE;
+	Win::log("4#相机处理线程 1 结束");
+
 	return 0;
 }
 
@@ -3762,167 +1986,53 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread4_2_alive = TRUE;
-	pImgProc->m_NO_produced4 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread4_2_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera4_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref4;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref4;
 
 	while (pImgProc->is_thread4_2_alive)
 	{
 		if (!pImgProc->m_ImgList4_2.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue4_2 = %d\n", pImgProc->m_Queue4_2.GetLength());
-			//pImgProc->m_Queue4_2.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList4_2.front();
-			pImgProc->m_ImgList4_2.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList4_2.front();
+			pImgProc->m_ImgList4_2.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(4, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList4.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList4_2.clear();
 
 	pImgProc->is_thread4_2_alive = FALSE;
+	Win::log("4#相机处理线程 2 结束");
+
 	return 0;
 }
 
@@ -3930,167 +2040,54 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread4_3_alive = TRUE;
-	pImgProc->m_NO_produced4 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread4_3_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera4_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref4;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref4;
 
 	while (pImgProc->is_thread4_3_alive)
 	{
 		if (!pImgProc->m_ImgList4_3.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue4_3 = %d\n", pImgProc->m_Queue4_3.GetLength());
-			//pImgProc->m_Queue4_3.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList4_3.front();
-			pImgProc->m_ImgList4_3.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList4_3.front();
+			pImgProc->m_ImgList4_3.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(4, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList4.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
 
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList4_3.clear();
 
 	pImgProc->is_thread4_3_alive = FALSE;
+	Win::log("4#相机处理线程 3 结束");
+
 	return 0;
 }
 
@@ -4098,167 +2095,53 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread4_4_alive = TRUE;
-	pImgProc->m_NO_produced4 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread4_4_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera4_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref4;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref4;
 
 	while (pImgProc->is_thread4_4_alive)
 	{
 		if (!pImgProc->m_ImgList4_4.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue4_4 = %d\n", pImgProc->m_Queue4_4.GetLength());
-			//pImgProc->m_Queue4_4.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList4_4.front();
-			pImgProc->m_ImgList4_4.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList4_4.front();
+			pImgProc->m_ImgList4_4.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(4, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList4.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList4_4.clear();
 
 	pImgProc->is_thread4_4_alive = FALSE;
+	Win::log("4#相机处理线程 4 结束");
+
 	return 0;
 }
 
@@ -4266,166 +2149,52 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread4_5_alive = TRUE;
-	pImgProc->m_NO_produced4 = 0;
-
-	std::string str_path;
-	if (!pImgProc->GetSavePath(str_path)) {
-		pImgProc->is_thread4_5_alive = FALSE;
-		return 1;
-	}
-
-	// Local iconic variables
-	HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
 
 	//处理参考图像
+	HImage hi_ref;
 	if (!pImgProc->TEST_MODEL) {
 		while (!pImgProc->m_camera4_reference_image_acquired) {
 			Sleep(50);
 		}
+		hi_ref = pImgProc->m_hi_ref4;
 	}
-	ho_ImageMedian_ref = pImgProc->ho_Image_ref4;
-
-	GetImageSize(ho_ImageMedian_ref, &hv_Width_ref, &hv_Height_ref);
-	//MedianImage(pImgProc->ho_Image_ref4, &ho_ImageMedian_ref, "circle", 1, "mirrored");
+	else hi_ref = pImgProc->m_hi_ref4;
 
 	while (pImgProc->is_thread4_5_alive)
 	{
 		if (!pImgProc->m_ImgList4_5.empty())
 		{
-			//从队列中取出待检图像
-			//TRACE("m_queue4_5 = %d\n", pImgProc->m_Queue4_5.GetLength());
-			//pImgProc->m_Queue4_5.DelQueue(ho_Image_def);
-			ho_Image_def = pImgProc->m_ImgList4_5.front();
-			pImgProc->m_ImgList4_5.pop_front();
-   Threshold(ho_Image_def, &ho_Region_defth, 1, 255);
-			Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-			SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-				&hv_Row_end_def, &hv_Column_end_def);
-			ReduceDomain(ho_Image_def, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-			CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-			MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-			GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-			//判断待检图像是否有黑边
-			if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-				ReduceDomain(ho_ImageMedian_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-				CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-				AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-			else {
-				//参考图像减去待检测图像，结果取绝对值
-				//可利用放大倍数设置检测的精度和等级
-				AbsDiffImage(ho_ImageMedian_def, ho_ImageMedian_ref, &ho_ImageAbsDiff, 5);
-				MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-			}
-
-			//参考图像像素平均值
-			GetDomain(ho_ImageMedian_ref, &ho_Domain_ref);
-			Intensity(ho_Domain_ref, ho_ImageMedian_ref, &hv_Mean_ref, &hv_Deviation_ref);
-			//差值图像的像素最大值
-			//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-			//判断是整除还是取模
-			hv_row_scale = hv_Height_def / 256;
-			if (0 != ((hv_Height_def % 256) != 0))
-			{
-				hv_row_scale += 1;
-			}
-			hv_column_scale = hv_Width_def / 256;
-			if (0 != ((hv_Width_def % 256) != 0))
-			{
-				hv_column_scale += 1;
-			}
-
-			// vector 暂存瑕疵位置信息，排序后放入队列
 			std::vector<DefectType> vdef;
 
-			HTuple end_val41 = hv_row_scale - 1;
-			HTuple step_val41 = 1;
-			for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-			{
-				HTuple end_val42 = hv_column_scale - 1;
-				HTuple step_val42 = 1;
-				for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-				{
-					//重定义图像的定义域，分切图像
-					GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-						((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-					//帧相减后的图像在缩减区域的像素平均值
-					ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-					//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-					//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-					////求区域内像素的最大最小值
-					////reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-					//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-					////分切后的图像动态阈值化
-					////Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
+			//从队列中取出待检图像
+			HImage hi_def = pImgProc->m_ImgList4_5.front();
+			pImgProc->m_ImgList4_5.pop_front();
 
-					Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-					//连接区域
-					Connection(ho_Region, &ho_ConnectedRegions);
-					//选择ROI
-					SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-					//对单张小图进行处理
-					//计算ROI数量
-					CountObj(ho_SelectedRegions, &hv_Number);
-					if (hv_Number != 0) {
-						//保存瑕疵图片
-						pImgProc->NO_dft += 1;
-						DefectType temp_def = pImgProc->LocateDefectPosition(4, str_path, ho_SelectedRegions,
-							hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-						//TRACE("absolute position---------------------= %f\n", temp_def.absolute_position);
-						vdef.push_back(temp_def);
-
-					}
-				}
-
-			}
+			//瑕疵检测算法
+			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
-
 			//根据瑕疵绝对位置排序后存入瑕疵队列
 			if (!vdef.empty()) {
 				std::sort(vdef.begin(), vdef.end());
-
 				std::vector<DefectType>::iterator it;
 				for (it = vdef.begin(); it != vdef.end(); ++it)
 				{
 					pImgProc->m_DFTList4.push_back(*it);
+					//pImgProc->m_NO_dft += 1;
 				}
 			}
-
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
-
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-
-		}
-		else
-		{
+		}else{
 			Sleep(5);
 		}
 	}
 	pImgProc->m_ImgList4_5.clear();
 
 	pImgProc->is_thread4_5_alive = FALSE;
+	Win::log("4#相机处理线程 5 结束");
+
 	return 0;
 }

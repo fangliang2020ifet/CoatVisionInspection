@@ -322,35 +322,12 @@ void CInspectDlg::RecordLogList(const std::wstring& str)
 
 void CInspectDlg::ClearImgProcQueue()
 {
-	//m_pImgProc.m_DefectQueue1.Clear();
-	//m_pImgProc.m_DefectQueue2.Clear();
-	//m_pImgProc.m_DefectQueue3.Clear();
-	//m_pImgProc.m_DefectQueue4.Clear();
-	//m_pImgProc.m_Queue1_1.Clear();
-	//m_pImgProc.m_Queue1_2.Clear();
-	//m_pImgProc.m_Queue1_3.Clear();
-	//m_pImgProc.m_Queue1_4.Clear();
-	//m_pImgProc.m_Queue2_1.Clear();
-	//m_pImgProc.m_Queue2_2.Clear();
-	//m_pImgProc.m_Queue2_3.Clear();
-	//m_pImgProc.m_Queue2_4.Clear();
-	//m_pImgProc.m_Queue3_1.Clear();
-	//m_pImgProc.m_Queue3_2.Clear();
-	//m_pImgProc.m_Queue3_3.Clear();
-	//m_pImgProc.m_Queue3_4.Clear();
-	//m_pImgProc.m_Queue4_1.Clear();
-	//m_pImgProc.m_Queue4_2.Clear();
-	//m_pImgProc.m_Queue4_3.Clear();
-	//m_pImgProc.m_Queue4_4.Clear();
-
 	m_pImgProc.m_DFTList1.clear();
 	m_pImgProc.m_DFTList2.clear();
 	m_pImgProc.m_DFTList3.clear();
 	m_pImgProc.m_DFTList4.clear();
 	m_pImgProc.m_Sorted_DFTList.clear();
 
-	//m_pImgProc.m_SortDefectQueue.Clear();
-	//m_pImgProc.m_vFileName.clear();
 	m_pImgProc.m_NO_IMG = 0;
 	m_pImgProc.m_current_position = 0;
 
@@ -1136,20 +1113,75 @@ void CInspectDlg::Freeze()
 		RecordWarning(L"1#相机停止失败");
 		return;
 	}
+	else {
+		//清除最后一张可能带有黑边的图像
+		if (!m_pImgProc.m_ImgList1_1.empty())
+			m_pImgProc.m_ImgList1_1.pop_back();
+		if (!m_pImgProc.m_ImgList1_2.empty())
+			m_pImgProc.m_ImgList1_2.pop_back();
+		if (!m_pImgProc.m_ImgList1_3.empty())
+			m_pImgProc.m_ImgList1_3.pop_back();
+		if (!m_pImgProc.m_ImgList1_4.empty())
+			m_pImgProc.m_ImgList1_4.pop_back();
+		if (!m_pImgProc.m_ImgList1_5.empty())
+			m_pImgProc.m_ImgList1_5.pop_back();
+	}
+
 	if (!m_Xfer2->Freeze()) {
 		Win::log("2#相机停止失败");
 		RecordWarning(L"2#相机停止失败");
 		return;
 	}
+	else {
+		//清除最后一张可能带有黑边的图像
+		if (!m_pImgProc.m_ImgList2_1.empty())
+			m_pImgProc.m_ImgList2_1.pop_back();
+		if (!m_pImgProc.m_ImgList2_2.empty())
+			m_pImgProc.m_ImgList2_2.pop_back();
+		if (!m_pImgProc.m_ImgList2_3.empty())
+			m_pImgProc.m_ImgList2_3.pop_back();
+		if (!m_pImgProc.m_ImgList2_4.empty())
+			m_pImgProc.m_ImgList2_4.pop_back();
+		if (!m_pImgProc.m_ImgList2_5.empty())
+			m_pImgProc.m_ImgList2_5.pop_back();
+	}
+
 	if (!m_Xfer3->Freeze()) {
 		Win::log("3#相机停止失败");
 		RecordWarning(L"3#相机停止失败");
 		return;
 	}
+	else {
+		//清除最后一张可能带有黑边的图像
+		if (!m_pImgProc.m_ImgList3_1.empty())
+			m_pImgProc.m_ImgList3_1.pop_back();
+		if (!m_pImgProc.m_ImgList3_2.empty())
+			m_pImgProc.m_ImgList3_2.pop_back();
+		if (!m_pImgProc.m_ImgList3_3.empty())
+			m_pImgProc.m_ImgList3_3.pop_back();
+		if (!m_pImgProc.m_ImgList3_4.empty())
+			m_pImgProc.m_ImgList3_4.pop_back();
+		if (!m_pImgProc.m_ImgList3_5.empty())
+			m_pImgProc.m_ImgList3_5.pop_back();
+	}
+
 	if (!m_Xfer4->Freeze()) {
 		Win::log("4#相机停止失败");
 		RecordWarning(L"4#相机停止失败");
 		return;
+	}
+	else {
+		//清除最后一张可能带有黑边的图像
+		if (!m_pImgProc.m_ImgList4_1.empty())
+			m_pImgProc.m_ImgList4_1.pop_back();
+		if (!m_pImgProc.m_ImgList4_2.empty())
+			m_pImgProc.m_ImgList4_2.pop_back();
+		if (!m_pImgProc.m_ImgList4_3.empty())
+			m_pImgProc.m_ImgList4_3.pop_back();
+		if (!m_pImgProc.m_ImgList4_4.empty())
+			m_pImgProc.m_ImgList4_4.pop_back();
+		if (!m_pImgProc.m_ImgList4_5.empty())
+			m_pImgProc.m_ImgList4_5.pop_back();
 	}
 
 	if (!m_is_system_pause) {
