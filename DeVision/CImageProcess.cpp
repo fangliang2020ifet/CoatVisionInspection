@@ -10,7 +10,7 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread3);
 	InitializeCriticalSection(&m_csCalculateThread4);
 	//InitializeCriticalSection(&m_csNO_dft);
-
+	m_referenceImage_OK = FALSE;
 	m_camera1_reference_image_acquired = FALSE;
 	m_camera2_reference_image_acquired = FALSE;
 	m_camera3_reference_image_acquired = FALSE;
@@ -66,6 +66,11 @@ BOOL CImageProcess::BeginProcess()
 	if (!GetSavePath(str_path)) return FALSE;
 	
 	//创建线程
+	if (!(m_ReferenceImage = AfxBeginThread(ReferenceImage, this))) {
+		Win::log("创建图像参考图像处理线程失败");
+		return FALSE;
+	}
+
 	if (!(m_CalculateThread1_1 = AfxBeginThread(ImageCalculate1_1, this))) {
 		Win::log("创建图像处理线程1_1失败");
 		return FALSE;
@@ -160,6 +165,11 @@ BOOL CImageProcess::BeginProcess()
 
 BOOL CImageProcess::StopProcess()
 {
+	while (is_reference_thread_alive)
+	{
+		is_reference_thread_alive = FALSE;
+	}
+
 	while (is_thread1_1_alive || is_thread2_1_alive || is_thread3_1_alive || is_thread4_1_alive
 		|| is_thread1_2_alive || is_thread2_2_alive || is_thread3_2_alive || is_thread4_2_alive
 		|| is_thread1_3_alive || is_thread2_3_alive || is_thread3_3_alive || is_thread4_3_alive
@@ -265,8 +275,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 	}
 	HImage img1;
 	ReadImage(&img1, hv_ref_image_name1);
-	HalconCpp::MedianImage(img1, &m_hi_ref1, "circle", 1, "mirrored");
-
+	//HalconCpp::MedianImage(img1, &m_hi_ref1, "circle", 1, "mirrored");
+	//高斯滤波
+	HalconCpp::GaussFilter(img1, &m_hi_ref1, 5);
+	m_camera1_reference_image_acquired = TRUE;
 
 	//读取参考图像2
 	std::string ref_image_name2 = "reference_image2.bmp";
@@ -277,7 +289,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 	}
 	HImage img2;
 	ReadImage(&img2, hv_ref_image_name2);
-	HalconCpp::MedianImage(img2, &m_hi_ref2, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(img2, &m_hi_ref2, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(img2, &m_hi_ref2, 5);
+	m_camera2_reference_image_acquired = TRUE;
 
 
 	//读取参考图像3
@@ -289,7 +304,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 	}
 	HImage img3;
 	ReadImage(&img3, hv_ref_image_name3);
-	HalconCpp::MedianImage(img3, &m_hi_ref3, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(img3, &m_hi_ref3, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(img3, &m_hi_ref3, 5);
+	m_camera3_reference_image_acquired = TRUE;
 
 	//读取参考图像4
 	std::string ref_image_name4 = "reference_image4.bmp";
@@ -300,7 +318,10 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 	}
 	HImage img4;
 	ReadImage(&img4, hv_ref_image_name4);
-	HalconCpp::MedianImage(img4, &m_hi_ref4, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(img4, &m_hi_ref4, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(img4, &m_hi_ref4, 5);
+	m_camera4_reference_image_acquired = TRUE;
 
 
 	return TRUE;
@@ -492,7 +513,8 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_ref)
 	}
 	else return FALSE;
 
-	if (!m_ImgList1_2.empty()) {
+	if (m_ImgList1_2.size() > 1) {
+		m_ImgList1_2.pop_front();
 		img2 = m_ImgList1_2.front();
 		m_ImgList1_2.pop_front();
 	}
@@ -521,8 +543,11 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_ref)
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	//ho_Image_ref1 = result;
-	//中值滤波
-	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+	////中值滤波
+	//HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+	//高斯滤波
+	HalconCpp::GaussFilter(result, &hi_ref, 5);
+	m_camera1_reference_image_acquired = TRUE;
 
 	return TRUE;
 }
@@ -537,7 +562,8 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_ref)
 	}
 	else return FALSE;
 
-	if (!m_ImgList2_2.empty()) {
+	if (m_ImgList2_2.size() > 1) {
+		m_ImgList2_2.pop_front();
 		img2 = m_ImgList2_2.front();
 		m_ImgList2_2.pop_front();
 	}
@@ -566,7 +592,10 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_ref)
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	//ho_Image_ref2 = result;
-	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(result, &hi_ref, 5);
+	m_camera2_reference_image_acquired = TRUE;
 
 	return TRUE;
 }
@@ -581,7 +610,8 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_ref)
 	}
 	else return FALSE;
 
-	if (!m_ImgList3_2.empty()) {
+	if (m_ImgList3_2.size() > 1) {
+		m_ImgList3_2.pop_front();
 		img2 = m_ImgList3_2.front();
 		m_ImgList3_2.pop_front();
 	}
@@ -610,7 +640,10 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_ref)
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	//ho_Image_ref3 = result;
-	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(result, &hi_ref, 5);
+	m_camera3_reference_image_acquired = TRUE;
 
 	return TRUE;
 }
@@ -625,7 +658,8 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_ref)
 	}
 	else return FALSE;
 
-	if (!m_ImgList4_2.empty()) {
+	if (m_ImgList4_2.size() > 1) {
+		m_ImgList4_2.pop_front();
 		img2 = m_ImgList4_2.front();
 		m_ImgList4_2.pop_front();
 	}
@@ -654,9 +688,84 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_ref)
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	//ho_Image_ref4 = result;
-	HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+	//HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
+		//高斯滤波
+	HalconCpp::GaussFilter(result, &hi_ref, 5);
+	m_camera4_reference_image_acquired = TRUE;
 
 	return TRUE;
+}
+
+BOOL CImageProcess::CheckReferenceImageState()
+{
+	if (m_camera1_reference_image_acquired && m_camera2_reference_image_acquired &&
+		m_camera3_reference_image_acquired && m_camera4_reference_image_acquired)
+		return TRUE;
+	else return FALSE;
+}
+
+int CImageProcess::ProduceReferenceImage1(HImage hi_ref1, HImage hi_ref2)
+{
+	HTuple hv_width_ref1, hv_height_ref1, hv_width_ref2, hv_height_ref2;
+	HalconCpp::GetImageSize(hi_ref2, &hv_width_ref2, &hv_height_ref2);
+	if (hv_width_ref2 == 0)
+		return -1;
+
+	// Local iconic variables
+	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions;
+	HObject  ho_ImageReduced;
+	HTuple  hv_Width1, hv_Height1, hv_Mean, hv_Deviation;
+	HTuple  hv_Row1, hv_Column1, hv_Row2, hv_Column2;
+
+	ho_Image = hi_ref1;
+	GetImageSize(ho_Image, &hv_Width1, &hv_Height1);
+	if (hv_Width1 == 0)
+		return -1;
+
+	GenRectangle1(&ho_Rectangle, 0, hv_Width1 - 256, 256, hv_Width1);
+	Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
+	Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
+	Connection(ho_Region, &ho_ConnectedRegions);
+	SmallestRectangle1(ho_ConnectedRegions, &hv_Row1, &hv_Column1, &hv_Row2, &hv_Column2);
+	ReduceDomain(ho_Image, ho_ConnectedRegions, &ho_ImageReduced);
+	GetImageSize(ho_ImageReduced, &hv_width_ref1, &hv_height_ref1);
+
+	if (hv_width_ref1 != hv_width_ref2)
+		return std::abs((int)hv_width_ref2 - (int)hv_width_ref1) + 32;
+	else
+		return 0;
+}
+
+int CImageProcess::ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3)
+{
+	HTuple hv_width_ref1, hv_height_ref1, hv_width_ref2, hv_height_ref2;
+	HalconCpp::GetImageSize(hi_ref3, &hv_width_ref2, &hv_height_ref2);
+	if (hv_width_ref2 == 0)
+		return -1;
+
+	// Local iconic variables
+	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions;
+	HObject  ho_ImageReduced;
+	HTuple  hv_Width1, hv_Height1, hv_Mean, hv_Deviation;
+	HTuple  hv_Row1, hv_Column1, hv_Row2, hv_Column2;
+
+	ho_Image = hi_ref4;
+	GetImageSize(ho_Image, &hv_Width1, &hv_Height1);
+	if (hv_Width1 == 0)
+		return -1;
+
+	GenRectangle1(&ho_Rectangle, 0, hv_Width1 - 256, 256, hv_Width1);
+	Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
+	Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
+	Connection(ho_Region, &ho_ConnectedRegions);
+	SmallestRectangle1(ho_ConnectedRegions, &hv_Row1, &hv_Column1, &hv_Row2, &hv_Column2);
+	ReduceDomain(ho_Image, ho_ConnectedRegions, &ho_ImageReduced);
+	GetImageSize(ho_ImageReduced, &hv_width_ref1, &hv_height_ref1);
+
+	if (hv_width_ref1 != hv_width_ref2)
+		return std::abs((int)hv_width_ref2 - (int)hv_width_ref1) + 32;
+	else
+		return 0;
 }
 
 BOOL CImageProcess::SaveReferenceImage()
@@ -1059,6 +1168,213 @@ int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, 
 	return 0;
 }
 
+int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
+{
+	// Local iconic variables
+	HObject  ho_Image_ref, ho_Image_def;
+	HObject  ho_ImageGauss1, ho_ImageAbsDiff1, ho_Regions, ho_ConnectedRegions, ho_ImageResult;;
+	HObject  ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
+	HObject  ho_ImageReduced, ho_ImagePart;
+
+	// Local control variables
+	//HTuple  hv_Width_ref, hv_Height_ref;
+	HTuple  hv_Width, hv_Height, hv_Min, hv_Max, hv_Range, hv_Number;
+	HTuple  hv_i, hv_Row, hv_Column, hv_Radius;
+	//HTuple  hv_ThreadID;
+
+	//读取参考图像
+	ho_Image_ref = hi_ref;
+	//GetImageSize(ho_Image_ref, &hv_Width_ref, &hv_Height_ref);
+	//GaussFilter(ho_Image_ref, &ho_ImageGauss, 5);
+	//读取待检测图像
+	ho_Image_def = hi_img;
+	GetImageSize(ho_Image_def, &hv_Width, &hv_Height);
+	GaussFilter(ho_Image_def, &ho_ImageGauss1, 5);
+
+	//待检图 - 参考图
+	AbsDiffImage(ho_ImageGauss1, ho_Image_ref, &ho_ImageAbsDiff1, 1);
+
+	//自动阈值输入必须是是单通道图像，会有多阈值分割，Sigma用于对灰度直方图进行高斯平滑，决定了平滑的程度（分割细致程度），
+	//当sigma很大时，灰度直方图基本会被平滑为只剩下一个波峰，而分割是根据平滑后直方图的波谷来进行的，Sigma小，分割的越细致
+	//AutoThreshold(ho_ImageAbsDiff1, &ho_Regions, 3);
+	GrayRangeRect(ho_ImageAbsDiff1, &ho_ImageResult, 10, 10);
+	MinMaxGray(ho_ImageResult, ho_ImageResult, 0, &hv_Min, &hv_Max, &hv_Range);
+	Threshold(ho_ImageResult, &ho_Regions, (HTuple(5.55).TupleConcat(hv_Max*0.8)).TupleMax(), 255);
+	Connection(ho_Regions, &ho_ConnectedRegions);
+	//区域选择参数：1.轮廓周长(pixel)  2.最大内接圆半径(pixel)
+	SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, (HTuple("contlength").Append("inner_radius")),
+		"and", (HTuple(11).Append(1)), (HTuple(9999999).Append(9999999)));
+	CountObj(ho_SelectedRegions, &hv_Number);
+	if (0 != hv_Number)
+	{
+		{
+			HTuple end_val19 = hv_Number;
+			HTuple step_val19 = 1;
+			for (hv_i = 1; hv_i.Continue(end_val19, step_val19); hv_i += step_val19)
+			{
+				SelectObj(ho_SelectedRegions, &ho_ObjectSelected, hv_i);
+				SmallestCircle(ho_ObjectSelected, &hv_Row, &hv_Column, &hv_Radius);
+				if (0 != (hv_Radius > 4000))
+				{
+					continue;
+				}
+				if (0 != (hv_Row < 127))
+				{
+					hv_Row = 127;
+				}
+				else if (0 != (hv_Row > (hv_Width - 127)))
+				{
+					hv_Row = hv_Width - 127;
+				}
+				if (0 != (hv_Column < 127))
+				{
+					hv_Column = 127;
+				}
+				else if (0 != (hv_Column > (hv_Height - 127)))
+				{
+					hv_Column = hv_Height - 127;
+				}
+				GenRectangle1(&ho_Rectangle, hv_Row - 127, hv_Column - 127, hv_Row + 128, hv_Column + 128);
+				ReduceDomain(ho_Image_def, ho_Rectangle, &ho_ImageReduced);
+				CropDomain(ho_ImageReduced, &ho_ImagePart);
+
+				//计算像素平均值
+				HTuple hv_mean, hv_deviation;
+				HalconCpp::Intensity(ho_ObjectSelected, ho_ImagePart, &hv_mean, &hv_deviation);
+
+				//保存检测到的瑕疵信息
+				DefectType dtype; 
+				dtype.center_x = (hv_Column.TupleInt() + IMAGE_WIDTH * (cameraNO - 1))*HORIZON_PRECISION;     //单位：毫米
+				dtype.area = 0.255f;
+				dtype.circle_radius = hv_Radius.TupleInt();
+				dtype.pixel_value = hv_mean.TupleInt();
+				dtype.absolute_position = m_current_position + hv_Row.TupleInt() * VERTICAL_PRECISION / 1000.0f;   //单位：米
+				//瑕疵分类
+				if (0 < dtype.pixel_value && dtype.pixel_value <= 92) {
+					if (dtype.area < 100) {
+						dtype.type = 0;
+					}
+					else
+						dtype.type = 2;
+				}
+				else if (92 < dtype.pixel_value && dtype.pixel_value <= 168) {
+					if (dtype.area < 100) {
+						dtype.type = 0;
+					}
+					else
+						dtype.type = 1;
+				}
+				else
+					dtype.type = 2;
+
+				//格式化文件名
+				char cpos[16];
+				sprintf_s(cpos, "%.3f", dtype.absolute_position);
+				//HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
+				HTuple hv_position = (HTuple)cpos;
+				char cX[16];
+				sprintf_s(cX, "%.3f", dtype.center_x);
+				HTuple hv_X = (HTuple)cX;
+				char cradius[16];
+				sprintf_s(cradius, "%.3f", dtype.circle_radius);
+				HTuple hv_radius = (HTuple)cradius;
+				char carea[16];
+				sprintf_s(carea, "%.3f", dtype.area);
+				HTuple hv_harea = (HTuple)carea;
+				HTuple hv_kind = (HTuple)dtype.type;
+
+				//保存瑕疵信息
+				vDFT.push_back(dtype);
+
+				//瑕疵图像的名称
+				HTuple hv_path = (HTuple)m_strPath.c_str();
+				HTuple hv_img_name = hv_path + "P" + hv_position
+					+ "_X" + hv_X
+					+ "_R" + hv_radius
+					+ "_A" + hv_harea
+					+ "_K" + hv_kind;
+				SaveDefectImage(ho_ImagePart, hv_img_name);
+
+			}
+		}
+	}
+	return 0;
+}
+
+//参考图像处理线程
+UINT CImageProcess::ReferenceImage(LPVOID pParam)
+{
+	CImageProcess *pThis = (CImageProcess *)pParam;
+	pThis->is_reference_thread_alive = TRUE;
+	pThis->m_referenceImage_OK = FALSE;
+
+	pThis->m_camera1_invalid_area = 0;
+	pThis->m_camera1_invalid_area = 0;
+	while (pThis->is_reference_thread_alive)
+	{
+		if (!pThis->TEST_MODEL) {
+			if (!pThis->m_camera1_reference_image_acquired) {
+				pThis->GenerateReferenceImage1(pThis->m_hi_ref1);
+				pThis->SaveDefectImage(pThis->m_hi_ref1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
+				Win::log("获取1#参考图像");
+			}
+			if (!pThis->m_camera2_reference_image_acquired) {
+				pThis->GenerateReferenceImage2(pThis->m_hi_ref2);
+				pThis->SaveDefectImage(pThis->m_hi_ref2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
+				Win::log("获取2#参考图像");
+			}
+			if (!pThis->m_camera3_reference_image_acquired) {
+				pThis->GenerateReferenceImage3(pThis->m_hi_ref3);
+				pThis->SaveDefectImage(pThis->m_hi_ref3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
+				Win::log("获取3#参考图像");
+			}
+			if (!pThis->m_camera4_reference_image_acquired) {
+				pThis->GenerateReferenceImage4(pThis->m_hi_ref4);
+				pThis->SaveDefectImage(pThis->m_hi_ref4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
+				Win::log("获取4#参考图像");
+			}
+		}
+		else {
+			pThis->LoadRefImage("C:/DeVisionProject/sample0403/");
+			pThis->LoadSingleImage("C:/DeVisionProject/sample0403/test1");
+		}
+
+		if (pThis->CheckReferenceImageState()) {
+			pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
+			if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_ref1, hv_height_ref1;
+
+				HalconCpp::GetImageSize(pThis->m_hi_ref1, &hv_width_ref1, &hv_height_ref1);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_ref1 - pThis->m_camera1_invalid_area, 0,
+					hv_width_ref1, hv_height_ref1);
+				HalconCpp::ReduceDomain(pThis->m_hi_ref1, ho_Region, &ho_ImageReduced);
+				pThis->m_hi_ref1 = ho_ImageReduced;
+			}
+
+			pThis->m_camera4_invalid_area = pThis->ProduceReferenceImage4(pThis->m_hi_ref4, pThis->m_hi_ref3);
+			if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_ref4, hv_height_ref4;
+
+				HalconCpp::GetImageSize(pThis->m_hi_ref4, &hv_width_ref4, &hv_height_ref4);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_ref4 - pThis->m_camera4_invalid_area, hv_height_ref4);
+				HalconCpp::ReduceDomain(pThis->m_hi_ref4, ho_Region, &ho_ImageReduced);
+				pThis->m_hi_ref4 = ho_ImageReduced;
+			}
+
+			pThis->m_referenceImage_OK = TRUE;
+			pThis->is_reference_thread_alive = FALSE;
+		}
+		else
+			Sleep(50);
+	}
+	pThis->is_reference_thread_alive = FALSE;
+
+	return 0;
+}
+
 //  1# 相机处理线程
 UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 {
@@ -1067,20 +1383,12 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (1)
-		{
-			if (pImgProc->GenerateReferenceImage1(hi_ref)) {
-				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image1.bmp");
-				pImgProc->m_hi_ref1 = hi_ref;
-				pImgProc->m_camera1_reference_image_acquired = TRUE;
-				Win::log("获取1#参考图像");
-				break;
-			}
-			else Sleep(50);
-		}
+	while(!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref1;
+	hi_ref = pImgProc->m_hi_ref1;
+	int valid_area = pImgProc->m_camera1_invalid_area;
 
 	while (pImgProc->is_thread1_1_alive)
 	{
@@ -1091,9 +1399,20 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_1.front();
 			pImgProc->m_ImgList1_1.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
+					hv_width_def, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1131,13 +1450,12 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera1_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref1;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref1;
+	hi_ref = pImgProc->m_hi_ref1;
+	int valid_area = pImgProc->m_camera1_invalid_area;
 
 	while (pImgProc->is_thread1_2_alive)
 	{
@@ -1148,9 +1466,20 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_2.front();
 			pImgProc->m_ImgList1_2.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
+					hv_width_def, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1188,13 +1517,12 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera1_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref1;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref1;
+	hi_ref = pImgProc->m_hi_ref1;
+	int valid_area = pImgProc->m_camera1_invalid_area;
 
 	while (pImgProc->is_thread1_3_alive)
 	{
@@ -1205,9 +1533,20 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_3.front();
 			pImgProc->m_ImgList1_3.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
+					hv_width_def, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1247,13 +1586,12 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera1_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref1;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref1;
+	hi_ref = pImgProc->m_hi_ref1;
+	int valid_area = pImgProc->m_camera1_invalid_area;
 
 	while (pImgProc->is_thread1_4_alive)
 	{
@@ -1264,9 +1602,20 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_4.front();
 			pImgProc->m_ImgList1_4.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
+					hv_width_def, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1305,13 +1654,12 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera1_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref1;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref1;
+	hi_ref = pImgProc->m_hi_ref1;
+	int valid_area = pImgProc->m_camera1_invalid_area;
 
 	std::vector<DefectType> vdef;
 	while (pImgProc->is_thread1_5_alive)
@@ -1323,9 +1671,20 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_5.front();
 			pImgProc->m_ImgList1_5.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
+					hv_width_def, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1365,19 +1724,11 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (1)
-		{
-			if (pImgProc->GenerateReferenceImage2(hi_ref)) {
-				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image2.bmp");
-				pImgProc->m_hi_ref2 = hi_ref;
-				pImgProc->m_camera2_reference_image_acquired = TRUE;
-				Win::log("获取2#参考图像");
-				break;
-			} else	Sleep(50);
-		}
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref2;
+	hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_1_alive)
 	{
@@ -1390,7 +1741,8 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 			pImgProc->m_ImgList2_1.pop_front();
 			
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1425,13 +1777,11 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera2_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref2;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref2;
+	hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_2_alive)
 	{
@@ -1444,7 +1794,8 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 			pImgProc->m_ImgList2_2.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1479,14 +1830,11 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera2_reference_image_acquired) {
-
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref2;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref2;
+	hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_3_alive)
 	{
@@ -1499,7 +1847,8 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 			pImgProc->m_ImgList2_3.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1534,14 +1883,11 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera2_reference_image_acquired) {
-
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref2;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref2;
+	hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_4_alive)
 	{
@@ -1554,7 +1900,8 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 			pImgProc->m_ImgList2_4.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1589,14 +1936,11 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera2_reference_image_acquired) {
-
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref2;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref2;
+	hi_ref = pImgProc->m_hi_ref2;
 
 	while (pImgProc->is_thread2_5_alive)
 	{
@@ -1609,7 +1953,8 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 			pImgProc->m_ImgList2_5.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 
@@ -1646,21 +1991,11 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (1)
-		{
-			if (pImgProc->GenerateReferenceImage3(hi_ref)) {
-				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image3.bmp");
-				pImgProc->m_hi_ref3 = hi_ref;
-				pImgProc->m_camera3_reference_image_acquired = TRUE;
-				Win::log("获取3#参考图像");
-				break;
-			}
-			else
-				Sleep(50);
-		}
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref3;
+	hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_1_alive)
 	{
@@ -1673,7 +2008,8 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 			pImgProc->m_ImgList3_1.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1708,14 +2044,11 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera3_reference_image_acquired) {
-
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref3;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref3;
+	hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_2_alive)
 	{
@@ -1728,7 +2061,8 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 			pImgProc->m_ImgList3_2.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1762,17 +2096,13 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 	pImgProc->is_thread3_3_alive = TRUE;
 	pImgProc->m_NO_produced3 = 0;
 
-
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera3_reference_image_acquired) {
-
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref3;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref3;
+	hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_3_alive)
 	{
@@ -1785,7 +2115,8 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 			pImgProc->m_ImgList3_3.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1820,13 +2151,11 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera3_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref3;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref3;
+	hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_4_alive)
 	{
@@ -1839,7 +2168,8 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 			pImgProc->m_ImgList3_4.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1874,13 +2204,11 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera3_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref3;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref3;
+	hi_ref = pImgProc->m_hi_ref3;
 
 	while (pImgProc->is_thread3_5_alive)
 	{
@@ -1893,7 +2221,8 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 			pImgProc->m_ImgList3_5.pop_front();
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1929,19 +2258,12 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (1)
-		{
-			if (pImgProc->GenerateReferenceImage4(hi_ref)) {
-				pImgProc->SaveDefectImage(hi_ref, (HTuple)pImgProc->m_strPath.c_str() + "ref\\reference_image4.bmp");
-				pImgProc->m_hi_ref4 = hi_ref;
-				pImgProc->m_camera4_reference_image_acquired = TRUE;
-				Win::log("获取4#参考图像");
-				break;
-			} else Sleep(50);
-		}
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref4;
+	hi_ref = pImgProc->m_hi_ref4;
+	int valid_area = pImgProc->m_camera4_invalid_area;
 
 	while (pImgProc->is_thread4_1_alive)
 	{
@@ -1952,9 +2274,20 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_1.front();
 			pImgProc->m_ImgList4_1.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -1989,13 +2322,12 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera4_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref4;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref4;
+	hi_ref = pImgProc->m_hi_ref4;
+	int valid_area = pImgProc->m_camera4_invalid_area;
 
 	while (pImgProc->is_thread4_2_alive)
 	{
@@ -2006,9 +2338,20 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_2.front();
 			pImgProc->m_ImgList4_2.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2043,13 +2386,12 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera4_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref4;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref4;
+	hi_ref = pImgProc->m_hi_ref4;
+	int valid_area = pImgProc->m_camera4_invalid_area;
 
 	while (pImgProc->is_thread4_3_alive)
 	{
@@ -2060,9 +2402,20 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_3.front();
 			pImgProc->m_ImgList4_3.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2098,13 +2451,12 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera4_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref4;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref4;
+	hi_ref = pImgProc->m_hi_ref4;
+	int valid_area = pImgProc->m_camera4_invalid_area;
 
 	while (pImgProc->is_thread4_4_alive)
 	{
@@ -2115,9 +2467,20 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_4.front();
 			pImgProc->m_ImgList4_4.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2152,13 +2515,12 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 
 	//处理参考图像
 	HImage hi_ref;
-	if (!pImgProc->TEST_MODEL) {
-		while (!pImgProc->m_camera4_reference_image_acquired) {
-			Sleep(50);
-		}
-		hi_ref = pImgProc->m_hi_ref4;
+	while (!pImgProc->m_referenceImage_OK)
+	{
+		Sleep(50);
 	}
-	else hi_ref = pImgProc->m_hi_ref4;
+	hi_ref = pImgProc->m_hi_ref4;
+	int valid_area = pImgProc->m_camera4_invalid_area;
 
 	while (pImgProc->is_thread4_5_alive)
 	{
@@ -2169,9 +2531,20 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_5.front();
 			pImgProc->m_ImgList4_5.pop_front();
+			if (valid_area != 0 && valid_area != -1) {
+				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HTuple hv_width_def, hv_height_def;
+
+				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
+					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
+				hi_def = ho_ImageReduced;
+			}
 
 			//瑕疵检测算法
-			pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
+			pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列

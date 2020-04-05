@@ -187,7 +187,19 @@ public:
 	HImage m_hi_ref4;
 
 private:
+	BOOL m_camera1_reference_image_acquired;
+	BOOL m_camera2_reference_image_acquired;
+	BOOL m_camera3_reference_image_acquired;
+	BOOL m_camera4_reference_image_acquired;
+	BOOL m_referenceImage_OK = FALSE;
+	int m_camera1_invalid_area;
+	int m_camera4_invalid_area;
+
+	BOOL CheckReferenceImageState();
+	int ProduceReferenceImage1(HImage hi_ref1, HImage hi_ref2);
+	int ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3);
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
+	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 
 protected:
 
@@ -199,6 +211,7 @@ protected:
 	BOOL IsPathExist(const std::string &pathname);
 private:
 
+	CWinThread *m_ReferenceImage;
 	CWinThread *m_CalculateThread1_1;
 	CWinThread *m_CalculateThread1_2;
 	CWinThread *m_CalculateThread1_3;
@@ -224,7 +237,7 @@ private:
 	CRITICAL_SECTION m_csCalculateThread3;
 	CRITICAL_SECTION m_csCalculateThread4;
 	CRITICAL_SECTION m_csNO_dft;
-
+	BOOL is_reference_thread_alive;
 	BOOL is_thread1_1_alive;
 	BOOL is_thread1_2_alive;
 	BOOL is_thread1_3_alive;
@@ -245,7 +258,7 @@ private:
 	BOOL is_thread4_3_alive;
 	BOOL is_thread4_4_alive;
 	BOOL is_thread4_5_alive;
-
+	static UINT ReferenceImage(LPVOID pParam);
 	static UINT ImageCalculate1_1(LPVOID pParam);
 	static UINT ImageCalculate1_2(LPVOID pParam);
 	static UINT ImageCalculate1_3(LPVOID pParam);
@@ -267,9 +280,5 @@ private:
 	static UINT ImageCalculate4_4(LPVOID pParam);
 	static UINT ImageCalculate4_5(LPVOID pParam);
 
-	BOOL m_camera1_reference_image_acquired;
-	BOOL m_camera2_reference_image_acquired;
-	BOOL m_camera3_reference_image_acquired;
-	BOOL m_camera4_reference_image_acquired;
 
 };

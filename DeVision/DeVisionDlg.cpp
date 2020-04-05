@@ -1299,10 +1299,10 @@ void CDeVisionDlg::OnBnClickedButtonSelect()
 	// TODO: 在此添加控件通知处理程序代码	
 	CWaitCursor wait;
 
-	if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
-		m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
-		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0403/test1");
-	}
+	//if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
+	//	m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
+	//	m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0403/test1");
+	//}
 }
 
 //查找  按钮

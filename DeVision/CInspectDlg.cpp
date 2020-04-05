@@ -1114,17 +1114,17 @@ void CInspectDlg::Freeze()
 		return;
 	}
 	else {
-		//清除最后一张可能带有黑边的图像
-		if (!m_pImgProc.m_ImgList1_1.empty())
-			m_pImgProc.m_ImgList1_1.pop_back();
-		if (!m_pImgProc.m_ImgList1_2.empty())
-			m_pImgProc.m_ImgList1_2.pop_back();
-		if (!m_pImgProc.m_ImgList1_3.empty())
-			m_pImgProc.m_ImgList1_3.pop_back();
-		if (!m_pImgProc.m_ImgList1_4.empty())
-			m_pImgProc.m_ImgList1_4.pop_back();
-		if (!m_pImgProc.m_ImgList1_5.empty())
-			m_pImgProc.m_ImgList1_5.pop_back();
+		////清除最后一张可能带有黑边的图像
+		//if (!m_pImgProc.m_ImgList1_1.empty())
+		//	m_pImgProc.m_ImgList1_1.pop_back();
+		//if (!m_pImgProc.m_ImgList1_2.empty())
+		//	m_pImgProc.m_ImgList1_2.pop_back();
+		//if (!m_pImgProc.m_ImgList1_3.empty())
+		//	m_pImgProc.m_ImgList1_3.pop_back();
+		//if (!m_pImgProc.m_ImgList1_4.empty())
+		//	m_pImgProc.m_ImgList1_4.pop_back();
+		//if (!m_pImgProc.m_ImgList1_5.empty())
+		//	m_pImgProc.m_ImgList1_5.pop_back();
 	}
 
 	if (!m_Xfer2->Freeze()) {
@@ -1133,17 +1133,17 @@ void CInspectDlg::Freeze()
 		return;
 	}
 	else {
-		//清除最后一张可能带有黑边的图像
-		if (!m_pImgProc.m_ImgList2_1.empty())
-			m_pImgProc.m_ImgList2_1.pop_back();
-		if (!m_pImgProc.m_ImgList2_2.empty())
-			m_pImgProc.m_ImgList2_2.pop_back();
-		if (!m_pImgProc.m_ImgList2_3.empty())
-			m_pImgProc.m_ImgList2_3.pop_back();
-		if (!m_pImgProc.m_ImgList2_4.empty())
-			m_pImgProc.m_ImgList2_4.pop_back();
-		if (!m_pImgProc.m_ImgList2_5.empty())
-			m_pImgProc.m_ImgList2_5.pop_back();
+		////清除最后一张可能带有黑边的图像
+		//if (!m_pImgProc.m_ImgList2_1.empty())
+		//	m_pImgProc.m_ImgList2_1.pop_back();
+		//if (!m_pImgProc.m_ImgList2_2.empty())
+		//	m_pImgProc.m_ImgList2_2.pop_back();
+		//if (!m_pImgProc.m_ImgList2_3.empty())
+		//	m_pImgProc.m_ImgList2_3.pop_back();
+		//if (!m_pImgProc.m_ImgList2_4.empty())
+		//	m_pImgProc.m_ImgList2_4.pop_back();
+		//if (!m_pImgProc.m_ImgList2_5.empty())
+		//	m_pImgProc.m_ImgList2_5.pop_back();
 	}
 
 	if (!m_Xfer3->Freeze()) {
@@ -1152,17 +1152,17 @@ void CInspectDlg::Freeze()
 		return;
 	}
 	else {
-		//清除最后一张可能带有黑边的图像
-		if (!m_pImgProc.m_ImgList3_1.empty())
-			m_pImgProc.m_ImgList3_1.pop_back();
-		if (!m_pImgProc.m_ImgList3_2.empty())
-			m_pImgProc.m_ImgList3_2.pop_back();
-		if (!m_pImgProc.m_ImgList3_3.empty())
-			m_pImgProc.m_ImgList3_3.pop_back();
-		if (!m_pImgProc.m_ImgList3_4.empty())
-			m_pImgProc.m_ImgList3_4.pop_back();
-		if (!m_pImgProc.m_ImgList3_5.empty())
-			m_pImgProc.m_ImgList3_5.pop_back();
+		////清除最后一张可能带有黑边的图像
+		//if (!m_pImgProc.m_ImgList3_1.empty())
+		//	m_pImgProc.m_ImgList3_1.pop_back();
+		//if (!m_pImgProc.m_ImgList3_2.empty())
+		//	m_pImgProc.m_ImgList3_2.pop_back();
+		//if (!m_pImgProc.m_ImgList3_3.empty())
+		//	m_pImgProc.m_ImgList3_3.pop_back();
+		//if (!m_pImgProc.m_ImgList3_4.empty())
+		//	m_pImgProc.m_ImgList3_4.pop_back();
+		//if (!m_pImgProc.m_ImgList3_5.empty())
+		//	m_pImgProc.m_ImgList3_5.pop_back();
 	}
 
 	if (!m_Xfer4->Freeze()) {
@@ -1171,17 +1171,17 @@ void CInspectDlg::Freeze()
 		return;
 	}
 	else {
-		//清除最后一张可能带有黑边的图像
-		if (!m_pImgProc.m_ImgList4_1.empty())
-			m_pImgProc.m_ImgList4_1.pop_back();
-		if (!m_pImgProc.m_ImgList4_2.empty())
-			m_pImgProc.m_ImgList4_2.pop_back();
-		if (!m_pImgProc.m_ImgList4_3.empty())
-			m_pImgProc.m_ImgList4_3.pop_back();
-		if (!m_pImgProc.m_ImgList4_4.empty())
-			m_pImgProc.m_ImgList4_4.pop_back();
-		if (!m_pImgProc.m_ImgList4_5.empty())
-			m_pImgProc.m_ImgList4_5.pop_back();
+		////清除最后一张可能带有黑边的图像
+		//if (!m_pImgProc.m_ImgList4_1.empty())
+		//	m_pImgProc.m_ImgList4_1.pop_back();
+		//if (!m_pImgProc.m_ImgList4_2.empty())
+		//	m_pImgProc.m_ImgList4_2.pop_back();
+		//if (!m_pImgProc.m_ImgList4_3.empty())
+		//	m_pImgProc.m_ImgList4_3.pop_back();
+		//if (!m_pImgProc.m_ImgList4_4.empty())
+		//	m_pImgProc.m_ImgList4_4.pop_back();
+		//if (!m_pImgProc.m_ImgList4_5.empty())
+		//	m_pImgProc.m_ImgList4_5.pop_back();
 	}
 
 	if (!m_is_system_pause) {
