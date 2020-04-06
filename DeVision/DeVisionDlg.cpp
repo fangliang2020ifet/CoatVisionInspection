@@ -209,7 +209,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	InitialTotalDefect();
 	//刻度显示初始化
 	InitialScaleFlag();
-	m_display_range = 1000.0f;
+	m_display_range = 100.0f;
 	CString ctext;
 	ctext.Format(_T("%.2f"), m_display_range);
 	m_edisplay_range.SetWindowTextW(ctext);
@@ -230,7 +230,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetTimer(1, 500, 0);
 
 	m_inspectDlg.m_freerun = TRUE;
-	m_inspectDlg.m_pImgProc.TEST_MODEL = TRUE;
+	m_inspectDlg.m_pImgProc.TEST_MODEL = FALSE;
 
 	Win::log("初始化完成");
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -1299,10 +1299,10 @@ void CDeVisionDlg::OnBnClickedButtonSelect()
 	// TODO: 在此添加控件通知处理程序代码	
 	CWaitCursor wait;
 
-	//if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
-	//	m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
-	//	m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0403/test1");
-	//}
+	if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
+		//m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
+		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0403/test1");
+	}
 }
 
 //查找  按钮

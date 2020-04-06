@@ -560,6 +560,12 @@ BOOL CInspectDlg::InitialAllBoards()
 		m_AcqDevice4->SetFeatureValue("TriggerMode", "Off");//触发模式打开
 		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
 	}
+	else {
+		m_AcqDevice1->SetFeatureValue("TriggerMode", "On");//触发模式打开
+		m_AcqDevice2->SetFeatureValue("TriggerMode", "On");//触发模式打开
+		m_AcqDevice3->SetFeatureValue("TriggerMode", "On");//触发模式打开
+		m_AcqDevice4->SetFeatureValue("TriggerMode", "On");//触发模式打开
+	}
 
 	m_ImageWnd1.AttachEventHandler(this);
 	m_ImageWnd1.CenterImage(true);

@@ -712,24 +712,31 @@ int CImageProcess::ProduceReferenceImage1(HImage hi_ref1, HImage hi_ref2)
 		return -1;
 
 	// Local iconic variables
-	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions;
-	HObject  ho_ImageReduced;
+	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
+	HObject  ho_ImageReduced, ho_ImagePart;
 	HTuple  hv_Width1, hv_Height1, hv_Mean, hv_Deviation;
-	HTuple  hv_Row1, hv_Column1, hv_Row2, hv_Column2;
 
 	ho_Image = hi_ref1;
 	GetImageSize(ho_Image, &hv_Width1, &hv_Height1);
 	if (hv_Width1 == 0)
 		return -1;
 
-	GenRectangle1(&ho_Rectangle, 0, hv_Width1 - 256, 256, hv_Width1);
-	Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
-	Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
-	Connection(ho_Region, &ho_ConnectedRegions);
-	SmallestRectangle1(ho_ConnectedRegions, &hv_Row1, &hv_Column1, &hv_Row2, &hv_Column2);
-	ReduceDomain(ho_Image, ho_ConnectedRegions, &ho_ImageReduced);
-	GetImageSize(ho_ImageReduced, &hv_width_ref1, &hv_height_ref1);
+	//选取右侧边缘 256*256 大小区域用于计算像素平均值
+	HalconCpp::GenRectangle1(&ho_Rectangle, 0, hv_Width1 - 256, 255, hv_Width1);
+	HalconCpp::Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
+	//以平均像素值的 0.8 倍进行阈值化
+	HalconCpp::Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
+	HalconCpp::Connection(ho_Region, &ho_ConnectedRegions);
+	//进行区域选择，选取有效区域
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "height", "and",
+		hv_height_ref2 - 1000, hv_height_ref2);
+	//缩减图像的定义域(对原图选择新区域，但图像的大小不变)
+	HalconCpp::ReduceDomain(ho_Image, ho_SelectedRegions, &ho_ImageReduced);
+	//根据区域对灰度图像进行减除
+	HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+	HalconCpp::GetImageSize(ho_ImagePart, &hv_width_ref1, &hv_height_ref1);
 
+	// 加 32 用于避开边缘像素变化较大的区域
 	if (hv_width_ref1 != hv_width_ref2)
 		return std::abs((int)hv_width_ref2 - (int)hv_width_ref1) + 32;
 	else
@@ -744,24 +751,31 @@ int CImageProcess::ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3)
 		return -1;
 
 	// Local iconic variables
-	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions;
-	HObject  ho_ImageReduced;
+	HObject  ho_Image, ho_Rectangle, ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
+	HObject  ho_ImageReduced, ho_ImagePart;
 	HTuple  hv_Width1, hv_Height1, hv_Mean, hv_Deviation;
-	HTuple  hv_Row1, hv_Column1, hv_Row2, hv_Column2;
 
 	ho_Image = hi_ref4;
-	GetImageSize(ho_Image, &hv_Width1, &hv_Height1);
+	HalconCpp::GetImageSize(ho_Image, &hv_Width1, &hv_Height1);
 	if (hv_Width1 == 0)
 		return -1;
 
-	GenRectangle1(&ho_Rectangle, 0, hv_Width1 - 256, 256, hv_Width1);
-	Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
-	Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
-	Connection(ho_Region, &ho_ConnectedRegions);
-	SmallestRectangle1(ho_ConnectedRegions, &hv_Row1, &hv_Column1, &hv_Row2, &hv_Column2);
-	ReduceDomain(ho_Image, ho_ConnectedRegions, &ho_ImageReduced);
-	GetImageSize(ho_ImageReduced, &hv_width_ref1, &hv_height_ref1);
+	//选取左侧边缘 256*256 大小区域用于计算像素平均值
+	HalconCpp::GenRectangle1(&ho_Rectangle, 0, 0, 255, 255);
+	HalconCpp::Intensity(ho_Rectangle, ho_Image, &hv_Mean, &hv_Deviation);
+	//以平均像素值的 0.8 倍进行阈值化
+	HalconCpp::Threshold(ho_Image, &ho_Region, hv_Mean*0.8, 255);
+	HalconCpp::Connection(ho_Region, &ho_ConnectedRegions);
+	//进行区域选择，选取有效区域
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "height", "and",
+		hv_height_ref2 - 1000, hv_height_ref2);
+	//缩减图像的定义域(对原图选择新区域，但图像的大小不变)
+	HalconCpp::ReduceDomain(ho_Image, ho_SelectedRegions, &ho_ImageReduced);
+	//根据区域对灰度图像进行减除
+	HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+	HalconCpp::GetImageSize(ho_ImagePart, &hv_width_ref1, &hv_height_ref1);
 
+	// 加 32 用于避开边缘像素变化较大的区域
 	if (hv_width_ref1 != hv_width_ref2)
 		return std::abs((int)hv_width_ref2 - (int)hv_width_ref1) + 32;
 	else
@@ -1058,6 +1072,7 @@ void CImageProcess::SaveDefectImage(HObject &ho_img, HTuple name)
 	return;
 }
 
+// 检测算法：2020.4.3 以前（分割成小图后检测）
 int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
 {
 	// Local iconic variables
@@ -1168,6 +1183,7 @@ int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, 
 	return 0;
 }
 
+// 检测算法：2020.4.5（直接对大图进行检测）
 int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
 {
 	// Local iconic variables
@@ -1197,13 +1213,15 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 	//自动阈值输入必须是是单通道图像，会有多阈值分割，Sigma用于对灰度直方图进行高斯平滑，决定了平滑的程度（分割细致程度），
 	//当sigma很大时，灰度直方图基本会被平滑为只剩下一个波峰，而分割是根据平滑后直方图的波谷来进行的，Sigma小，分割的越细致
 	//AutoThreshold(ho_ImageAbsDiff1, &ho_Regions, 3);
+
+	//用一个矩形掩膜计算像素点的灰度范围
 	GrayRangeRect(ho_ImageAbsDiff1, &ho_ImageResult, 10, 10);
 	MinMaxGray(ho_ImageResult, ho_ImageResult, 0, &hv_Min, &hv_Max, &hv_Range);
 	Threshold(ho_ImageResult, &ho_Regions, (HTuple(5.55).TupleConcat(hv_Max*0.8)).TupleMax(), 255);
 	Connection(ho_Regions, &ho_ConnectedRegions);
 	//区域选择参数：1.轮廓周长(pixel)  2.最大内接圆半径(pixel)
 	SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, (HTuple("contlength").Append("inner_radius")),
-		"and", (HTuple(11).Append(1)), (HTuple(9999999).Append(9999999)));
+		"and", (HTuple(5).Append(1)), (HTuple(32768).Append(2048)));
 	CountObj(ho_SelectedRegions, &hv_Number);
 	if (0 != hv_Number)
 	{
@@ -1214,7 +1232,9 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 			{
 				SelectObj(ho_SelectedRegions, &ho_ObjectSelected, hv_i);
 				SmallestCircle(ho_ObjectSelected, &hv_Row, &hv_Column, &hv_Radius);
-				if (0 != (hv_Radius > 4000))
+				//当所选的区域的外接圆半径大于2048，即区域范围大于图像的三分之二时，默认跳过
+				// min([hv_width, hv_height]) / 3
+				if (0 != (hv_Radius > ((hv_Width.TupleConcat(hv_Height)).TupleMin()) / 3))
 				{
 					continue;
 				}
@@ -1336,32 +1356,31 @@ UINT CImageProcess::ReferenceImage(LPVOID pParam)
 		}
 		else {
 			pThis->LoadRefImage("C:/DeVisionProject/sample0403/");
-			pThis->LoadSingleImage("C:/DeVisionProject/sample0403/test1");
 		}
 
 		if (pThis->CheckReferenceImageState()) {
 			pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
 			if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HObject ho_ImagePart, ho_Region, ho_ImageReduced;
 				HTuple hv_width_ref1, hv_height_ref1;
 
 				HalconCpp::GetImageSize(pThis->m_hi_ref1, &hv_width_ref1, &hv_height_ref1);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_ref1 - pThis->m_camera1_invalid_area, 0,
-					hv_width_ref1, hv_height_ref1);
+				HalconCpp::GenRectangle1(&ho_Region, 0, pThis->m_camera1_invalid_area, hv_height_ref1, hv_width_ref1);
 				HalconCpp::ReduceDomain(pThis->m_hi_ref1, ho_Region, &ho_ImageReduced);
-				pThis->m_hi_ref1 = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				pThis->m_hi_ref1 = ho_ImagePart;
 			}
 
 			pThis->m_camera4_invalid_area = pThis->ProduceReferenceImage4(pThis->m_hi_ref4, pThis->m_hi_ref3);
 			if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-				HObject ho_Image, ho_Region, ho_ImageReduced;
+				HObject ho_ImagePart, ho_Region, ho_ImageReduced;
 				HTuple hv_width_ref4, hv_height_ref4;
 
 				HalconCpp::GetImageSize(pThis->m_hi_ref4, &hv_width_ref4, &hv_height_ref4);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_ref4 - pThis->m_camera4_invalid_area, hv_height_ref4);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_ref4, hv_width_ref4 - (HTuple)pThis->m_camera4_invalid_area);
 				HalconCpp::ReduceDomain(pThis->m_hi_ref4, ho_Region, &ho_ImageReduced);
-				pThis->m_hi_ref4 = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				pThis->m_hi_ref4 = ho_ImagePart;
 			}
 
 			pThis->m_referenceImage_OK = TRUE;
@@ -1399,15 +1418,17 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_1.front();
 			pImgProc->m_ImgList1_1.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
-					hv_width_def, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, valid_area,	hv_height_def, hv_width_def);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -1466,15 +1487,17 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_2.front();
 			pImgProc->m_ImgList1_2.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
-					hv_width_def, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, valid_area, hv_height_def, hv_width_def);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -1533,15 +1556,17 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_3.front();
 			pImgProc->m_ImgList1_3.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
-					hv_width_def, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, valid_area, hv_height_def, hv_width_def);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -1602,15 +1627,17 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_4.front();
 			pImgProc->m_ImgList1_4.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
-					hv_width_def, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, valid_area, hv_height_def, hv_width_def);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -1671,15 +1698,17 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList1_5.front();
 			pImgProc->m_ImgList1_5.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, hv_width_def - valid_area, 0,
-					hv_width_def, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, valid_area, hv_height_def, hv_width_def);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -2274,15 +2303,17 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_1.front();
 			pImgProc->m_ImgList4_1.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_def, hv_width_def - valid_area);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -2338,15 +2369,17 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_2.front();
 			pImgProc->m_ImgList4_2.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_def, hv_width_def - valid_area);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -2402,15 +2435,17 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_3.front();
 			pImgProc->m_ImgList4_3.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_def, hv_width_def - valid_area);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -2467,15 +2502,17 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_4.front();
 			pImgProc->m_ImgList4_4.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_def, hv_width_def - valid_area);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
@@ -2531,15 +2568,17 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 			//从队列中取出待检图像
 			HImage hi_def = pImgProc->m_ImgList4_5.front();
 			pImgProc->m_ImgList4_5.pop_front();
+			HObject ho_ImagePart;
 			if (valid_area != 0 && valid_area != -1) {
 				HObject ho_Image, ho_Region, ho_ImageReduced;
 				HTuple hv_width_def, hv_height_def;
 
 				HalconCpp::GetImageSize(hi_def, &hv_width_def, &hv_height_def);
-				HalconCpp::GenRectangle1(&ho_Region, 0, 0,
-					hv_width_def - valid_area, hv_height_def);
+				HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_def, hv_width_def - valid_area);
+				//重定义图像的定义域，分切图像 
 				HalconCpp::ReduceDomain(hi_def, ho_Region, &ho_ImageReduced);
-				hi_def = ho_ImageReduced;
+				HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+				hi_def = ho_ImagePart;
 			}
 
 			//瑕疵检测算法
