@@ -231,6 +231,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 
 	m_inspectDlg.m_freerun = TRUE;
 	m_inspectDlg.m_pImgProc.TEST_MODEL = FALSE;
+	m_inspectDlg.m_pImgProc.REDUCE_BLACK_EDGE = FALSE;
 
 	Win::log("初始化完成");
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -1301,7 +1302,7 @@ void CDeVisionDlg::OnBnClickedButtonSelect()
 
 	if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
 		//m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
-		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0403/test1");
+		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0406/test3");
 	}
 }
 

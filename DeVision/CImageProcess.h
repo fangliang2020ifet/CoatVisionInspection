@@ -92,6 +92,11 @@ struct DefectType
 
 };
 
+struct SelectRegion
+{
+	int index;
+	POINT point;
+};
 
 typedef std::list<HImage> ImgList;
 typedef std::list<DefectType> DFTList;
@@ -105,6 +110,7 @@ public:
 
 public:
 	BOOL TEST_MODEL = FALSE;
+	BOOL REDUCE_BLACK_EDGE = FALSE;
 	BOOL m_save_reference_image = TRUE;
 	BOOL BeginProcess();
 	BOOL StopProcess();
@@ -118,14 +124,14 @@ public:
 	HObject CopyHobject(HObject ho_image);
 	BOOL GetSavePath(std::string &path);
 	BOOL GenerateRefImg(int cameraNo, std::string save_path, HObject &ho_ref);
-	BOOL GenerateReferenceImage1(HImage &hi_ref);
-	BOOL GenerateReferenceImage2(HImage &hi_ref);
-	BOOL GenerateReferenceImage3(HImage &hi_ref);
-	BOOL GenerateReferenceImage4(HImage &hi_ref);
+	BOOL GenerateReferenceImage1(HImage &hi_average, HImage &hi_deviation);
+	BOOL GenerateReferenceImage2(HImage &hi_average, HImage &hi_deviation);
+	BOOL GenerateReferenceImage3(HImage &hi_average, HImage &hi_deviation);
+	BOOL GenerateReferenceImage4(HImage &hi_average, HImage &hi_deviation);
 	BOOL SaveReferenceImage();
-	BOOL GenerateAndSaveRefImage();
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
 									HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
+	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
 	void ReSortDefectQueue();
 
@@ -169,22 +175,22 @@ public:
 
 	//测试变量
 	std::string file_path;    //文件路径,参考图像
-	//HObject ho_test1;
-	//HObject ho_test2;
-	//HObject ho_test3;
-	//HObject ho_test4;
 	HImage m_hi_test1;
 	HImage m_hi_test2;
 	HImage m_hi_test3;
 	HImage m_hi_test4;
-	//HObject ho_Image_ref1;       //参考图像
-	//HObject ho_Image_ref2;
-	//HObject ho_Image_ref3;
-	//HObject ho_Image_ref4;
-	HImage m_hi_ref1;
+	HImage m_hi_ref1;       //参考图像
 	HImage m_hi_ref2;
 	HImage m_hi_ref3;
 	HImage m_hi_ref4;
+	HImage m_hi_average1;   //平均图像
+	HImage m_hi_average2;
+	HImage m_hi_average3;
+	HImage m_hi_average4;
+	HImage m_hi_deviation1;    //标准差图像
+	HImage m_hi_deviation2;
+	HImage m_hi_deviation3;
+	HImage m_hi_deviation4;
 
 private:
 	BOOL m_camera1_reference_image_acquired;
@@ -200,6 +206,8 @@ private:
 	int ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3);
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
+	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
+		HImage hi_img, std::vector<DefectType> &vDFT);
 
 protected:
 
