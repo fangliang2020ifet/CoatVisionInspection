@@ -78,6 +78,9 @@ protected:
 public:
 	CListCtrl m_ListCtrlHis;
 	CListCtrl m_ListCtrlDetail;
+	CComboBox m_comSearchOption;
+	CEdit m_editSearchWord;
+	CButton m_open_inprogram;
 
 	virtual BOOL OnInitDialog();
 
@@ -94,7 +97,5 @@ public:
 	afx_msg void OnBnClickedButtonOpenexcel();
 	afx_msg void OnBnClickedButtonOpeninprogram();
 	afx_msg void OnBnClickedButtonOpenexcelpath();
-	CComboBox m_comSearchOption;
-	CEdit m_editSearchWord;
-	CButton m_open_inprogram;
+	afx_msg void OnDestroy();
 };

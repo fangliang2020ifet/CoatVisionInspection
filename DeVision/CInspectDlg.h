@@ -34,11 +34,15 @@ public:
 
 public:
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
-	BOOL m_freerun;
 	CFont m_font;
 	BOOL m_bUpdateUserInfo = FALSE;
 	BOOL m_is_system_pause;
 	BOOL m_camera_system_initialled;
+	BOOL m_camera1_thread_alive = FALSE;
+	BOOL m_camera2_thread_alive = FALSE;
+	BOOL m_camera3_thread_alive = FALSE;
+	BOOL m_camera4_thread_alive = FALSE;
+
 
 	void RecordWarning(const std::wstring& str);   //记录报警信息
 	void RecordLogList(const std::wstring& str);   //记录日志
@@ -163,6 +167,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButton1();
+	CButton m_btn_changeinfo;
 	CStatic m_static_number;
 	CStatic m_static_width;
 	CStatic m_static_operator;

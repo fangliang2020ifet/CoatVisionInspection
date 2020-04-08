@@ -19,6 +19,7 @@ IMPLEMENT_DYNCREATE(CMyView, CScrollView)
 
 CMyView::CMyView()
 {
+	m_vDefect.clear();
 
 }
 

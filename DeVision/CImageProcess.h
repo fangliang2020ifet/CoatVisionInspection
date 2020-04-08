@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <direct.h>
 #include <fstream>
-//#include "LinkQueue.h"
 
 #include "HalconCpp.h"
 #include "HDevThread.h"
@@ -73,34 +72,35 @@ namespace HDevExportCpp
 
 }
 
-
-
 struct DefectType
 {
 	int rank = 0;                     //瑕疵等级
 	int type = 0;                     //瑕疵分类/类型
-	float center_x = 0;               //水平位置(mm)
-	float absolute_position = 0.0f;   //纵向位置(m)
-	float area = 0.1f;                //面积
+	float center_x = 0;               //水平位置(毫米)
+	float absolute_position = 0.0f;   //纵向位置(米)
+	float area = 0.0f;                //面积
 	float contlength = 5.0f;          //周长
 	float circle_radius = 1.0f;       //外接圆直径
 	int pixel_value = 128;            //像素平均灰度值
-
 	bool operator < (const DefectType& def) const {
 		return absolute_position < def.absolute_position;
 	}
-
 };
 
 struct SelectRegion
 {
+	//单位均为像素
 	int index;
-	POINT point;
+	HTuple hv_Row_Center;
+	HTuple hv_Column_Center;
+	float area;
+	float radius;
+	float contlength;
+	float pixelvalue;
 };
 
 typedef std::list<HImage> ImgList;
 typedef std::list<DefectType> DFTList;
-
 
 class CImageProcess
 {
@@ -111,11 +111,17 @@ public:
 public:
 	BOOL TEST_MODEL = FALSE;
 	BOOL REDUCE_BLACK_EDGE = FALSE;
-	BOOL m_save_reference_image = TRUE;
+	BOOL SAVE_REFERENCE_IMAGE = TRUE;
+	int m_camera1_standart_deviation = 15;
+	int m_camera2_standart_deviation = 15;
+	int m_camera3_standart_deviation = 15;
+	int m_camera4_standart_deviation = 15;
+
 	BOOL BeginProcess();
 	BOOL StopProcess();
 	void RestartProcess();
 	BOOL IsThreadsAlive();
+	int CheckTotalListSize();
 
 	BOOL LoadRefImage(std::string folder_path);
 	BOOL LoadImageToQueue(std::string folder_path, int numbers);
@@ -123,7 +129,6 @@ public:
 	BOOL LoadSingleImage(std::string image_name);
 	HObject CopyHobject(HObject ho_image);
 	BOOL GetSavePath(std::string &path);
-	BOOL GenerateRefImg(int cameraNo, std::string save_path, HObject &ho_ref);
 	BOOL GenerateReferenceImage1(HImage &hi_average, HImage &hi_deviation);
 	BOOL GenerateReferenceImage2(HImage &hi_average, HImage &hi_deviation);
 	BOOL GenerateReferenceImage3(HImage &hi_average, HImage &hi_deviation);
@@ -132,6 +137,8 @@ public:
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
 									HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
+	int  ImageClassification(HObject ho_img);
+	int  RankDivide(DefectType dtype);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
 	void ReSortDefectQueue();
 

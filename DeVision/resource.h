@@ -265,6 +265,7 @@
 #define IDC_COMBO_SEARCHOPTION          1223
 #define IDC_EDIT_SEARCHWORDS            1224
 #define IDC_EDIT_WND1_RANGE             1225
+#define IDC_BUTTON_CHANGEINFO           1226
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -316,7 +317,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        177
 #define _APS_NEXT_COMMAND_VALUE         32815
-#define _APS_NEXT_CONTROL_VALUE         1226
+#define _APS_NEXT_CONTROL_VALUE         1227
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -69,6 +69,7 @@ BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_OPENEXCEL, &CTableDlg::OnBnClickedButtonOpenexcel)
 	ON_BN_CLICKED(IDC_BUTTON_OPENINPROGRAM, &CTableDlg::OnBnClickedButtonOpeninprogram)
 	ON_BN_CLICKED(IDC_BUTTON_OPENEXCELPATH, &CTableDlg::OnBnClickedButtonOpenexcelpath)
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 
@@ -93,6 +94,14 @@ BOOL CTableDlg::OnInitDialog()
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
+}
+
+void CTableDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	// TODO: 在此处添加消息处理程序代码
+	m_vecDFT.clear();
 }
 
 void CTableDlg::OnPaint()
@@ -1497,3 +1506,6 @@ void CTableDlg::OnBnClickedButtonOpenexcelpath()
 	ShellExecute(NULL, L"explore", L"D://report", NULL, NULL, SW_SHOW);
 
 }
+
+
+

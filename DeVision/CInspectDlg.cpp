@@ -14,7 +14,6 @@ IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_INSPECT, pParent)
 {
-	m_freerun = FALSE;
 
 	m_Acq1 = NULL;
 	m_Acq2 = NULL;
@@ -74,11 +73,12 @@ void CInspectDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_WARNNING, m_listWarning);
 	DDX_Control(pDX, IDC_STATIC_NUMBER, m_static_number);
 	DDX_Control(pDX, IDC_STATIC_WIDTH, m_static_width);
+	DDX_Control(pDX, IDC_BUTTON_CHANGEINFO, m_btn_changeinfo);
 }
 
 
 BEGIN_MESSAGE_MAP(CInspectDlg, CDialogEx)
-	ON_BN_CLICKED(IDC_BUTTON1, &CInspectDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON_CHANGEINFO, &CInspectDlg::OnBnClickedButton1)
 	ON_WM_DESTROY()
 	ON_WM_CTLCOLOR()
 	ON_WM_SIZE()
@@ -550,17 +550,17 @@ BOOL CInspectDlg::InitialAllBoards()
 	if (!CreateObjects()) { EndDialog(TRUE); return FALSE; }
 
 	//外部触发时无需设置以下参数
-	if (m_pImgProc.TEST_MODEL || m_freerun) {
+	if (m_pImgProc.TEST_MODEL) {
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
-		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 20000);//设定触发频率
+		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 60000);//设定触发频率
 		m_AcqDevice2->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", 60000);//设定曝光时间
 		m_AcqDevice3->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", 60000);//设定曝光时间
 		m_AcqDevice4->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 60000);//设定曝光时间
 	}
-	else {
+	if(!m_pImgProc.TEST_MODEL){
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "On");//触发模式打开
 		m_AcqDevice2->SetFeatureValue("TriggerMode", "On");//触发模式打开
 		m_AcqDevice3->SetFeatureValue("TriggerMode", "On");//触发模式打开
@@ -1000,6 +1000,11 @@ BOOL CInspectDlg::CreateObjects()
 
 BOOL CInspectDlg::DestroyObjects()
 {
+	m_camera1_thread_alive = FALSE;
+	m_camera2_thread_alive = FALSE;
+	m_camera3_thread_alive = FALSE;
+	m_camera4_thread_alive = FALSE;
+
 	// Destroy transfer object
 	if (m_Xfer1 && *m_Xfer1) m_Xfer1->Destroy();
 	if (m_Xfer2 && *m_Xfer2) m_Xfer2->Destroy();
@@ -1065,15 +1070,13 @@ void CInspectDlg::Grab()
 		return;
 	}
 
+	m_camera1_thread_alive = TRUE;
+	m_camera2_thread_alive = TRUE;
+	m_camera3_thread_alive = TRUE;
+	m_camera4_thread_alive = TRUE;
+
 	if (!m_is_system_pause) {
 		m_pImgProc.RestartProcess();
-
-
-		if (!m_pImgProc.BeginProcess()) {
-			Win::log("图像处理线程启动失败");
-			RecordWarning(L"图像处理线程启动失败，请检查程序运行日志");
-			return;
-		}
 	}
 
 	Win::log("开始采集图像Grab");
@@ -1190,14 +1193,13 @@ void CInspectDlg::Freeze()
 		//	m_pImgProc.m_ImgList4_5.pop_back();
 	}
 
+	m_camera1_thread_alive = FALSE;
+	m_camera2_thread_alive = FALSE;
+	m_camera3_thread_alive = FALSE;
+	m_camera4_thread_alive = FALSE;
+
 	if (!m_is_system_pause) {
 		ClearImgProcQueue();
-
-		if (!m_pImgProc.StopProcess()) {
-			Win::log("图像处理线程结束失败");
-			RecordWarning(L"图像处理线程结束失败，请检查程序运行日志");
-			return;
-		}
 	}
 
 	Win::log("停止采集Freeze");
@@ -1598,7 +1600,4 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		}
 	}
 }
-
-
-
 

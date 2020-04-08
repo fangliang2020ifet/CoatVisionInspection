@@ -90,6 +90,8 @@ void CHistoryDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 
+	m_vImage_name.clear();
+
 	// TODO: 在此处添加消息处理程序代码
 }
 

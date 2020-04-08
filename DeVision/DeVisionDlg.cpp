@@ -77,8 +77,8 @@ CDeVisionDlg::~CDeVisionDlg()
 {
 
 	DeleteCriticalSection(&m_csVecDFT);
-
 }
+
 void CDeVisionDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -229,12 +229,38 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//主界面信息刷新定时器
 	SetTimer(1, 500, 0);
 
-	m_inspectDlg.m_freerun = TRUE;
-	m_inspectDlg.m_pImgProc.TEST_MODEL = FALSE;
+	m_iAllThread_stopped = 0;
+	m_inspectDlg.m_pImgProc.TEST_MODEL = TRUE;
 	m_inspectDlg.m_pImgProc.REDUCE_BLACK_EDGE = FALSE;
 
 	Win::log("初始化完成");
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+void CDeVisionDlg::ExitProgram()
+{
+	m_vDFT.clear();
+
+	return;
+}
+
+int CDeVisionDlg::CheckThreadStatue()
+{
+	if (m_inspectDlg.m_pImgProc.IsThreadsAlive())
+		return 1;
+
+	if (m_tableDlg.m_save_successfully)
+		return 2;
+
+	BOOL camera_thread = m_inspectDlg.m_camera1_thread_alive || m_inspectDlg.m_camera2_thread_alive
+			      		|| m_inspectDlg.m_camera3_thread_alive || m_inspectDlg.m_camera4_thread_alive;
+	if (camera_thread)
+		return 3;
+
+	if (m_is_refrushThread_alive)
+		return 4;
+
+	return 0;
 }
 
 void CDeVisionDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -406,6 +432,7 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	switch (nIDEvent)
 	{
 	case 1:  // 计时器1
+		m_iAllThread_stopped = !CheckThreadStatue();
 		UpdateSysMenuBtn();
 		UpdateSysStatus();
 		current_position = m_inspectDlg.m_pImgProc.m_current_position;
@@ -526,7 +553,7 @@ void CDeVisionDlg::TabDlgResize()
 	m_historyDlg.MoveWindow(&rc);
 }
 
-//状态栏
+//状态栏初始化
 void CDeVisionDlg::InitialStateBar()
 {
 	//添加状态栏
@@ -556,7 +583,7 @@ void CDeVisionDlg::InitialStateBar()
 	m_StatusBar.SetPaneInfo(2, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
 	m_StatusBar.SetPaneInfo(3, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
 	m_StatusBar.SetPaneInfo(4, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
-	m_StatusBar.SetPaneInfo(5, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
+	m_StatusBar.SetPaneInfo(5, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 200);
 	m_StatusBar.SetPaneInfo(6, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
 	m_StatusBar.SetPaneInfo(7, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
 	m_StatusBar.SetPaneInfo(8, m_StatusBar.GetDlgCtrlID(), SBPS_STRETCH, 150);
@@ -991,7 +1018,9 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
 		m_button_online.SetWindowTextW(_T("在线"));
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
+		if(m_iAllThread_stopped == 0)
+			GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
+
 
 		////主窗口关闭按钮无效
 		//pSysMenu->EnableMenuItem(SC_CLOSE, MF_ENABLED);
@@ -1010,7 +1039,6 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 			GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
 			GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
 			m_button_online.SetWindowTextW(_T("离线"));
-
 		}
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
@@ -1034,6 +1062,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
 		m_tableDlg.m_open_inprogram.EnableWindow(false);
 		m_historyDlg.m_btn_pre_page.EnableWindow(false);
 		m_historyDlg.m_btn_next_page.EnableWindow(false);
@@ -1047,18 +1076,21 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
 		m_historyDlg.m_btn_pre_page.EnableWindow(true);
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
 
 
 		break;
 	case SYSTEM_STATE_STOP:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
+		if (m_tableDlg.m_save_successfully)
+			GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(true);
 		m_tableDlg.m_open_inprogram.EnableWindow(true);
 		m_historyDlg.m_btn_pre_page.EnableWindow(true);
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
@@ -1129,11 +1161,11 @@ void CDeVisionDlg::UpdateSysStatus()
 
 		//总处理数量
 		UINT64 acquire_frame_count = m_inspectDlg.GetTotalFrameCount();
-		int produced_frame_count = m_inspectDlg.m_pImgProc.m_NO_produced1 * 4;
+		int list_size = m_inspectDlg.m_pImgProc.CheckTotalListSize();
 		if (acquire_frame_count > 0)
 		{
 			CString cstr_frame_count, cstr_unit;
-			cstr_frame_count.Format(L"总帧数： %d / %d 帧(%d)", produced_frame_count, acquire_frame_count, std::abs((int)acquire_frame_count - produced_frame_count));
+			cstr_frame_count.Format(L"总帧数： %d / %d 帧(%d)", acquire_frame_count - list_size, acquire_frame_count, list_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
 		}
 
@@ -1302,7 +1334,7 @@ void CDeVisionDlg::OnBnClickedButtonSelect()
 
 	if (m_inspectDlg.m_pImgProc.TEST_MODEL) {
 		//m_inspectDlg.m_pImgProc.LoadRefImage("C:/DeVisionProject/sample0403/");
-		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0406/test3");
+		m_inspectDlg.m_pImgProc.LoadSingleImage("C:/DeVisionProject/sample0408/test01");
 	}
 }
 
@@ -1336,12 +1368,27 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
 
+	//启动图像采集
+	m_inspectDlg.Grab();
+
 	if (m_system_state != SYSTEM_STATE_PAUSE) {
 		//开始运行前的准备
 		ReStartPrepare();
 
+		if (!m_inspectDlg.m_pImgProc.BeginProcess()) {
+			//处理线程启动失败则结束采集
+			m_inspectDlg.Freeze();
+
+			Win::log("图像处理线程启动失败");
+			RecordWarning(L"图像处理线程启动失败，请检查程序运行日志");
+			return;
+		}
+
 		//启动界面刷新线程
 		if (!(m_RefrushThread = AfxBeginThread(RefrushWnd, this))) {
+			//界面线程启动失败则结束采集
+			m_inspectDlg.Freeze();
+
 			Win::log("界面刷新线程启动失败");
 			m_inspectDlg.RecordWarning(L"界面刷新线程启动失败");
 			return;
@@ -1354,17 +1401,16 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		Win::log("结束暂停，启动检测...");
 		m_inspectDlg.RecordLogList(L"结束暂停，启动检测...");
 	}
+	
+	//启动历史页面刷新
+	m_historyDlg.m_pages = 0;
+	SetTimer(2, 3000, 0);
 
-	m_inspectDlg.Grab();
 	//时间记录戳
 	start_time = GetTickCount();
 
-	//在线状态则启动历史页面刷新
-	m_historyDlg.m_pages = 0;
-	if(m_system_state == SYSTEM_STATE_ONLINE)
-		SetTimer(2, 5000, 0);
-
 	m_system_state = SYSTEM_STATE_RUN;
+	return;
 }
 
 //停止  按钮
@@ -1375,6 +1421,17 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 
 	m_inspectDlg.m_is_system_pause = FALSE;
 	m_inspectDlg.Freeze();
+
+	//等待列表中的图像都处理完成, 之后结束处理线程
+	while (m_inspectDlg.m_pImgProc.CheckTotalListSize())
+	{
+		Sleep(500);
+	}
+	if (!m_inspectDlg.m_pImgProc.StopProcess()) {
+		Win::log("图像处理线程结束失败");
+		RecordWarning(L"图像处理线程结束失败，请检查程序运行日志");
+		return;
+	}
 
 	//结束瑕疵界面刷新线程
 	while (m_is_refrushThread_alive)
@@ -1388,12 +1445,15 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	m_tableDlg.BeginSaveTable();
 	LeaveCriticalSection(&m_csVecDFT);
 
+	//结束历史图像刷新定时器
+	KillTimer(2);
 
 
 	Win::log("停止检测");
 	m_inspectDlg.RecordLogList(L"停止检测");
 
 	m_system_state = SYSTEM_STATE_STOP;
+	return;
 }
 
 //暂停  按钮
@@ -1402,6 +1462,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonPause()
 	// TODO: 在此添加控件通知处理程序代码
 	m_inspectDlg.m_is_system_pause = TRUE;
 	m_inspectDlg.Freeze();
+
+	//结束历史图像刷新定时器
+	KillTimer(2);
 
 	Win::log("暂停检测");
 	m_inspectDlg.RecordLogList(L"暂停检测");
@@ -1432,14 +1495,13 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		m_vDFT.clear();
 		pView->m_vDefect.clear();
 
-		KillTimer(2);
-
-		Win::log("已设置为离线模式");
-		m_inspectDlg.RecordLogList(L"已设置为离线模式");
+		Win::log("已设置为离线模式, 当前线程：%d", CheckThreadStatue());
+		m_inspectDlg.RecordLogList(_T("已设置为离线模式, 当前线程：%d"));
 
 		m_system_state = SYSTEM_STATE_OFFLINE;
 		m_button_online.SetIcon(m_hOfflineIcon);
 	}
+	return;
 }
 
 //锁定按钮
@@ -1460,6 +1522,9 @@ void CDeVisionDlg::OnBnClickedButtonLock()
 void CDeVisionDlg::OnBnClickedButtonExit()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	
+	ExitProgram();
+
 	EndDialog(TRUE);
 }
 

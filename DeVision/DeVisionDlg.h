@@ -46,6 +46,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	BOOL LoadInitialInfo();
+	void ExitProgram();
+	int CheckThreadStatue();
 
 	int m_CurSelTab;                              //标记当前选择的页面
 	void InitialTabDlg();                         //初始化 tab control
@@ -93,6 +95,7 @@ protected:
 private:
 	LPCWSTR CUSTOMER_FILEPATH = L"inis\\system.ini";
 	
+	int m_iAllThread_stopped;
 	CRITICAL_SECTION m_csVecDFT;                  //定义一个临界区
 	CWinThread *m_RefrushThread;
 	static UINT RefrushWnd(LPVOID pParam);
