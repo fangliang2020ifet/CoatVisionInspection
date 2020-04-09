@@ -4,6 +4,8 @@
 //#include "pch.h"
 #include "stdafx.h"
 #include "DeVision.h"
+#include "DeVisionDlg.h"
+
 #include "CMyView.h"
 
 

@@ -22,6 +22,7 @@ public:
 #endif
 
 public:
+	std::string m_DFT_img_path;
 	std::wstring m_save_path = L"D:\\report\\";
 	std::wstring m_wstr_num;               //批号
 	std::wstring m_wstr_id;                //型号
@@ -32,6 +33,7 @@ public:
 	void DrawTable(CDC *mDC, CRect rect, float x, float y);
 	void CreateFlag(CDC *mDC, int x, int y, int kind);
 	void DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height);
+	void DrawSelectDFT(CDC *mDC, int x, int y);
 	void AddToDetailList(int NO, int kind, float position, float radius, int rank);
 	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
 	bool SaveBMPToFile(HBITMAP hBitmap, LPSTR lpFileName);
@@ -57,6 +59,9 @@ private:
 	COLORREF blue_color = RGB(35, 55, 225);            //蓝色
 	COLORREF yellow_color = RGB(255, 255, 0);          //黄色
 
+	int m_selected_x = 0;
+	int m_selected_y = 0;
+
 	std::wstring m_wstr_savetime;                        //保存时间
 	CWinThread *m_SaveTable;
 	static UINT SaveTableThread(LPVOID pParam);
@@ -70,6 +75,7 @@ private:
 		std::string &ID, std::string &longth, std::string &operators);
 
 	void OpenExcelFile(std::wstring excelname);
+	void ShowBitmap(CWnd *pWnd, CString BmpName);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -98,4 +104,5 @@ public:
 	afx_msg void OnBnClickedButtonOpeninprogram();
 	afx_msg void OnBnClickedButtonOpenexcelpath();
 	afx_msg void OnDestroy();
+	afx_msg void OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -21,6 +21,12 @@
 #include "Log.h"
 
 
+#define IMAGE_WIDTH 8192
+#define IMAGE_HEIGHT 8192
+// 纵向的精度, 单位： mm
+#define VERTICAL_PRECISION 0.035f
+// 横向的精度，单位： mm
+#define HORIZON_PRECISION 0.05f
 
 
 // CDeVisionDlg 对话框
@@ -150,6 +156,7 @@ public:
 	int serious_def_num = 0;                              //严重瑕疵个数
 	float total_def_length = 0.0f;							  //瑕疵总米数
 
+	int m_ImgList_size;
 
 protected:
 	CEdit m_edisplay_range;

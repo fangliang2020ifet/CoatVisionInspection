@@ -227,7 +227,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//设置系统状态
 	m_system_state = SYSTEM_STATE_OFFLINE;
 	//主界面信息刷新定时器
-	SetTimer(1, 500, 0);
+	SetTimer(1, 1000, 0);
 
 	m_iAllThread_stopped = 0;
 	m_inspectDlg.m_pImgProc.TEST_MODEL = TRUE;
@@ -249,7 +249,7 @@ int CDeVisionDlg::CheckThreadStatue()
 	if (m_inspectDlg.m_pImgProc.IsThreadsAlive())
 		return 1;
 
-	if (m_tableDlg.m_save_successfully)
+	if (!m_tableDlg.m_save_successfully)
 		return 2;
 
 	BOOL camera_thread = m_inspectDlg.m_camera1_thread_alive || m_inspectDlg.m_camera2_thread_alive
@@ -431,20 +431,28 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent)
 	{
-	case 1:  // 计时器1
-		m_iAllThread_stopped = !CheckThreadStatue();
+	case 1: 
+		//获取图像 List 大小
+		m_ImgList_size = m_inspectDlg.m_pImgProc.CheckTotalListSize();
+		//获取当前线程状态
+		if(m_system_state == SYSTEM_STATE_STOP || m_system_state == SYSTEM_STATE_OFFLINE)
+			m_iAllThread_stopped = CheckThreadStatue();
+		//更新按钮和菜单
 		UpdateSysMenuBtn();
+		//更新状态栏
 		UpdateSysStatus();
+		//更新当前位置
 		current_position = m_inspectDlg.m_pImgProc.m_current_position;
 		m_tableDlg.m_current_position = current_position;
+		//更新刻度
 		UpdateScaleValue(1650.0f, current_position);
-
+		//保存用户信息
 		if (m_inspectDlg.m_bUpdateUserInfo)
 			SaveUserInfo();
 
 		break;
 	case 2:
-		//选中历史页面
+		//更新历史图像，选中历史页面
 		if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
 			m_historyDlg.LoadHistoryImage(m_work_path);
 
@@ -1057,8 +1065,10 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		break;
 	case SYSTEM_STATE_RUN:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
-		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(true);
+		if (m_inspectDlg.m_pImgProc.m_referenceImage_OK) {
+			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
+			GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(true);
+		}
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
@@ -1071,7 +1081,8 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		break;
 	case SYSTEM_STATE_PAUSE:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
+		if(m_ImgList_size == 0)
+			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
@@ -1161,11 +1172,10 @@ void CDeVisionDlg::UpdateSysStatus()
 
 		//总处理数量
 		UINT64 acquire_frame_count = m_inspectDlg.GetTotalFrameCount();
-		int list_size = m_inspectDlg.m_pImgProc.CheckTotalListSize();
 		if (acquire_frame_count > 0)
 		{
 			CString cstr_frame_count, cstr_unit;
-			cstr_frame_count.Format(L"总帧数： %d / %d 帧(%d)", acquire_frame_count - list_size, acquire_frame_count, list_size);
+			cstr_frame_count.Format(L"总帧数：%d / %d 帧(%d)", acquire_frame_count - m_ImgList_size, acquire_frame_count, m_ImgList_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
 		}
 
@@ -1188,7 +1198,7 @@ void CDeVisionDlg::UpdateSysStatus()
 	switch (m_system_state)
 	{
 	case SYSTEM_STATE_OFFLINE:
-		cstr_statue.Format(L"离线");
+		cstr_statue.Format(L"离线: %d", m_iAllThread_stopped);
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		break;
 	case SYSTEM_STATE_ONLINE:
@@ -1270,6 +1280,7 @@ void CDeVisionDlg::ReStartPrepare()
 	CreateWorkPath(m_work_path);
 	//获取瑕疵图像保存路径
 	m_inspectDlg.m_pImgProc.m_strPath = m_work_path;
+	m_tableDlg.m_DFT_img_path = m_work_path;
 	Win::log("工作目录已创建");
 	m_inspectDlg.RecordLogList(L"工作目录已创建");
 
@@ -1368,49 +1379,53 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
 
-	//启动图像采集
-	m_inspectDlg.Grab();
-
 	if (m_system_state != SYSTEM_STATE_PAUSE) {
 		//开始运行前的准备
 		ReStartPrepare();
 
-		if (!m_inspectDlg.m_pImgProc.BeginProcess()) {
-			//处理线程启动失败则结束采集
-			m_inspectDlg.Freeze();
-
-			Win::log("图像处理线程启动失败");
-			RecordWarning(L"图像处理线程启动失败，请检查程序运行日志");
-			return;
-		}
-
-		//启动界面刷新线程
-		if (!(m_RefrushThread = AfxBeginThread(RefrushWnd, this))) {
-			//界面线程启动失败则结束采集
-			m_inspectDlg.Freeze();
-
-			Win::log("界面刷新线程启动失败");
-			m_inspectDlg.RecordWarning(L"界面刷新线程启动失败");
-			return;
-		}
-
 		Win::log("启动检测...");
 		m_inspectDlg.RecordLogList(L"启动检测...");
+
+		//启动图像采集
+		if (m_inspectDlg.Grab() == 0) {
+
+			if (m_inspectDlg.m_pImgProc.BeginProcess()) {
+				
+				//启动主界面刷新线程
+				m_RefrushThread = AfxBeginThread(RefrushWnd, this);
+
+				//启动历史页面刷新
+				m_historyDlg.m_pages = 0;
+				SetTimer(2, 3000, 0);
+			}
+			else {
+				//处理线程启动失败则结束采集
+				m_inspectDlg.Freeze();
+
+				Win::log("图像处理线程启动失败");
+				RecordWarning(L"图像处理线程启动失败，请检查程序运行日志");
+				return;
+			}
+		}
+		else {
+			Win::log("获取图像失败");
+			RecordWarning(L"获取图像失败");
+			return;
+		}
 	}
 	else {
+		m_inspectDlg.m_is_system_pause = FALSE;
+
 		Win::log("结束暂停，启动检测...");
 		m_inspectDlg.RecordLogList(L"结束暂停，启动检测...");
-	}
-	
-	//启动历史页面刷新
-	m_historyDlg.m_pages = 0;
-	SetTimer(2, 3000, 0);
+	}	
 
 	//时间记录戳
 	start_time = GetTickCount();
 
-	m_system_state = SYSTEM_STATE_RUN;
-	return;
+	if(m_system_state != SYSTEM_STATE_RUN)
+		m_system_state = SYSTEM_STATE_RUN;
+	
 }
 
 //停止  按钮
@@ -1419,57 +1434,61 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
 
-	m_inspectDlg.m_is_system_pause = FALSE;
-	m_inspectDlg.Freeze();
+	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
 
-	//等待列表中的图像都处理完成, 之后结束处理线程
-	while (m_inspectDlg.m_pImgProc.CheckTotalListSize())
-	{
-		Sleep(500);
+		if (m_inspectDlg.Freeze() == 0) {
+
+			//等待列表中的图像都处理完成, 之后结束处理线程
+			
+			//结束计算线程
+			m_inspectDlg.m_pImgProc.StopProcess();
+
+			//结束瑕疵界面刷新线程
+			while (m_is_refrushThread_alive)
+			{
+				m_is_refrushThread_alive = FALSE;
+			}
+
+			//结束历史图像刷新定时器
+			KillTimer(2);
+
+			//保存检测记录
+			EnterCriticalSection(&m_csVecDFT);
+			m_tableDlg.m_vecDFT = m_vDFT;
+			m_tableDlg.BeginSaveTable();
+			LeaveCriticalSection(&m_csVecDFT);
+
+			m_inspectDlg.m_is_system_pause = FALSE;
+		}
+		else {
+			Win::log("相机停止失败");
+			RecordWarning(L"相机停止失败");
+			return;
+		}
 	}
-	if (!m_inspectDlg.m_pImgProc.StopProcess()) {
-		Win::log("图像处理线程结束失败");
-		RecordWarning(L"图像处理线程结束失败，请检查程序运行日志");
-		return;
-	}
-
-	//结束瑕疵界面刷新线程
-	while (m_is_refrushThread_alive)
-	{
-		m_is_refrushThread_alive = FALSE;
-	}
-
-	//保存检测记录
-	EnterCriticalSection(&m_csVecDFT);
-	m_tableDlg.m_vecDFT = m_vDFT;
-	m_tableDlg.BeginSaveTable();
-	LeaveCriticalSection(&m_csVecDFT);
-
-	//结束历史图像刷新定时器
-	KillTimer(2);
-
 
 	Win::log("停止检测");
 	m_inspectDlg.RecordLogList(L"停止检测");
 
-	m_system_state = SYSTEM_STATE_STOP;
-	return;
+	if(m_system_state != SYSTEM_STATE_STOP)
+		m_system_state = SYSTEM_STATE_STOP;
+
 }
 
 //暂停  按钮
 void CDeVisionDlg::OnBnClickedMfcbuttonPause()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	
+	//暂停检测，相机获取的图像不放入图像列表
 	m_inspectDlg.m_is_system_pause = TRUE;
-	m_inspectDlg.Freeze();
 
-	//结束历史图像刷新定时器
-	KillTimer(2);
 
 	Win::log("暂停检测");
 	m_inspectDlg.RecordLogList(L"暂停检测");
 
-	m_system_state = SYSTEM_STATE_PAUSE;
+	if(m_system_state != SYSTEM_STATE_PAUSE)
+		m_system_state = SYSTEM_STATE_PAUSE;
 }
 
 //在线  按钮

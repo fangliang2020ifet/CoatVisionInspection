@@ -266,6 +266,24 @@
 #define IDC_EDIT_SEARCHWORDS            1224
 #define IDC_EDIT_WND1_RANGE             1225
 #define IDC_BUTTON_CHANGEINFO           1226
+#define IDC_EDIT8                       1227
+#define IDC_EDIT17                      1228
+#define IDC_EDIT18                      1229
+#define IDC_EDIT19                      1230
+#define IDC_EDIT20                      1231
+#define IDC_EDIT21                      1232
+#define IDC_EDIT22                      1233
+#define IDC_EDIT23                      1234
+#define IDC_EDIT24                      1235
+#define IDC_EDIT25                      1236
+#define IDC_EDIT26                      1237
+#define IDC_EDIT27                      1238
+#define IDC_EDIT28                      1239
+#define IDC_EDIT29                      1240
+#define IDC_EDIT30                      1241
+#define IDC_TREE1                       1242
+#define IDC_EDIT31                      1243
+#define IDC_STATIC_TABLE_DFT_IMAGE      1244
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -317,7 +335,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        177
 #define _APS_NEXT_COMMAND_VALUE         32815
-#define _APS_NEXT_CONTROL_VALUE         1227
+#define _APS_NEXT_CONTROL_VALUE         1245
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

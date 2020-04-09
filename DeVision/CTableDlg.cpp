@@ -70,6 +70,7 @@ BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_OPENINPROGRAM, &CTableDlg::OnBnClickedButtonOpeninprogram)
 	ON_BN_CLICKED(IDC_BUTTON_OPENEXCELPATH, &CTableDlg::OnBnClickedButtonOpenexcelpath)
 	ON_WM_DESTROY()
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_DETAIL, &CTableDlg::OnNMDblclkListDetail)
 END_MESSAGE_MAP()
 
 
@@ -132,12 +133,14 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 
 	DrawAllFlag(dc, wnd_width, wnd_height);
 
-	if (1) {
-		LPRECT prect = rect;
-		m_hbitmap = GetSrcBit(*dc, prect);
-		//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
-		BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
-	}
+	DrawSelectDFT(dc, m_selected_x, m_selected_y);
+
+	//if (1) {
+	//	LPRECT prect = rect;
+	//	m_hbitmap = GetSrcBit(*dc, prect);
+	//	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
+	//	BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
+	//}
 
 	CDialogEx::OnPaintClipboard(pClipAppWnd, hPaintStruct);
 }
@@ -290,6 +293,16 @@ void CTableDlg::DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height)
 	
 
 	return;
+}
+
+void CTableDlg::DrawSelectDFT(CDC *mDC, int x, int y)
+{
+	CPen pen;
+	pen.CreatePen(PS_SOLID, 3, RGB(0, 0, 255));
+
+	mDC->SelectObject(&pen);
+	mDC->Rectangle(x - 5, y - 5, x + 5, y + 5);
+
 }
 
 void CTableDlg::AddToDetailList(int NO, int kind, float position, float radius, int rank)
@@ -910,7 +923,6 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	AfxEnableControlContainer();	
 
 	CTableDlg *pThis = (CTableDlg *)pParam;
-
 	pThis->m_save_successfully = FALSE;
 
 	//1.创建基本对象
@@ -1357,15 +1369,23 @@ void CTableDlg::OnBnClickedBtnRefrush()
 
 	//清除列表
 	m_ListCtrlDetail.DeleteAllItems();
-	//m_ListCtrlDetail.InsertColumn(0, L"序号", LVCFMT_LEFT, 40);
-	//m_ListCtrlDetail.InsertColumn(1, L"类型", LVCFMT_LEFT, 40);
-	//m_ListCtrlDetail.InsertColumn(2, L"位置", LVCFMT_LEFT, 40);
-	//m_ListCtrlDetail.InsertColumn(3, L"直径", LVCFMT_LEFT, 40);
-	//m_ListCtrlDetail.InsertColumn(4, L"等级", LVCFMT_LEFT, 40);
-
 
 	Invalidate();
+	UpdateWindow();
 
+	//保存窗口图像
+	if (1) {
+		CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
+		CRect rect;
+		pwnd->GetClientRect(&rect);
+		CDC *dc = pwnd->GetDC();
+
+		LPRECT prect = rect;
+		m_hbitmap = GetSrcBit(*dc, prect);
+		//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
+		BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
+		ReleaseDC(dc);
+	}
 }
 
 //查询
@@ -1374,7 +1394,7 @@ void CTableDlg::OnBnClickedButtonSearch()
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
 
-	SaveToExcel(*m_pvDFT);
+	//SaveToExcel(*m_pvDFT);
 }
 
 
@@ -1495,7 +1515,6 @@ void CTableDlg::OnBnClickedButtonSaveas()
 	// TODO: 在此添加控件通知处理程序代码
 }
 
-
 //打开文件夹
 void CTableDlg::OnBnClickedButtonOpenexcelpath()
 {
@@ -1507,5 +1526,107 @@ void CTableDlg::OnBnClickedButtonOpenexcelpath()
 
 }
 
+//双击ListBox某一瑕疵
+void CTableDlg::OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
 
+	CString image_name;
+	int index = m_ListCtrlDetail.GetSelectionMark();
 
+	if (!m_pvDFT->empty()) {
+		int nsize = m_ListCtrlDetail.GetItemCount();
+		DefectType dtype = m_pvDFT->at(nsize - index - 1);
+		//标记的位置
+		CRect rect;
+		GetDlgItem(IDC_STATIC_REPORT)->GetClientRect(&rect);
+		m_selected_x = (int)(dtype.center_x * scale_x);
+		m_selected_y = (int)(rect.Height() - dtype.absolute_position * scale_y);
+
+		//生成图像文件名
+		HTuple hv_path = (HTuple)m_DFT_img_path.c_str();
+		char cpos[16];
+		sprintf_s(cpos, "%.3f", dtype.absolute_position);
+		//HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
+		HTuple hv_position = (HTuple)cpos;
+		char cX[16];
+		sprintf_s(cX, "%.3f", dtype.center_x);
+		HTuple hv_X = (HTuple)cX;
+		char cradius[16];
+		sprintf_s(cradius, "%.3f", dtype.circle_radius);
+		HTuple hv_radius = (HTuple)cradius;
+		char carea[16];
+		sprintf_s(carea, "%.3f", dtype.area);
+		HTuple hv_harea = (HTuple)carea;
+		HTuple hv_kind = (HTuple)dtype.type;
+		HTuple hv_img_name = hv_path + "P" + hv_position
+			+ "_X" + hv_X
+			+ "_R" + hv_radius
+			+ "_A" + hv_harea
+			+ "_K" + hv_kind
+			+ ".bmp";
+		std::string name = hv_img_name.S();
+		image_name = name.c_str();
+	}
+
+	CWnd *pwnd = GetDlgItem(IDC_STATIC_TABLE_DFT_IMAGE);
+	ShowBitmap(pwnd, image_name);
+
+	*pResult = 0;
+}
+
+//显示 .bmp 图像文件
+void CTableDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
+{
+	CRect rect;
+	pWnd->GetClientRect(&rect);
+	int width = rect.Width();
+	int height = rect.Height();
+	CDC* pDC = pWnd->GetDC();
+	CBitmap m_bitmap;
+
+	/*创建位图并调用函数LoadImage装载图标、光标或位图.
+	/*定义bitmap指针 调用函数LoadImage装载位图
+	/* 1.要装载OEM图像，则设此参数值为0  OBM_ OEM位图 OIC_OEM图标 OCR_OEM光标
+	/* 2.BmpName要装载图片的文件名
+	/* 3.装载图像类型:
+	/*   IMAGE_BITMAP-装载位图 IMAGE_CURSOR-装载光标 IMAGE_ICON-装载图标
+	/* 4.指定图标或光标的像素宽度和长度 以像素为单位
+	/* 5.加载选项:
+	/*   IR_LOADFROMFILE-指明由lpszName指定文件中加载图像
+	/*   IR_DEFAULTSIZE-指明使用图像默认大小
+	/*   LR_CREATEDIBSECTION-当uType参数为IMAGE_BITMAP时,创建一个DIB项
+	/**************************************************************************/
+	HBITMAP m_hBitmap;
+	m_hBitmap = (HBITMAP)LoadImage(NULL, BmpName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	if (m_hBitmap == NULL)
+		return;
+
+	if (m_bitmap.m_hObject)
+	{
+		m_bitmap.Detach();           //切断CWnd和窗口联系  
+	}
+	m_bitmap.Attach(m_hBitmap);      //将句柄HBITMAP m_hBitmap与CBitmap m_bitmap关联  
+
+	//定义并创建一个内存设备环境DC  
+	CDC dcBmp;
+	if (!dcBmp.CreateCompatibleDC(pDC))   //创建兼容性的DC  
+		return;
+
+	//定义BITMAP变量,调用函数GetBitmap将图片载入位图中,该定义是为获取图像的长宽等信息
+	BITMAP m_bmp;                          //临时bmp图片变量  
+	m_bitmap.GetBitmap(&m_bmp);            //将图片载入位图中  
+
+	//调用函数SelectObject将位图选入兼容内存设备环境DC中.
+	CBitmap* pbmpOld = dcBmp.SelectObject(&m_bitmap);         //将位图选入临时内存设备环境  
+
+	pDC->SetStretchBltMode(STRETCH_HALFTONE);
+	pDC->StretchBlt(0, 0, width, height, &dcBmp, 0, 0, m_bmp.bmWidth, m_bmp.bmHeight, SRCCOPY);
+
+	//恢复临时DC的位图,删除CreateCompatibleDC得到的图片DC,删除内存中的位图及释放系统资源
+	dcBmp.SelectObject(pbmpOld);           //恢复临时DC的位图  
+	DeleteObject(&m_bitmap);               //删除内存中的位图  
+	dcBmp.DeleteDC();                      //删除CreateCompatibleDC得到的图片DC  
+
+}

@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <list>
-//#include <map>
 #include <algorithm>
 #include <direct.h>
 #include <fstream>
@@ -11,18 +10,7 @@
 #include "HalconCpp.h"
 #include "HDevThread.h"
 
-
-
-#define IMAGE_WIDTH 8192
-#define IMAGE_HEIGHT 8192
-// 纵向的精度, 单位： mm
-#define VERTICAL_PRECISION 0.035f
-// 横向的精度，单位： mm
-#define HORIZON_PRECISION 0.05f
-
-
 using namespace HalconCpp;
-
 
 namespace HDevExportCpp
 {
@@ -100,6 +88,7 @@ struct SelectRegion
 };
 
 typedef std::list<HImage> ImgList;
+
 typedef std::list<DefectType> DFTList;
 
 class CImageProcess
@@ -112,10 +101,12 @@ public:
 	BOOL TEST_MODEL = FALSE;
 	BOOL REDUCE_BLACK_EDGE = FALSE;
 	BOOL SAVE_REFERENCE_IMAGE = TRUE;
-	int m_camera1_standart_deviation = 15;
-	int m_camera2_standart_deviation = 15;
-	int m_camera3_standart_deviation = 15;
-	int m_camera4_standart_deviation = 15;
+	BOOL m_referenceImage_OK = FALSE;
+
+	int m_camera1_standart_deviation = 5;
+	int m_camera2_standart_deviation = 5;
+	int m_camera3_standart_deviation = 5;
+	int m_camera4_standart_deviation = 5;
 
 	BOOL BeginProcess();
 	BOOL StopProcess();
@@ -204,7 +195,6 @@ private:
 	BOOL m_camera2_reference_image_acquired;
 	BOOL m_camera3_reference_image_acquired;
 	BOOL m_camera4_reference_image_acquired;
-	BOOL m_referenceImage_OK = FALSE;
 	int m_camera1_invalid_area;
 	int m_camera4_invalid_area;
 
@@ -225,6 +215,8 @@ protected:
 	BOOL IsFileExist(const std::string &filename);
 	BOOL IsPathExist(const std::string &pathname);
 private:
+
+	HANDLE                m_hStopEvent;
 
 	CWinThread *m_ReferenceImage;
 	CWinThread *m_CalculateThread1_1;
