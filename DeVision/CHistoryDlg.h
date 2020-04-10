@@ -26,8 +26,10 @@ public:
 	//std::string m_strPath;	                           //历史图像路径
 
 	//std::vector<std::string> m_vImages;
-	BOOL LoadHistoryImage(std::string m_strPath);
+	BOOL LoadHistoryImage();
+
 	int m_pages;
+	std::string m_file_path = "D:\\history";
 
 protected:
 	CWnd *pwnd1;
@@ -46,7 +48,6 @@ private:
 	void ShowBitmap(CWnd *pWnd, CString BmpName);
 
 	std::vector<std::string> m_vImage_name;
-	std::string m_file_path = "D:\\history";
 
 public:
 	afx_msg void OnBnClickedButtonPrePage();

@@ -284,6 +284,9 @@
 #define IDC_TREE1                       1242
 #define IDC_EDIT31                      1243
 #define IDC_STATIC_TABLE_DFT_IMAGE      1244
+#define IDC_COMBO_GLOBAL_THRESHOLD      1245
+#define IDC_COMBO_SELECT_THRESHOLD      1246
+#define IDC_CHECK_LOAD_DEFAULT          1247
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -328,14 +331,15 @@
 #define ID_Save                         32812
 #define ID_32813                        32813
 #define ID_32814                        32814
+#define ID_DEFFECT_TRADER               32815
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        177
-#define _APS_NEXT_COMMAND_VALUE         32815
-#define _APS_NEXT_CONTROL_VALUE         1245
+#define _APS_NEXT_COMMAND_VALUE         32816
+#define _APS_NEXT_CONTROL_VALUE         1248
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

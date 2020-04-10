@@ -126,7 +126,7 @@ BEGIN_MESSAGE_MAP(CDeVisionDlg, CDialogEx)
 	ON_COMMAND(ID_Save, &CDeVisionDlg::OnSave)
 	ON_COMMAND(ID_EXIT, &CDeVisionDlg::OnExit)
 	ON_COMMAND(ID_PRODUCT, &CDeVisionDlg::OnProduct)
-	ON_COMMAND(ID_USER, &CDeVisionDlg::OnUser)
+	ON_COMMAND(ID_DEFFECT_TRADER, &CDeVisionDlg::OnDeffectTrader)
 	ON_COMMAND(ID_DEFECT_ANALYSIS, &CDeVisionDlg::OnDefectAnalysis)
 	ON_COMMAND(ID_TABLE, &CDeVisionDlg::OnTable)
 	ON_COMMAND(ID_IMAGE, &CDeVisionDlg::OnImage)
@@ -230,8 +230,8 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetTimer(1, 1000, 0);
 
 	m_iAllThread_stopped = 0;
-	m_inspectDlg.m_pImgProc.TEST_MODEL = TRUE;
-	m_inspectDlg.m_pImgProc.REDUCE_BLACK_EDGE = FALSE;
+	m_inspectDlg.FREE_RUN = TRUE;
+	m_inspectDlg.m_pImgProc.TEST_MODEL = FALSE;
 
 	Win::log("初始化完成");
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -242,6 +242,18 @@ void CDeVisionDlg::ExitProgram()
 	m_vDFT.clear();
 
 	return;
+}
+
+void CDeVisionDlg::OnIdok()
+{
+	// TODO: 在此添加命令处理程序代码
+	// NOTHING
+}
+
+void CDeVisionDlg::OnIdcancel()
+{
+	// TODO: 在此添加命令处理程序代码
+	//nothing
 }
 
 int CDeVisionDlg::CheckThreadStatue()
@@ -427,6 +439,7 @@ HBRUSH CDeVisionDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
+//定时器回调函数
 void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent)
@@ -454,8 +467,7 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	case 2:
 		//更新历史图像，选中历史页面
 		if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
-			m_historyDlg.LoadHistoryImage(m_work_path);
-
+			m_historyDlg.LoadHistoryImage();
 		break;
 	default:
 		break;
@@ -1028,12 +1040,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		m_button_online.SetWindowTextW(_T("在线"));
 		if(m_iAllThread_stopped == 0)
 			GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
-
-
-		////主窗口关闭按钮无效
-		//pSysMenu->EnableMenuItem(SC_CLOSE, MF_ENABLED);
-		if (pMenu)
-		{
+		if (pMenu){
 			pMenu->EnableMenuItem(ID_SETUP, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_EXIT, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_DISABLED);
@@ -1051,10 +1058,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-
-		//pSysMenu->EnableMenuItem(SC_CLOSE, MF_DISABLED);
-		if (pMenu)
-		{
+		if (pMenu){
 			pMenu->EnableMenuItem(ID_SETUP, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_EXIT, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_ENABLED);
@@ -1076,7 +1080,11 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		m_tableDlg.m_open_inprogram.EnableWindow(false);
 		m_historyDlg.m_btn_pre_page.EnableWindow(false);
 		m_historyDlg.m_btn_next_page.EnableWindow(false);
-
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_PRODUCT, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
+		}
 
 		break;
 	case SYSTEM_STATE_PAUSE:
@@ -1105,7 +1113,11 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		m_tableDlg.m_open_inprogram.EnableWindow(true);
 		m_historyDlg.m_btn_pre_page.EnableWindow(true);
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
-
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_PRODUCT, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
+		}
 
 		break;
 	default:
@@ -1280,7 +1292,8 @@ void CDeVisionDlg::ReStartPrepare()
 	CreateWorkPath(m_work_path);
 	//获取瑕疵图像保存路径
 	m_inspectDlg.m_pImgProc.m_strPath = m_work_path;
-	m_tableDlg.m_DFT_img_path = m_work_path;
+	m_tableDlg.m_DFT_img_path         = m_work_path;
+	m_historyDlg.m_file_path          = m_work_path;
 	Win::log("工作目录已创建");
 	m_inspectDlg.RecordLogList(L"工作目录已创建");
 
@@ -1549,7 +1562,7 @@ void CDeVisionDlg::OnBnClickedButtonExit()
 
 //*********************************************菜单****************************************//
 
-//系统
+//系统：设置
 void CDeVisionDlg::OnSetup()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1563,12 +1576,13 @@ void CDeVisionDlg::OnSetup()
 
 }
 
+//系统：保存
 void CDeVisionDlg::OnSave()
 {
 	// TODO: 在此添加命令处理程序代码
 }
 
-
+//系统：退出
 void CDeVisionDlg::OnExit()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1577,7 +1591,7 @@ void CDeVisionDlg::OnExit()
 }
 
 
-//控制
+//控制：相机设置
 void CDeVisionDlg::OnCameraSetup()
 {
 	// TODO: 在此添加命令处理程序代码		
@@ -1587,7 +1601,7 @@ void CDeVisionDlg::OnCameraSetup()
 
 }
 
-
+//控制：光源设置
 void CDeVisionDlg::OnLedSetup()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1596,7 +1610,7 @@ void CDeVisionDlg::OnLedSetup()
 
 }
 
-
+//控制：触发设置
 void CDeVisionDlg::OnTrigger()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1605,34 +1619,41 @@ void CDeVisionDlg::OnTrigger()
 
 }
 
-
+//控制：故障分析
 void CDeVisionDlg::OnError()
 {
 	// TODO: 在此添加命令处理程序代码
 }
 
-//瑕疵检测
+//瑕疵检测：产品信息
 void CDeVisionDlg::OnProduct()
 {
 	// TODO: 在此添加命令处理程序代码
 }
 
-
-void CDeVisionDlg::OnUser()
+//瑕疵检测：瑕疵趋势信息
+void CDeVisionDlg::OnDeffectTrader()
 {
 	// TODO: 在此添加命令处理程序代码
 }
 
-
+//瑕疵检测：瑕疵检测算法
 void CDeVisionDlg::OnDefectAnalysis()
 {
 	// TODO: 在此添加命令处理程序代码
 	CAlgorithmDlg algorithmDlg;
 	algorithmDlg.DoModal();
 
+	if (algorithmDlg.m_global_threshold != 0)
+		m_inspectDlg.m_pImgProc.m_k_normal_distribution = algorithmDlg.m_global_threshold;
+	if (algorithmDlg.m_select_threshold != 0)
+		m_inspectDlg.m_pImgProc.m_k_min_select_area = algorithmDlg.m_select_threshold;
+	m_inspectDlg.m_pImgProc.m_bLoad_Default_Ref_Dev = algorithmDlg.m_load_default;
+
+
 }
 
-//历史记录
+//历史记录：报表
 void CDeVisionDlg::OnTable()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1644,7 +1665,7 @@ void CDeVisionDlg::OnTable()
 
 }
 
-
+//历史记录：图像
 void CDeVisionDlg::OnImage()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -1654,36 +1675,29 @@ void CDeVisionDlg::OnImage()
 
 }
 
-//帮助
+//帮助：帮助
 void CDeVisionDlg::OnHelp()
 {
 	// TODO: 在此添加命令处理程序代码
 }
 
-
+//帮助：日志
 void CDeVisionDlg::OnRecord()
 {
 	// TODO: 在此添加命令处理程序代码
+	TCHAR path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, path);
+	CString cpath = path;
+	cpath = cpath + L"\\log";
+	ShellExecute(NULL, L"explore", cpath, NULL, NULL, SW_SHOW);
+
 }
 
-
+//帮助：关于
 void CDeVisionDlg::OnAbout()
 {
 	// TODO: 在此添加命令处理程序代码
 	CAboutDlg about;
 	about.DoModal();
 
-}
-
-
-void CDeVisionDlg::OnIdok()
-{
-	// TODO: 在此添加命令处理程序代码
-	// NOTHING
-}
-
-void CDeVisionDlg::OnIdcancel()
-{
-	// TODO: 在此添加命令处理程序代码
-	//nothing
 }

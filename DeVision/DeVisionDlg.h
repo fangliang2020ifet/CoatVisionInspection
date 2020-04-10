@@ -195,7 +195,7 @@ protected:
 	afx_msg void OnSave();
 	afx_msg void OnExit();
 	afx_msg void OnProduct();
-	afx_msg void OnUser();
+	afx_msg void OnDeffectTrader();
 	afx_msg void OnDefectAnalysis();
 	afx_msg void OnTable();
 	afx_msg void OnImage();

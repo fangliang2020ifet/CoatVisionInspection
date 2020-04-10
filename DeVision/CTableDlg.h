@@ -35,10 +35,12 @@ public:
 	void DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height);
 	void DrawSelectDFT(CDC *mDC, int x, int y);
 	void AddToDetailList(int NO, int kind, float position, float radius, int rank);
+	void SaveDistributeImage();
 	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
 	bool SaveBMPToFile(HBITMAP hBitmap, LPSTR lpFileName);
 	bool SaveBitmapToFile(HBITMAP hBitmap, LPSTR lpFileName);
 	void SaveToExcel(std::vector<DefectType> vDFT);
+	void SaveToExcelUseDefault(CString &name);
 	void FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead);
 	void BeginSaveTable();
 
@@ -65,6 +67,7 @@ private:
 	std::wstring m_wstr_savetime;                        //保存时间
 	CWinThread *m_SaveTable;
 	static UINT SaveTableThread(LPVOID pParam);
+	static UINT SaveTableThreadDefault(LPVOID pParam);
 	HBITMAP m_hbitmap;
 	void GenerateReportName(std::wstring &wstrname);
 	void InitialHistoryList();
@@ -74,6 +77,7 @@ private:
 	void GetExcelsInfo(std::string filename, std::string &time, std::string &number,
 		std::string &ID, std::string &longth, std::string &operators);
 
+	CString m_current_excel_name;                       //当前使用的 excel 的文件名
 	void OpenExcelFile(std::wstring excelname);
 	void ShowBitmap(CWnd *pWnd, CString BmpName);
 

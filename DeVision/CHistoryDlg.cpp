@@ -13,6 +13,48 @@
 #include "Log.h"
 
 //using namespace std;
+bool cmp(const std::string &str1, const std::string &str2)
+{
+	auto pos1 = str1.find_first_of("_");
+	std::string sub1 = str1.substr(1, pos1 - 1);
+	double NO1 = std::stod(sub1);
+
+	auto pos2 = str2.find_first_of("_");
+	std::string sub2 = str2.substr(1, pos2 - 1);
+	double NO2 = std::stod(sub2);
+
+	return NO1 < NO2;
+}
+
+//查找目录下的所有文件
+void getFiles(std::string path, std::vector<std::string>& files)
+{
+	//文件句柄
+	intptr_t   hFile = 0;
+	//文件信息
+	struct _finddata_t fileinfo;
+	std::string p;
+	if ((hFile = _findfirst(p.assign(path).append("*.bmp").c_str(), &fileinfo)) != -1)
+	{
+		do
+		{
+			//如果是目录,迭代之
+			//如果不是,加入列表
+			if ((fileinfo.attrib &  _A_SUBDIR))
+			{
+				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
+					getFiles(p.assign(path).append("\\").append(fileinfo.name), files);
+			}
+			else
+			{
+				//files.push_back(p.assign(path).append("\\").append(fileinfo.name));
+				files.push_back(fileinfo.name);
+			}
+		} while (_findnext(hFile, &fileinfo) == 0);
+		_findclose(hFile);
+	}
+}
+
 
 // CHistoryDlg 对话框
 
@@ -99,9 +141,16 @@ void CHistoryDlg::OnDestroy()
 void CHistoryDlg::OnBnClickedButtonPrePage()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if (m_vImage_name.empty()) {
+		//排序
+		std::vector<std::string> vstring;
+		getFiles(m_file_path, vstring);
+		sort(vstring.begin(), vstring.end(), cmp);
+		m_vImage_name = vstring;
+	}
+
 	if (m_pages > 0)
 		m_pages -= 1;
-
 
 	RefrushImgWnd(m_file_path, m_vImage_name);
 
@@ -111,6 +160,13 @@ void CHistoryDlg::OnBnClickedButtonPrePage()
 void CHistoryDlg::OnBnClickedButtonNextPage()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if (m_vImage_name.empty()) {
+		//排序
+		std::vector<std::string> vstring;
+		getFiles(m_file_path, vstring);
+		sort(vstring.begin(), vstring.end(), cmp);
+		m_vImage_name = vstring;
+	}
 
 	// 向上取整
 	int nums = (int)ceil((double)m_vImage_name.size() / 9.0);
@@ -118,7 +174,6 @@ void CHistoryDlg::OnBnClickedButtonNextPage()
 		m_pages += 1;
 
 	RefrushImgWnd(m_file_path, m_vImage_name);
-
 }
 
 //打开目录
@@ -314,71 +369,16 @@ void CHistoryDlg::ReadDFTInfo(std::string name, std::string &kind, std::string &
 	return;
 }
 
-//查找目录下的所有文件
-void getFiles(std::string path, std::vector<std::string>& files)
+BOOL CHistoryDlg::LoadHistoryImage()
 {
-	//文件句柄
-	intptr_t   hFile = 0;
-	//文件信息
-	struct _finddata_t fileinfo;
-	std::string p;
-	if ((hFile = _findfirst(p.assign(path).append("*.bmp").c_str(), &fileinfo)) != -1)
-	{
-		do
-		{
-			//如果是目录,迭代之
-			//如果不是,加入列表
-			if ((fileinfo.attrib &  _A_SUBDIR))
-			{
-				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
-					getFiles(p.assign(path).append("\\").append(fileinfo.name), files);
-			}
-			else
-			{
-				//files.push_back(p.assign(path).append("\\").append(fileinfo.name));
-				files.push_back(fileinfo.name);
-			}
-		} while (_findnext(hFile, &fileinfo) == 0);
-		_findclose(hFile);
-	}
-}
-
-bool cmp(const std::string &str1, const std::string &str2)
-{
-	auto pos1 = str1.find_first_of("_");
-	std::string sub1 = str1.substr(0, pos1);
-	int NO1 = std::stoi(sub1);
-
-	auto pos2 = str2.find_first_of("_");
-	std::string sub2 = str2.substr(0, pos2);
-	int NO2 = std::stoi(sub2);
-
-	return NO1 < NO2;
-}
-
-bool cmp2(const std::string &str1, const std::string &str2)
-{
-	auto pos1 = str1.find_first_of("_");
-	std::string sub1 = str1.substr(1, pos1 - 1);
-	double NO1 = std::stod(sub1);
-
-	auto pos2 = str2.find_first_of("_");
-	std::string sub2 = str2.substr(1, pos2 - 1);
-	double NO2 = std::stod(sub2);
-
-	return NO1 < NO2;
-}
-
-BOOL CHistoryDlg::LoadHistoryImage(std::string path)
-{
-	//std::string file_path = m_strPath.substr(0, m_strPath.length() - 2);
-	std::string _path = path;
-	m_file_path = path;
+	////std::string file_path = m_strPath.substr(0, m_strPath.length() - 2);
+	//std::string _path = path;
+	//m_file_path = path;
 
 	//排序
 	std::vector<std::string> vstring;
-	getFiles(_path, vstring);
-	sort(vstring.begin(), vstring.end(), cmp2);
+	getFiles(m_file_path, vstring);
+	sort(vstring.begin(), vstring.end(), cmp);
 	m_vImage_name = vstring;
 
 	m_pages = 0;

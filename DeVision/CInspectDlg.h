@@ -33,6 +33,8 @@ public:
 	};
 
 public:
+	BOOL FREE_RUN = FALSE;           //相机内部触发模式
+
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 	CFont m_font;
 	BOOL m_bUpdateUserInfo = FALSE;

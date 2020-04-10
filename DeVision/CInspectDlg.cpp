@@ -91,13 +91,12 @@ BOOL CInspectDlg::OnInitDialog()
 	__super::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	
-	//获取父窗口指针
-	//CDeVisionDlg * pMainDlg = (CDeVisionDlg*)this->GetParent();
-	//m_pImgProc = &(pMainDlg->m_pImageProcess);
-
 	m_font.CreatePointFont(300, _T("Times New Roman"));
 
+	camera1_show_buffer = TRUE;
+	camera2_show_buffer = TRUE;
+	camera3_show_buffer = TRUE;
+	camera4_show_buffer = TRUE;
 
 	CButton *pcheck =(CButton*)GetDlgItem(IDC_CHECK1);
 	pcheck->SetCheck(TRUE);
@@ -416,13 +415,13 @@ BOOL CInspectDlg::CameraSystemInitial()
 {
 	if (!m_camera_system_initialled) {
 
-		/*
+		
 		if (!InitServer()) {
 			Win::log("采集设备异常");
 			RecordWarning(L"采集设备异常");
 			return FALSE;
 		}
-
+		/*
 		if (!InitialBoard1())
 		{
 			Win::log("1#相机初始化失败");
@@ -453,19 +452,12 @@ BOOL CInspectDlg::CameraSystemInitial()
 			RecordLogList(L"相机初始化：对象创建失败");
 			return FALSE;
 		}
-
 		InitializeCWndAndView();
 		*/
 
 		InitialAllBoards();
 
-		camera1_show_buffer = TRUE;
-		camera2_show_buffer = TRUE;
-		camera3_show_buffer = TRUE;
-		camera4_show_buffer = TRUE;
-
 	}
-
 
 	m_camera_system_initialled = TRUE;
 	Win::log("采集系统初始化完成");
@@ -477,12 +469,11 @@ BOOL CInspectDlg::CameraSystemInitial()
 //初始化采集卡
 BOOL CInspectDlg::InitialAllBoards()
 {
-	if (m_pImgProc.TEST_MODEL) {
+	if ( FREE_RUN ) {
 		char free_run_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_1.ccf";
 		char free_run_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_2.ccf";
 		char free_run_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_3.ccf";
 		char free_run_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_4.ccf";
-
 		memcpy(configFilename1, free_run_1, sizeof(free_run_1));
 		memcpy(configFilename2, free_run_2, sizeof(free_run_2));
 		memcpy(configFilename3, free_run_3, sizeof(free_run_3));
@@ -493,7 +484,6 @@ BOOL CInspectDlg::InitialAllBoards()
 		char encode_trigger_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board2.ccf";
 		char encode_trigger_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board3.ccf";
 		char encode_trigger_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board4.ccf";
-
 		memcpy(configFilename1, encode_trigger_1, sizeof(encode_trigger_1));
 		memcpy(configFilename2, encode_trigger_2, sizeof(encode_trigger_2));
 		memcpy(configFilename3, encode_trigger_3, sizeof(encode_trigger_3));
@@ -558,7 +548,7 @@ BOOL CInspectDlg::InitialAllBoards()
 	if (!CreateObjects()) { EndDialog(TRUE); return FALSE; }
 
 	//外部触发时无需设置以下参数
-	if (m_pImgProc.TEST_MODEL) {
+	if (FREE_RUN) {
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
 		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 20000);//设定触发频率
 		m_AcqDevice2->SetFeatureValue("TriggerMode", "Off");//触发模式打开

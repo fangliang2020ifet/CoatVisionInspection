@@ -13,6 +13,7 @@
 #include <math.h>
 #include <direct.h>
 #include <io.h>
+#include <fstream>
 
 
 using namespace ATL;
@@ -364,6 +365,21 @@ void CTableDlg::AddToDetailList(int NO, int kind, float position, float radius, 
 	m_ListCtrlDetail.SetItemText(nItem, 3, CA2W(cradius));
 	m_ListCtrlDetail.SetItemText(nItem, 4, cstrRank);
 	return;
+}
+
+//保存瑕疵分布图
+void CTableDlg::SaveDistributeImage()
+{
+	CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
+	CRect rect;
+	pwnd->GetClientRect(&rect);
+	CDC *dc = pwnd->GetDC();
+
+	LPRECT prect = rect;
+	m_hbitmap = GetSrcBit(*dc, prect);
+	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
+	BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
+	ReleaseDC(dc);
 }
 
 HBITMAP CTableDlg::GetSrcBit(HDC hDC, LPRECT rEct)
@@ -777,26 +793,30 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 		CString strBMP = (TCHAR*)path;
 		CString imageName("\\temp\\saved.bmp");
 		strBMP += imageName;
-		//【2】插入图像
-		//获取图像插入的范围
-		//从Sheet对象上获得一个Shapes   
-		CShapes pShapes;
-		pShapes.AttachDispatch(sheet.get_Shapes());
-		//获得Range对象，用来插入图片
-		range.AttachDispatch(sheet.get_Range(COleVariant(_T("A6")), COleVariant(_T("H50"))), TRUE);
-		//range.Merge(COleVariant((long)0));  //合并单元格
-		VARIANT rLeft = range.get_Left();
-		VARIANT rTop = range.get_Top();
-		VARIANT rWidth = range.get_Width();
-		VARIANT rHeight = range.get_Height();
+		std::ifstream fin(strBMP.GetBuffer());
+		if (fin) {
+			//【2】插入图像
+			//获取图像插入的范围
+			//从Sheet对象上获得一个Shapes   
+			CShapes pShapes;
+			pShapes.AttachDispatch(sheet.get_Shapes());
+			//获得Range对象，用来插入图片
+			range.AttachDispatch(sheet.get_Range(COleVariant(_T("A7")), COleVariant(_T("H51"))), TRUE);
+			range.Merge(COleVariant((long)0));  //合并单元格
+			VARIANT rLeft = range.get_Left();
+			VARIANT rTop = range.get_Top();
+			VARIANT rWidth = range.get_Width();
+			VARIANT rHeight = range.get_Height();
 
-		//添加图像到 H1 - K10范围区域
-		CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
-			(float)rLeft.dblVal, (float)rTop.dblVal, (float)rWidth.dblVal, (float)rHeight.dblVal);
-		//设置图像所占的宽高
-		CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
-		shapeRange.put_Height(float(600));
-		shapeRange.put_Width(float(450));
+			//添加图像到 A7 - H51范围区域
+			CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
+				(float)rLeft.dblVal + 20.0f, (float)rTop.dblVal + 20.0f,
+				(float)rWidth.dblVal - 40.0f, (float)rHeight.dblVal - 40.0f);
+			////设置图像所占的宽高
+			//CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
+			//shapeRange.put_Height(float(600));
+			//shapeRange.put_Width(float(500));
+		}
 
 
 		range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
@@ -840,6 +860,55 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 	App.Quit();          // 退出_Application
 	App.ReleaseDispatch();
 
+}
+
+void CTableDlg::SaveToExcelUseDefault(CString &name)
+{
+	CApplication app;
+	CWorkbooks books;
+	CWorkbook book;
+
+	LPDISPATCH lpDisp;
+	COleVariant vResult;
+	COleVariant  covOptional((long)DISP_E_PARAMNOTFOUND, VT_ERROR);
+	if (!app.CreateDispatch(L"Excel.Application"))
+	{
+		AfxMessageBox(L"无法打开Excel应用", MB_OK | MB_ICONWARNING);
+		return;
+	}
+	books.AttachDispatch(app.get_Workbooks());
+	//打开模板文件
+	TCHAR path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, path);
+	CString cpath = path;
+	cpath = cpath + L"\\temp\\example.xlsx";
+
+	lpDisp = books.Open(cpath, covOptional, covOptional, covOptional, covOptional, covOptional
+		, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
+		covOptional, covOptional);
+	//得到得到视图workbook
+	book.AttachDispatch(lpDisp);
+
+	//另存为
+	CString strExcelFile = m_save_path.c_str();
+	std::wstring strname;
+	GenerateReportName(strname);
+	CString strdevName(strname.c_str());
+	strdevName += _T(".xlsx");
+	strExcelFile += strdevName;
+	COleVariant cvname(strExcelFile);
+	book.SaveAs(cvname, covOptional, covOptional, covOptional, covOptional, covOptional
+		, 1, covOptional, covOptional, covOptional, covOptional, covOptional);
+
+	book.ReleaseDispatch();
+	books.ReleaseDispatch();
+	book.Close(covOptional, covOptional, covOptional);//关闭Workbook对象
+	books.Close();           // 关闭Workbooks对象
+	//app.Quit();          // 退出_Application
+	//app.ReleaseDispatch();
+
+
+	name = cpath;
 }
 
 void CTableDlg::FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead)
@@ -906,8 +975,10 @@ void CTableDlg::BeginSaveTable()
 		//Win::log("报表保存失败，上一个保存线程尚未结束");
 		m_SaveTable = NULL;
 	}
+	//使用默认模板另存为
+	//SaveToExcelUseDefault(m_current_excel_name);
 
-	if (!(m_SaveTable = AfxBeginThread(SaveTableThread, this))) {
+	if (!(m_SaveTable = AfxBeginThread(SaveTableThreadDefault, this))) {
 		Win::log("报表保存失败");
 		return;
 	}
@@ -918,6 +989,7 @@ void CTableDlg::BeginSaveTable()
 //线程函数：保存excel
 UINT CTableDlg::SaveTableThread(LPVOID pParam)
 {
+	//解决多线程打开excel的错误
 	AFX_MANAGE_STATE(AfxGetStaticModuleState())
 		CoInitialize(NULL);
 	AfxEnableControlContainer();	
@@ -1171,26 +1243,29 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 		CString strBMP = (TCHAR*)path;
 		CString imageName("\\temp\\saved.bmp");
 		strBMP += imageName;
-		//【2】插入图像
-		//获取图像插入的范围
-		//从Sheet对象上获得一个Shapes   
-		CShapes pShapes;
-		pShapes.AttachDispatch(sheet.get_Shapes());
-		//获得Range对象，用来插入图片
-		range.AttachDispatch(sheet.get_Range(COleVariant(_T("A6")), COleVariant(_T("H50"))), TRUE);
-		//range.Merge(COleVariant((long)0));  //合并单元格
-		VARIANT rLeft = range.get_Left();
-		VARIANT rTop = range.get_Top();
-		VARIANT rWidth = range.get_Width();
-		VARIANT rHeight = range.get_Height();
+		std::ifstream fin(strBMP.GetBuffer());
+		if (fin) {
+			//【2】插入图像
+			//获取图像插入的范围
+			//从Sheet对象上获得一个Shapes   
+			CShapes pShapes;
+			pShapes.AttachDispatch(sheet.get_Shapes());
+			//获得Range对象，用来插入图片
+			range.AttachDispatch(sheet.get_Range(COleVariant(_T("A6")), COleVariant(_T("H50"))), TRUE);
+			//range.Merge(COleVariant((long)0));  //合并单元格
+			VARIANT rLeft = range.get_Left();
+			VARIANT rTop = range.get_Top();
+			VARIANT rWidth = range.get_Width();
+			VARIANT rHeight = range.get_Height();
 
-		//添加图像到 H1 - K10范围区域
-		CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
-			(float)rLeft.dblVal, (float)rTop.dblVal, (float)rWidth.dblVal, (float)rHeight.dblVal);
-		//设置图像所占的宽高
-		CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
-		shapeRange.put_Height(float(600));
-		shapeRange.put_Width(float(450));
+			//添加图像到 H1 - K10范围区域
+			CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
+				(float)rLeft.dblVal, (float)rTop.dblVal, (float)rWidth.dblVal, (float)rHeight.dblVal);
+			//设置图像所占的宽高
+			CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
+			shapeRange.put_Height(float(600));
+			shapeRange.put_Width(float(450));
+		}
 
 		range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
 		range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
@@ -1238,6 +1313,270 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	Win::log("报表已保存");
 	pThis->m_save_successfully = TRUE;
 
+
+	return 0;
+}
+
+UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
+{
+	//解决多线程打开excel的错误
+	AFX_MANAGE_STATE(AfxGetStaticModuleState())
+		CoInitialize(NULL);
+	AfxEnableControlContainer();
+
+	CTableDlg *pThis = (CTableDlg *)pParam;
+	pThis->m_save_successfully = FALSE;
+
+	//1.创建基本对象
+	CApplication App;                //创建应用程序实例
+	CWorkbooks Books;                //工作簿，多个Excel文件
+	CWorkbook Book_example, Book;    //单个工作簿
+	CWorksheets sheets;              //多个sheet页面
+	CWorksheet sheet;                //单个sheet页面
+	CRange range;                    //操作单元格
+	
+	LPDISPATCH lpDisp;
+	COleVariant vResult;
+	COleVariant  covOptional((long)DISP_E_PARAMNOTFOUND, VT_ERROR);
+	if (!App.CreateDispatch(L"Excel.Application"))
+	{
+		Win::log("创建Excel实例失败");
+		return -1;
+	}
+	Books.AttachDispatch(App.get_Workbooks());
+	//打开模板文件
+	TCHAR excel_path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, excel_path);
+	CString cpath = excel_path;
+	cpath = cpath + L"\\temp\\example.xlsx";
+	lpDisp = Books.Open(cpath, covOptional, covOptional, covOptional, covOptional, covOptional
+		, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
+		covOptional, covOptional);
+	//得到得到视图workbook
+	Book_example.AttachDispatch(lpDisp);
+
+	//另存为
+	CString strExcelFile = pThis->m_save_path.c_str();
+	std::wstring strname;
+	pThis->GenerateReportName(strname);
+	CString strdevName(strname.c_str());
+	strdevName += _T(".xlsx");
+	strExcelFile += strdevName;
+	COleVariant cvname(strExcelFile);
+	Book_example.SaveAs(cvname, covOptional, covOptional, covOptional, covOptional, covOptional
+		, 1, covOptional, covOptional, covOptional, covOptional, covOptional);
+
+	//打开另存的文件
+	lpDisp = Books.Open(strExcelFile, covOptional, covOptional, covOptional,
+		covOptional, covOptional , covOptional, covOptional, covOptional, covOptional,
+		covOptional, covOptional, covOptional,covOptional, covOptional);
+	//得到得到视图workbook
+	Book.AttachDispatch(lpDisp);
+	//得到worksheets
+	sheets.AttachDispatch(Book.get_Worksheets());
+	//得到sheet
+	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)1)));	//获取sheet1
+	range.AttachDispatch(sheet.get_UsedRange());
+
+	//填充表头
+	CString cnumber = pThis->m_wstr_num.c_str();     //批号
+	COleVariant vnumber(cnumber);
+	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
+
+	//时间格式化
+	pThis->m_wstr_savetime.insert(4, L"年");
+	pThis->m_wstr_savetime.insert(7, L"月");
+	pThis->m_wstr_savetime.insert(10, L"日");
+	pThis->m_wstr_savetime.insert(14, L"时");
+	pThis->m_wstr_savetime.insert(17, L"分");
+	pThis->m_wstr_savetime.insert(20, L"秒");
+	CString ctotal_time = pThis->m_wstr_savetime.c_str();     //检测时间
+	COleVariant vtotal_time(ctotal_time);
+	range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
+
+	CString coperator = pThis->m_wstr_user.c_str();     //检测员
+	COleVariant voperator(coperator);
+	range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
+
+	CString cID = pThis->m_wstr_id.c_str();     //型号
+	COleVariant vID(cID);
+	range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
+
+	CString clongth = pThis->m_wstr_width.c_str();     //检测长度
+	COleVariant vlongth(clongth);
+	range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
+
+	CString cspeed = pThis->m_wstr_speed.c_str();     //平均速度
+	COleVariant vspeed(cspeed);
+	range.put_Item(COleVariant((long)3), COleVariant((long)8), vspeed);
+	for (int k = 0; k < 7; k++)
+	{
+		if (k < 5) {
+			COleVariant vkind_stastic((long)k);   //类型统计
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
+		}
+		if (k == 5) {
+			CString cserious;
+			cserious.Format(_T("0000"));
+			COleVariant vserious(cserious);   //严重缺陷
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
+		}
+		if (k == 6) {
+			CString cout;
+			cout.Format(_T("一级"));
+			COleVariant vout(cout);   //检测结果
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
+		}
+	}
+
+	//写入瑕疵列表 sheet1
+	EnterCriticalSection(&pThis->m_csvec);
+	for (int i = 0; i < (int)pThis->m_vecDFT.size(); i++)
+	{
+		DefectType dft;
+		dft = pThis->m_vecDFT.at(i);
+		for (int j = 1; j < 9; j++)
+		{
+			switch (j)
+			{
+			case 1: {
+				COleVariant vResult((long)(i + 1));
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 2: {
+				CString ckind;
+				ckind.Format(_T("%d"), dft.type);
+				COleVariant vResult(ckind);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 3: {
+				CString cx;
+				cx.Format(_T("%.2f"), dft.center_x);
+				COleVariant vResult(cx);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 4: {
+				CString cy;
+				cy.Format(_T("%.2f"), dft.absolute_position);
+				COleVariant vResult(cy);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 5: {
+				CString cradius;
+				cradius.Format(_T("%.2f"), dft.circle_radius);
+				COleVariant vResult(cradius);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 6: {
+				CString carea;
+				carea.Format(_T("%.2f"), dft.area);
+				COleVariant vResult(carea);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 7: {
+				CString csize;
+				csize.Format(_T("%.2f"), dft.contlength);
+				COleVariant vResult(csize);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			case 8: {
+				CString ctime;
+				ctime.Format(_T("%.2f"), dft.pixel_value);
+				COleVariant vResult(ctime);
+				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
+				break; }
+			default:
+				break;
+			}
+		}
+	}
+	LeaveCriticalSection(&pThis->m_csvec);
+
+	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
+	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
+
+	//写入瑕疵分布图 sheet2
+	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)2)));	//获取sheet1
+	//取得用户区
+	range.AttachDispatch(sheet.get_UsedRange());
+	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
+	range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
+	range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
+	range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
+	range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
+	range.put_Item(COleVariant((long)3), COleVariant((long)8), vspeed);
+	for (int k = 0; k < 7; k++)
+	{
+		if (k < 5) {
+			COleVariant vkind_stastic((long)k);   //类型统计
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
+		}
+		if (k == 5) {
+			CString cserious;
+			cserious.Format(_T("0000"));
+			COleVariant vserious(cserious);   //严重缺陷
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
+		}
+		if (k == 6) {
+			CString cout;
+			cout.Format(_T("一级"));
+			COleVariant vout(cout);   //检测结果
+			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
+		}
+	}
+
+	//添加图片
+	char path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, (TCHAR*)path);//获取当前路径
+	CString strBMP = (TCHAR*)path;
+	CString imageName("\\temp\\saved.bmp");
+	strBMP += imageName;
+	std::ifstream fin(strBMP.GetBuffer());
+	if (fin) {
+		//【2】插入图像
+		//获取图像插入的范围
+		//从Sheet对象上获得一个Shapes   
+		CShapes pShapes;
+		pShapes.AttachDispatch(sheet.get_Shapes());
+		//获得Range对象，用来插入图片
+		range.AttachDispatch(sheet.get_Range(COleVariant(_T("A7")), COleVariant(_T("H52"))), TRUE);
+		range.Merge(COleVariant((long)0));  //合并单元格
+		VARIANT rLeft = range.get_Left();
+		VARIANT rTop = range.get_Top();
+		VARIANT rWidth = range.get_Width();
+		VARIANT rHeight = range.get_Height();
+
+		//添加图像到 A7 - H51范围区域
+		CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
+			(float)rLeft.dblVal + 20.0f, (float)rTop.dblVal + 20.0f,
+			(float)rWidth.dblVal - 40.0f, (float)rHeight.dblVal - 40.0f);
+		////设置图像所占的宽高
+		//CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
+		//shapeRange.put_Height(float(600));
+		//shapeRange.put_Width(float(500));
+	}
+	//*************************************************************
+
+	Book.Save(); //保存
+	Book.put_Saved(TRUE);
+
+	//8.释放资源
+	range.ReleaseDispatch();
+	sheet.ReleaseDispatch();
+	sheets.ReleaseDispatch();
+	Book.ReleaseDispatch();
+	Book_example.ReleaseDispatch();
+	Books.ReleaseDispatch();
+	Book.Close(covOptional, covOptional, covOptional);//关闭Workbook对象
+	Book_example.Close(covOptional, covOptional, covOptional);
+	Books.Close();           // 关闭Workbooks对象
+	App.Quit();          // 退出_Application
+	App.ReleaseDispatch();
+
+	pThis->m_vecDFT.clear();
+
+	Win::log("报表已保存");
+	pThis->m_save_successfully = TRUE;
 
 	return 0;
 }
@@ -1373,19 +1712,8 @@ void CTableDlg::OnBnClickedBtnRefrush()
 	Invalidate();
 	UpdateWindow();
 
-	//保存窗口图像
-	if (1) {
-		CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
-		CRect rect;
-		pwnd->GetClientRect(&rect);
-		CDC *dc = pwnd->GetDC();
-
-		LPRECT prect = rect;
-		m_hbitmap = GetSrcBit(*dc, prect);
-		//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
-		BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
-		ReleaseDC(dc);
-	}
+	//保存图像， 窗口必须切换至 tab3
+	SaveDistributeImage();
 }
 
 //查询
@@ -1395,6 +1723,8 @@ void CTableDlg::OnBnClickedButtonSearch()
 	CWaitCursor wait;
 
 	//SaveToExcel(*m_pvDFT);
+	//CString excel_name;
+	//SaveToExcelUseDefault(excel_name);
 }
 
 

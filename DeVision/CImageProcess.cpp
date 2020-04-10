@@ -225,6 +225,12 @@ void CImageProcess::RestartProcess()
 	m_current_position = 0.0f;
 	m_NO_dft = 0;
 
+	m_referenceImage_OK = FALSE;
+	m_camera1_reference_image_acquired = FALSE;
+	m_camera2_reference_image_acquired = FALSE;
+	m_camera3_reference_image_acquired = FALSE;
+	m_camera4_reference_image_acquired = FALSE;
+
 	return;
 }
 
@@ -305,7 +311,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 			HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 			HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 			HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-				((m_camera1_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+				((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 				"fill");
 		}
 		m_hi_average1 = ho_ImageAverage;
@@ -348,7 +354,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 			HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 			HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 			HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-				((m_camera2_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+				((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 				"fill");
 		}
 		m_hi_average2 = ho_ImageAverage;
@@ -391,7 +397,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 			HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 			HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 			HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-				((m_camera3_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+				((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 				"fill");
 		}
 		m_hi_average3 = ho_ImageAverage;
@@ -433,7 +439,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 			HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 			HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 			HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-				((m_camera4_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+				((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 				"fill");
 		}
 		m_hi_average4 = ho_ImageAverage;
@@ -566,9 +572,66 @@ int CImageProcess::CheckTotalListSize()
 	return (int)size;
 }
 
+BOOL CImageProcess::LoadDefaultRefAndDevImage(std::string path)
+{
+	if (path.empty())
+		return FALSE;
+
+	std::string ref_image_name1 = "reference_image1.bmp";
+	std::string ref_image_name2 = "reference_image2.bmp";
+	std::string ref_image_name3 = "reference_image3.bmp";
+	std::string ref_image_name4 = "reference_image4.bmp";
+	std::string dev_image_name1 = "dev1.bmp";
+	std::string dev_image_name2 = "dev2.bmp";
+	std::string dev_image_name3 = "dev3.bmp";
+	std::string dev_image_name4 = "dev4.bmp";
+
+	if (!IsPathExist(path)) {
+		Win::log("工作目录不存在");
+		return FALSE;
+	}
+	else {
+		if (!IsFileExist(path + ref_image_name1) || !IsFileExist(path + dev_image_name1)) {
+			Win::log("参考图像1不存在");
+			return FALSE;
+		}
+		if (!IsFileExist(path + ref_image_name2) || !IsFileExist(path + dev_image_name2)) {
+			Win::log("参考图像2不存在");
+			return FALSE;
+		}
+		if (!IsFileExist(path + ref_image_name3) || !IsFileExist(path + dev_image_name3)) {
+			Win::log("参考图像3不存在");
+			return FALSE;
+		}
+		if (!IsFileExist(path + ref_image_name4) || !IsFileExist(path + dev_image_name4)) {
+			Win::log("参考图像4不存在");
+			return FALSE;
+		}
+	}
+
+	HTuple hv_ref_image_name1 = (HTuple)((path + ref_image_name1).c_str());
+	HTuple hv_ref_image_name2 = (HTuple)((path + ref_image_name2).c_str());
+	HTuple hv_ref_image_name3 = (HTuple)((path + ref_image_name3).c_str());
+	HTuple hv_ref_image_name4 = (HTuple)((path + ref_image_name4).c_str());
+	HTuple hv_dev_image_name1 = (HTuple)((path + dev_image_name1).c_str());
+	HTuple hv_dev_image_name2 = (HTuple)((path + dev_image_name2).c_str());
+	HTuple hv_dev_image_name3 = (HTuple)((path + dev_image_name3).c_str());
+	HTuple hv_dev_image_name4 = (HTuple)((path + dev_image_name4).c_str());
+	ReadImage(&m_hi_average1, hv_ref_image_name1);
+	ReadImage(&m_hi_average2, hv_ref_image_name2);
+	ReadImage(&m_hi_average3, hv_ref_image_name3);
+	ReadImage(&m_hi_average4, hv_ref_image_name4);
+	ReadImage(&m_hi_deviation1, hv_dev_image_name1);
+	ReadImage(&m_hi_deviation2, hv_dev_image_name2);
+	ReadImage(&m_hi_deviation3, hv_dev_image_name3);
+	ReadImage(&m_hi_deviation4, hv_dev_image_name4);
+	return TRUE;
+}
+
 BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_deviation)
 {
-	HImage result;
+
+	/*
 	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList1_1.size() > 2 &&
 		!m_ImgList1_2.empty() &&
@@ -600,6 +663,20 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	*/
+
+	HImage result, img1, img2;
+	if (!m_ImgList1_2.empty() && !m_ImgList1_3.empty()) {
+		//舍弃第一张图像
+		m_ImgList1_1.pop_front();
+		img1 = m_ImgList1_2.front();
+		m_ImgList1_2.pop_front();
+		img2 = m_ImgList1_3.front();
+		m_ImgList1_3.pop_front();
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	}
+	else return FALSE;
+
 	m_hi_ref1 = result;
 
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -621,8 +698,7 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 		HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 		HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 		HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-			((m_camera1_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
-			"fill");
+			((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),"fill");
 	}
 	hi_average = ho_ImageAverage;
 	hi_deviation = ho_ImageDeviation;
@@ -634,6 +710,8 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 
 BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_deviation)
 {
+
+	/*
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList2_1.size() > 2 &&
@@ -666,6 +744,20 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	*/
+
+	HImage result, img1, img2;
+	if (!m_ImgList2_2.empty() && !m_ImgList2_3.empty()) {
+		//舍弃第一张图像
+		m_ImgList2_1.pop_front();
+		img1 = m_ImgList2_2.front();
+		m_ImgList2_2.pop_front();
+		img2 = m_ImgList2_3.front();
+		m_ImgList2_3.pop_front();
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	}
+	else return FALSE;
+
 	m_hi_ref2 = result;
 
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -687,7 +779,7 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 		HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 		HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 		HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-			((m_camera2_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+			((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 			"fill");
 	}
 	hi_average = ho_ImageAverage;
@@ -700,6 +792,7 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 
 BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_deviation)
 {
+	/*
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList3_1.size() > 2 &&
@@ -732,10 +825,20 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	//ho_Image_ref3 = result;
-	//HalconCpp::MedianImage(result, &hi_ref, "circle", 1, "mirrored");
-		//高斯滤波
-	//HalconCpp::GaussFilter(result, &hi_ref, 5);
+	*/
+
+	HImage result, img1, img2;
+	if (!m_ImgList3_2.empty() && !m_ImgList3_3.empty()) {
+		//舍弃第一张图像
+		m_ImgList3_1.pop_front();
+		img1 = m_ImgList3_2.front();
+		m_ImgList3_2.pop_front();
+		img2 = m_ImgList3_3.front();
+		m_ImgList3_3.pop_front();
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	}
+	else return FALSE;
+
 	m_hi_ref3 = result;
 
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -757,7 +860,7 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 		HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 		HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 		HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-			((m_camera3_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+			((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 			"fill");
 	}
 	hi_average = ho_ImageAverage;
@@ -769,6 +872,7 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 
 BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_deviation)
 {
+	/*
 	HImage result;
 	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList4_1.size() > 2 &&
@@ -801,6 +905,20 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_devia
 	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
 	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	*/
+
+	HImage result, img1, img2;
+	if (!m_ImgList4_2.empty() && !m_ImgList4_3.empty()) {
+		//舍弃第一张图像
+		m_ImgList4_1.pop_front();
+		img1 = m_ImgList4_2.front();
+		m_ImgList4_2.pop_front();
+		img2 = m_ImgList4_3.front();
+		m_ImgList4_3.pop_front();
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	}
+	else return FALSE;
+
 	m_hi_ref4 = result;
 
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -822,7 +940,7 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_devia
 		HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
 		HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
 		HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
-			((m_camera4_standart_deviation * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+			((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
 			"fill");
 	}
 	hi_average = ho_ImageAverage;
@@ -1476,7 +1594,7 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 {
 	HObject  ho_Image, ho_ImageAverage, ho_ImageDeviation, ho_ImageMedianDFT;
 	HObject  ho_ImageSub1, ho_ImageSub2, ho_ImageAddSub, ho_ImageResult;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
+	HObject  ho_Region, ho_RegionDilation, ho_ConnectedRegions, ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
 	HObject  ho_ImageReduced, ho_ImagePart;
 	HTuple   hv_Width, hv_Height, hv_Number;
 	HTuple   hv_i, hv_Area, hv_Row, hv_Column, hv_RowCircle, hv_ColumnCircle, hv_Radius, hv_Contlength;
@@ -1495,14 +1613,16 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	HalconCpp::AddImage(ho_ImageSub1, ho_ImageSub2, &ho_ImageAddSub, 0.5, 0);
 	HalconCpp::SubImage(ho_ImageAddSub, ho_ImageDeviation, &ho_ImageResult, 10, 0);
 	HalconCpp::Threshold(ho_ImageResult, &ho_Region, 1, 255);
-	HalconCpp::Connection(ho_Region, &ho_ConnectedRegions);
-	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and", 9, 15999999);
+	//膨胀,用于减少region的数量
+	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 64);
+	HalconCpp::Connection(ho_RegionDilation, &ho_ConnectedRegions);
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and", m_k_min_select_area, 15999999);
 	HalconCpp::CountObj(ho_SelectedRegions, &hv_Number);
 	if (0 != hv_Number)
 	{
 		//当单张图像中选择的区域超过 100 个，则认为此图计算失败
-		if (hv_Number > 100) {
-			Win::log("相机 %d 处理失败，请检测图像是否正常", cameraNO);
+		if (hv_Number > 50) {
+			Win::log("相机 %d 处理失败,当前位置 %.3f，请检测图像是否正常", cameraNO, m_current_position);
 			return -1;
 		}
 
@@ -1536,21 +1656,21 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 			vSelect.push_back(region);
 		}
 				
-		//删除相邻距离小于256的区域
-		std::vector<SelectRegion>::iterator it;
-		for (it = vSelect.begin(); it != vSelect.end(); it++)
-		{
-			if (it != vSelect.end() - 1) {
-				HTuple x, y;
-				HalconCpp::TupleAbs(it->hv_Row_Center - (it + 1)->hv_Row_Center, &y);
-				HalconCpp::TupleAbs(it->hv_Column_Center - (it + 1)->hv_Column_Center, &x);
-				if (x < 128 || y < 128) {
-					//在同已区域内则面积标记为 0
-					it->area = 0.0f;
-				}
-			}
-			else break;
-		}
+		////删除相邻距离小于256的区域
+		//std::vector<SelectRegion>::iterator it;
+		//for (it = vSelect.begin(); it != vSelect.end(); it++)
+		//{
+		//	if (it != vSelect.end() - 1) {
+		//		HTuple x, y;
+		//		HalconCpp::TupleAbs(it->hv_Row_Center - (it + 1)->hv_Row_Center, &y);
+		//		HalconCpp::TupleAbs(it->hv_Column_Center - (it + 1)->hv_Column_Center, &x);
+		//		if (x < 128 || y < 128) {
+		//			//在同已区域内则面积标记为 0
+		//			it->area = 0.0f;
+		//		}
+		//	}
+		//	else break;
+		//}
 		
 		//反向迭代器，保存瑕疵图像及信息
 		std::vector<SelectRegion>::reverse_iterator rit;
@@ -1654,40 +1774,58 @@ UINT CImageProcess::ReferenceImage(LPVOID pParam)
 	CImageProcess *pThis = (CImageProcess *)pParam;
 	pThis->is_reference_thread_alive = TRUE;
 	pThis->m_referenceImage_OK = FALSE;
+	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
 
 	pThis->m_camera1_invalid_area = 0;
 	pThis->m_camera1_invalid_area = 0;
 	while (pThis->is_reference_thread_alive)
 	{
+		//加载默认均值图像和标准差图像
+		if (pThis->m_bLoad_Default_Ref_Dev) {
+			if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
+				pThis->m_referenceImage_OK = TRUE;
+				pThis->is_reference_thread_alive = FALSE;
+				break;
+			}
+		}
+
 		if (!pThis->TEST_MODEL) {
-			if (!pThis->m_camera1_reference_image_acquired) {
-				pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-				Win::log("获取1#参考图像");
+			if (!got_ref1) {
+				got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
+				if(got_ref1)
+					Win::log("获取1#参考图像");
 			}
-			if (!pThis->m_camera2_reference_image_acquired) {
-				pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-				Win::log("获取2#参考图像");
+			if (!got_ref2) {
+				got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
+				if(got_ref2)
+					Win::log("获取2#参考图像");
 			}
-			if (!pThis->m_camera3_reference_image_acquired) {
-				pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
-				Win::log("获取3#参考图像");
+			if (!got_ref3) {
+				got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
+				if (got_ref3)
+					Win::log("获取3#参考图像");
 			}
-			if (!pThis->m_camera4_reference_image_acquired) {
-				pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
-				Win::log("获取4#参考图像");
+			if (!got_ref4) {
+				got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
+				if (got_ref4)
+					Win::log("获取4#参考图像");
 			}
 		}
 		else {
 			pThis->LoadRefImage("C:/DeVisionProject/sample0408/");
 		}
 
-		if (pThis->CheckReferenceImageState()) {
-
+		if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
 			if (pThis->SAVE_REFERENCE_IMAGE) {
-				pThis->SaveDefectImage(pThis->m_hi_ref1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_ref2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_ref3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_ref4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
+				pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
+				pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
 			}
 			
 			if (pThis->REDUCE_BLACK_EDGE) {
