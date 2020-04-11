@@ -470,20 +470,20 @@ BOOL CInspectDlg::CameraSystemInitial()
 BOOL CInspectDlg::InitialAllBoards()
 {
 	if ( FREE_RUN ) {
-		char free_run_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_1.ccf";
+		char free_run_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_1_ROI.ccf";
 		char free_run_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_2.ccf";
 		char free_run_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_3.ccf";
-		char free_run_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_4.ccf";
+		char free_run_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_4_ROI.ccf";
 		memcpy(configFilename1, free_run_1, sizeof(free_run_1));
 		memcpy(configFilename2, free_run_2, sizeof(free_run_2));
 		memcpy(configFilename3, free_run_3, sizeof(free_run_3));
 		memcpy(configFilename4, free_run_4, sizeof(free_run_4));
 	}
 	else {
-		char encode_trigger_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board1.ccf";
+		char encode_trigger_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board1_ROI.ccf";
 		char encode_trigger_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board2.ccf";
 		char encode_trigger_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board3.ccf";
-		char encode_trigger_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board4.ccf";
+		char encode_trigger_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board4_ROI.ccf";
 		memcpy(configFilename1, encode_trigger_1, sizeof(encode_trigger_1));
 		memcpy(configFilename2, encode_trigger_2, sizeof(encode_trigger_2));
 		memcpy(configFilename3, encode_trigger_3, sizeof(encode_trigger_3));
@@ -550,13 +550,13 @@ BOOL CInspectDlg::InitialAllBoards()
 	//外部触发时无需设置以下参数
 	if (FREE_RUN) {
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
-		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", 20000);//设定触发频率
+		m_AcqDevice1->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定触发频率
 		m_AcqDevice2->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice2->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定曝光时间
 		m_AcqDevice3->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice3->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定曝光时间
 		m_AcqDevice4->SetFeatureValue("TriggerMode", "Off");//触发模式打开
-		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", 20000);//设定曝光时间
+		m_AcqDevice4->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定曝光时间
 	}
 	else {
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "On");//触发模式打开

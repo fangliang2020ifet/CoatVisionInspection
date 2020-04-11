@@ -1,8 +1,15 @@
 
+
 #include "stdafx.h"
 #include "DeVisionDlg.h"
 #include "CImageProcess.h"
 #include "Log.h"
+
+#include <winbase.h>
+#include <windows.h>
+
+CEvent StopManage_Event;
+//CEvent StopCalculate_Event;
 
 CImageProcess::CImageProcess()
 {
@@ -11,6 +18,7 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread3);
 	InitializeCriticalSection(&m_csCalculateThread4);
 	//InitializeCriticalSection(&m_csNO_dft);
+
 	m_referenceImage_OK = FALSE;
 	m_camera1_reference_image_acquired = FALSE;
 	m_camera2_reference_image_acquired = FALSE;
@@ -67,7 +75,7 @@ BOOL CImageProcess::BeginProcess()
 	if (!GetSavePath(str_path)) return FALSE;
 	
 	//创建线程
-	if (!(m_ReferenceImage = AfxBeginThread(ReferenceImage, this))) {
+	if (!(m_ManageThread = AfxBeginThread(ManageThread, this))) {
 		Win::log("创建图像参考图像处理线程失败");
 		return FALSE;
 	}
@@ -166,14 +174,21 @@ BOOL CImageProcess::BeginProcess()
 
 BOOL CImageProcess::StopProcess()
 {
-	while (is_reference_thread_alive)
+	// 线程停止
+	StopManage_Event.SetEvent();
+
+	while (is_manage_thread_alive)
 	{
-		is_reference_thread_alive = FALSE;
+		is_manage_thread_alive = FALSE;
 	}
 
-	// SetEvent 为何无效？
-	SetEvent(m_hStopEvent);
+	StopCalculateThreads();
 
+	return TRUE;
+}
+
+void CImageProcess::StopCalculateThreads()
+{
 	while (is_thread1_1_alive || is_thread2_1_alive || is_thread3_1_alive || is_thread4_1_alive
 		|| is_thread1_2_alive || is_thread2_2_alive || is_thread3_2_alive || is_thread4_2_alive
 		|| is_thread1_3_alive || is_thread2_3_alive || is_thread3_3_alive || is_thread4_3_alive
@@ -205,8 +220,6 @@ BOOL CImageProcess::StopProcess()
 		is_thread4_4_alive = FALSE;
 		is_thread4_5_alive = FALSE;
 	}
-
-	return TRUE;
 }
 
 void CImageProcess::RestartProcess()
@@ -236,8 +249,7 @@ void CImageProcess::RestartProcess()
 
 BOOL CImageProcess::IsThreadsAlive()
 {
-	if (is_reference_thread_alive 
-		|| is_thread1_1_alive || is_thread2_1_alive || is_thread3_1_alive || is_thread4_1_alive
+	if (   is_thread1_1_alive || is_thread2_1_alive || is_thread3_1_alive || is_thread4_1_alive
 		|| is_thread1_2_alive || is_thread2_2_alive || is_thread3_2_alive || is_thread4_2_alive
 		|| is_thread1_3_alive || is_thread2_3_alive || is_thread3_3_alive || is_thread4_3_alive
 		|| is_thread1_4_alive || is_thread2_4_alive || is_thread3_4_alive || is_thread4_4_alive
@@ -296,7 +308,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		HTuple  hv_Deviation, hv_StandardDeviation;
 		HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 		HalconCpp::GetImageSize(img1, &hv_Width, &hv_Height);
-		HalconCpp::MedianImage(img1, &ho_ImageMedian, "square", 1, "mirrored");
+		HalconCpp::MedianImage(img1, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 		//创建 全 0 值图像
 		HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 		HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -339,7 +351,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		HTuple  hv_Deviation, hv_StandardDeviation;
 		HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 		HalconCpp::GetImageSize(img2, &hv_Width, &hv_Height);
-		HalconCpp::MedianImage(img2, &ho_ImageMedian, "square", 1, "mirrored");
+		HalconCpp::MedianImage(img2, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 		//创建 全 0 值图像
 		HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 		HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -382,7 +394,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		HTuple  hv_Deviation, hv_StandardDeviation;
 		HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 		HalconCpp::GetImageSize(img3, &hv_Width, &hv_Height);
-		HalconCpp::MedianImage(img3, &ho_ImageMedian, "square", 1, "mirrored");
+		HalconCpp::MedianImage(img3, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 		//创建 全 0 值图像
 		HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 		HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -424,7 +436,7 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		HTuple  hv_Deviation, hv_StandardDeviation;
 		HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 		HalconCpp::GetImageSize(img4, &hv_Width, &hv_Height);
-		HalconCpp::MedianImage(img4, &ho_ImageMedian, "square", 1, "mirrored");
+		HalconCpp::MedianImage(img4, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 		//创建 全 0 值图像
 		HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 		HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -629,15 +641,15 @@ BOOL CImageProcess::LoadDefaultRefAndDevImage(std::string path)
 }
 
 BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_deviation)
-{
-
-	/*
-	HImage img1, img2, img3, img4, img5;
+{	
+	HImage result;
 	if (m_ImgList1_1.size() > 2 &&
 		!m_ImgList1_2.empty() &&
 		!m_ImgList1_3.empty() &&
 		!m_ImgList1_4.empty() &&
 		!m_ImgList1_5.empty()) {
+
+		HImage img1, img2, img3, img4, img5;
 
 		//舍弃第一张图像
 		m_ImgList1_1.pop_front();
@@ -655,16 +667,16 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 
 		img5 = m_ImgList1_5.front();
 		m_ImgList1_5.pop_front();
+
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	}
 	else
 		return FALSE;
-
-	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	*/
-
+	
+	/*
 	HImage result, img1, img2;
 	if (!m_ImgList1_2.empty() && !m_ImgList1_3.empty()) {
 		//舍弃第一张图像
@@ -676,14 +688,14 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
 	}
 	else return FALSE;
+	*/
 
 	m_hi_ref1 = result;
-
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
 	HTuple  hv_Deviation, hv_StandardDeviation;
 	HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 	HalconCpp::GetImageSize(result, &hv_Width, &hv_Height);
-	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", 1, "mirrored");
+	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 	//创建 全 0 值图像
 	HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 	HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -709,16 +721,15 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 }
 
 BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_deviation)
-{
-
-	/*
+{	
 	HImage result;
-	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList2_1.size() > 2 &&
 		!m_ImgList2_2.empty() &&
 		!m_ImgList2_3.empty() &&
 		!m_ImgList2_4.empty() &&
 		!m_ImgList2_5.empty()) {
+
+		HImage img1, img2, img3, img4, img5;
 
 		//舍弃第一张图像
 		m_ImgList2_1.pop_front();
@@ -736,16 +747,17 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 
 		img5 = m_ImgList2_5.front();
 		m_ImgList2_5.pop_front();
+
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+
 	}
 	else
 		return FALSE;
-
-	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	*/
-
+	
+	/*
 	HImage result, img1, img2;
 	if (!m_ImgList2_2.empty() && !m_ImgList2_3.empty()) {
 		//舍弃第一张图像
@@ -757,14 +769,14 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
 	}
 	else return FALSE;
+	*/
 
 	m_hi_ref2 = result;
-
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
 	HTuple  hv_Deviation, hv_StandardDeviation;
 	HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 	HalconCpp::GetImageSize(result, &hv_Width, &hv_Height);
-	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", 1, "mirrored");
+	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 	//创建 全 0 值图像
 	HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 	HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -792,14 +804,14 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 
 BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_deviation)
 {
-	/*
 	HImage result;
-	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList3_1.size() > 2 &&
 		!m_ImgList3_2.empty() &&
 		!m_ImgList3_3.empty() &&
 		!m_ImgList3_4.empty() &&
 		!m_ImgList3_5.empty()) {
+
+		HImage img1, img2, img3, img4, img5;
 
 		//舍弃第一张图像
 		m_ImgList3_1.pop_front();
@@ -817,16 +829,18 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 
 		img5 = m_ImgList3_5.front();
 		m_ImgList3_5.pop_front();
+
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+
 	}
 	else
 		return FALSE;
 
-	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	*/
-
+	
+	/*
 	HImage result, img1, img2;
 	if (!m_ImgList3_2.empty() && !m_ImgList3_3.empty()) {
 		//舍弃第一张图像
@@ -838,14 +852,14 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
 	}
 	else return FALSE;
+	*/
 
 	m_hi_ref3 = result;
-
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
 	HTuple  hv_Deviation, hv_StandardDeviation;
 	HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 	HalconCpp::GetImageSize(result, &hv_Width, &hv_Height);
-	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", 1, "mirrored");
+	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 	//创建 全 0 值图像
 	HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 	HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -872,14 +886,14 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 
 BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_deviation)
 {
-	/*
 	HImage result;
-	HImage img1, img2, img3, img4, img5;
 	if (m_ImgList4_1.size() > 2 &&
 		!m_ImgList4_2.empty() &&
 		!m_ImgList4_3.empty() &&
 		!m_ImgList4_4.empty() &&
 		!m_ImgList4_5.empty()) {
+
+		HImage img1, img2, img3, img4, img5;
 
 		//舍弃第一张图像
 		m_ImgList4_1.pop_front();
@@ -897,16 +911,16 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_devia
 
 		img5 = m_ImgList4_5.front();
 		m_ImgList4_5.pop_front();
+
+		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
+		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
 	}
 	else
 		return FALSE;
-
-	HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-	HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-	*/
-
+	
+	/*
 	HImage result, img1, img2;
 	if (!m_ImgList4_2.empty() && !m_ImgList4_3.empty()) {
 		//舍弃第一张图像
@@ -918,14 +932,14 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_devia
 		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
 	}
 	else return FALSE;
+	*/
 
 	m_hi_ref4 = result;
-
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
 	HTuple  hv_Deviation, hv_StandardDeviation;
 	HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
 	HalconCpp::GetImageSize(result, &hv_Width, &hv_Height);
-	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", 1, "mirrored");
+	HalconCpp::MedianImage(result, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
 	//创建 全 0 值图像
 	HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
 	HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
@@ -1603,7 +1617,7 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	ho_ImageAverage = hi_average;
 	ho_ImageDeviation = hi_deviation;
 	HalconCpp::GetImageSize(ho_Image, &hv_Width, &hv_Height);
-	HalconCpp::MedianImage(ho_Image, &ho_ImageMedianDFT, "square", 1, "mirrored");
+	HalconCpp::MedianImage(ho_Image, &ho_ImageMedianDFT, "square", m_median_filter_size, "mirrored");
 
 	//参考文献：一种基于多目机器视觉的光学薄膜瑕疵检测系统
 	//如果相减后像素值小于零，其结果图中会被置0；同理，如果像素值大于255，也会被截断使其最大值为255
@@ -1611,7 +1625,7 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	HalconCpp::SubImage(ho_ImageMedianDFT, ho_ImageAverage, &ho_ImageSub1, 1, 0);
 	HalconCpp::SubImage(ho_ImageAverage, ho_ImageMedianDFT, &ho_ImageSub2, 1, 0);
 	HalconCpp::AddImage(ho_ImageSub1, ho_ImageSub2, &ho_ImageAddSub, 0.5, 0);
-	HalconCpp::SubImage(ho_ImageAddSub, ho_ImageDeviation, &ho_ImageResult, 10, 0);
+	HalconCpp::SubImage(ho_ImageAddSub, ho_ImageDeviation, &ho_ImageResult, 1, 0);
 	HalconCpp::Threshold(ho_ImageResult, &ho_Region, 1, 255);
 	//膨胀,用于减少region的数量
 	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 64);
@@ -1621,7 +1635,7 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	if (0 != hv_Number)
 	{
 		//当单张图像中选择的区域超过 100 个，则认为此图计算失败
-		if (hv_Number > 50) {
+		if (hv_Number > 64) {
 			Win::log("相机 %d 处理失败,当前位置 %.3f，请检测图像是否正常", cameraNO, m_current_position);
 			return -1;
 		}
@@ -1768,23 +1782,24 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	return 0;
 }
 
-//参考图像处理线程
-UINT CImageProcess::ReferenceImage(LPVOID pParam)
+//管理线程
+UINT CImageProcess::ManageThread(LPVOID pParam)
 {
 	CImageProcess *pThis = (CImageProcess *)pParam;
-	pThis->is_reference_thread_alive = TRUE;
+	pThis->is_manage_thread_alive = TRUE;
 	pThis->m_referenceImage_OK = FALSE;
 	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
+	//BOOL load_default = pThis->m_bLoad_Default_Ref_Dev;
 
 	pThis->m_camera1_invalid_area = 0;
 	pThis->m_camera1_invalid_area = 0;
-	while (pThis->is_reference_thread_alive)
+	while (pThis->is_manage_thread_alive)
 	{
 		//加载默认均值图像和标准差图像
 		if (pThis->m_bLoad_Default_Ref_Dev) {
 			if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
 				pThis->m_referenceImage_OK = TRUE;
-				pThis->is_reference_thread_alive = FALSE;
+				pThis->is_manage_thread_alive = FALSE;
 				break;
 			}
 		}
@@ -1792,12 +1807,12 @@ UINT CImageProcess::ReferenceImage(LPVOID pParam)
 		if (!pThis->TEST_MODEL) {
 			if (!got_ref1) {
 				got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-				if(got_ref1)
+				if (got_ref1)
 					Win::log("获取1#参考图像");
 			}
 			if (!got_ref2) {
 				got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-				if(got_ref2)
+				if (got_ref2)
 					Win::log("获取2#参考图像");
 			}
 			if (!got_ref3) {
@@ -1827,7 +1842,7 @@ UINT CImageProcess::ReferenceImage(LPVOID pParam)
 				pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
 				pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
 			}
-			
+
 			if (pThis->REDUCE_BLACK_EDGE) {
 				pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
 				if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
@@ -1855,12 +1870,25 @@ UINT CImageProcess::ReferenceImage(LPVOID pParam)
 			}
 
 			pThis->m_referenceImage_OK = TRUE;
-			pThis->is_reference_thread_alive = FALSE;
+			pThis->is_manage_thread_alive = FALSE;
 		}
 		else
 			Sleep(50);
+
+
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopManage_Event, INFINITE)) {
+
+		//	//AfxMessageBox(L"Stop Manage Thread");
+		//	while (pThis->CheckTotalListSize())
+		//	{
+		//		Sleep(200);
+		//	}
+
+		//	pThis->StopCalculateThreads();
+		//	return 0;
+		//}
 	}
-	pThis->is_reference_thread_alive = FALSE;
+	pThis->is_manage_thread_alive = FALSE;
 
 	return 0;
 }
@@ -1930,12 +1958,8 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(pImgProc->m_hStopEvent, INFINITE)) {
-		//	//清空图像队列
-		//	pImgProc->m_ImgList1_1.clear();
-		//	pImgProc->is_thread1_1_alive = FALSE;
-		//	Win::log("1#相机处理线程 1 结束");
-		//	return 0;
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
 		//}
 	}
 
@@ -2009,12 +2033,8 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(pImgProc->m_hStopEvent, INFINITE)) {
-		//	//清空图像队列
-		//	pImgProc->m_ImgList1_2.clear();
-		//	pImgProc->is_thread1_2_alive = FALSE;
-		//	Win::log("1#相机处理线程 1 结束");
-		//	return 0;
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
 		//}
 	}
 	//清空图像队列
@@ -2091,12 +2111,8 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 
 		} 
 		
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(pImgProc->m_hStopEvent, INFINITE)) {
-		//	//清空图像队列
-		//	pImgProc->m_ImgList1_3.clear();
-		//	pImgProc->is_thread1_3_alive = FALSE;
-		//	Win::log("1#相机处理线程 1 结束");
-		//	return 0;
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
 		//}
 
 	}
@@ -2174,12 +2190,8 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 		
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(pImgProc->m_hStopEvent, INFINITE)) {
-		//	//清空图像队列
-		//	pImgProc->m_ImgList1_4.clear();
-		//	pImgProc->is_thread1_4_alive = FALSE;
-		//	Win::log("1#相机处理线程 1 结束");
-		//	return 0;
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
 		//}
 	}
 
@@ -2257,12 +2269,8 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 		
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(pImgProc->m_hStopEvent, INFINITE)) {
-		//	//清空图像队列
-		//	pImgProc->m_ImgList1_5.clear();
-		//	pImgProc->is_thread1_5_alive = FALSE;
-		//	Win::log("1#相机处理线程 1 结束");
-		//	return 0;
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
 		//}
 	}
 
@@ -2320,12 +2328,13 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-		} else {
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList2_1.clear();
-
 	pImgProc->is_thread2_1_alive = FALSE;
 	Win::log("2#相机处理线程 1 结束");
 
@@ -2376,9 +2385,11 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList2_2.clear();
 
@@ -2432,9 +2443,11 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList2_3.clear();
 
@@ -2488,9 +2501,11 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList2_4.clear();
 
@@ -2545,9 +2560,11 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList2_5.clear();
 
@@ -2602,9 +2619,11 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList3_1.clear();
 
@@ -2658,9 +2677,11 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList3_2.clear();
 
@@ -2715,9 +2736,11 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList3_3.clear();
 
@@ -2771,9 +2794,11 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList3_4.clear();
 
@@ -2827,9 +2852,11 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList3_5.clear();
 
@@ -2900,9 +2927,11 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList4_1.clear();
 
@@ -2972,9 +3001,11 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList4_2.clear();
 
@@ -3044,9 +3075,11 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList4_3.clear();
 
@@ -3115,9 +3148,11 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList4_4.clear();
 
@@ -3187,9 +3222,11 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 			//已处理的图像总数
 			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
-		}else{
-			Sleep(5);
 		}
+		
+		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
+		//	break;
+		//}
 	}
 	pImgProc->m_ImgList4_5.clear();
 

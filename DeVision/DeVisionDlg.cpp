@@ -175,7 +175,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	Win::log("主窗口创建");
+	Win::log("程序启动");
 	GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
 
 	//创建字体
@@ -1644,10 +1644,13 @@ void CDeVisionDlg::OnDefectAnalysis()
 	CAlgorithmDlg algorithmDlg;
 	algorithmDlg.DoModal();
 
+	//标准差倍数
 	if (algorithmDlg.m_global_threshold != 0)
 		m_inspectDlg.m_pImgProc.m_k_normal_distribution = algorithmDlg.m_global_threshold;
+	//滤波器大小
 	if (algorithmDlg.m_select_threshold != 0)
-		m_inspectDlg.m_pImgProc.m_k_min_select_area = algorithmDlg.m_select_threshold;
+		m_inspectDlg.m_pImgProc.m_median_filter_size = algorithmDlg.m_select_threshold;
+	//是否使用默认参考图像
 	m_inspectDlg.m_pImgProc.m_bLoad_Default_Ref_Dev = algorithmDlg.m_load_default;
 
 

@@ -61,7 +61,7 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	m_combo_global_threshold.AddString(L"18");
 	m_combo_global_threshold.AddString(L"19");
 	m_combo_global_threshold.AddString(L"20");
-	m_combo_global_threshold.SetCurSel(8);
+	m_combo_global_threshold.SetCurSel(2);
 	
 	m_combo_select_threshold.AddString(L"1");
 	m_combo_select_threshold.AddString(L"3");

@@ -136,12 +136,8 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 
 	DrawSelectDFT(dc, m_selected_x, m_selected_y);
 
-	//if (1) {
-	//	LPRECT prect = rect;
-	//	m_hbitmap = GetSrcBit(*dc, prect);
-	//	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
-	//	BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
-	//}
+	//保存图像， 窗口必须切换至 tab3
+	SaveDistributeImage();
 
 	CDialogEx::OnPaintClipboard(pClipAppWnd, hPaintStruct);
 }
@@ -1711,9 +1707,6 @@ void CTableDlg::OnBnClickedBtnRefrush()
 
 	Invalidate();
 	UpdateWindow();
-
-	//保存图像， 窗口必须切换至 tab3
-	SaveDistributeImage();
 }
 
 //查询

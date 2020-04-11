@@ -1,5 +1,6 @@
 #pragma once
 #include "afxwin.h"
+
 #include <string>
 #include <vector>
 #include <list>
@@ -91,6 +92,7 @@ typedef std::list<HImage> ImgList;
 
 typedef std::list<DefectType> DFTList;
 
+
 class CImageProcess
 {
 public:
@@ -104,8 +106,9 @@ public:
 
 	BOOL m_referenceImage_OK = FALSE;
 	BOOL m_bLoad_Default_Ref_Dev = TRUE;
-	int m_k_normal_distribution = 11;
-	int m_k_min_select_area = 9;
+	int m_k_normal_distribution = 15;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
+	int m_k_min_select_area = 5;		   //面积删选
+	int m_median_filter_size = 5;          //滤波器大小,直接关系检出率
 
 	BOOL BeginProcess();
 	BOOL StopProcess();
@@ -217,10 +220,11 @@ protected:
 	BOOL IsFileExist(const std::string &filename);
 	BOOL IsPathExist(const std::string &pathname);
 private:
+	void StopCalculateThreads();
 
 	HANDLE                m_hStopEvent;
 
-	CWinThread *m_ReferenceImage;
+	CWinThread *m_ManageThread;
 	CWinThread *m_CalculateThread1_1;
 	CWinThread *m_CalculateThread1_2;
 	CWinThread *m_CalculateThread1_3;
@@ -246,7 +250,7 @@ private:
 	CRITICAL_SECTION m_csCalculateThread3;
 	CRITICAL_SECTION m_csCalculateThread4;
 	CRITICAL_SECTION m_csNO_dft;
-	BOOL is_reference_thread_alive;
+	BOOL is_manage_thread_alive;
 	BOOL is_thread1_1_alive;
 	BOOL is_thread1_2_alive;
 	BOOL is_thread1_3_alive;
@@ -267,7 +271,7 @@ private:
 	BOOL is_thread4_3_alive;
 	BOOL is_thread4_4_alive;
 	BOOL is_thread4_5_alive;
-	static UINT ReferenceImage(LPVOID pParam);
+	static UINT ManageThread(LPVOID pParam);
 	static UINT ImageCalculate1_1(LPVOID pParam);
 	static UINT ImageCalculate1_2(LPVOID pParam);
 	static UINT ImageCalculate1_3(LPVOID pParam);
