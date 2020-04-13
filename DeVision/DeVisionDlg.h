@@ -43,6 +43,8 @@ public:
 #endif
 
 protected:
+	HWND hMainWnd;                           //主窗口句柄
+
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 		// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -65,7 +67,7 @@ protected:
 	BOOL InitialTotalDefect();                    //全部瑕疵显示区
 	BOOL InitialPartialDefect();                  //初始化瑕疵标记区域
 	void DelQueueFromSource();
-	int DevideDFTRank(DefectType dft);
+	int DevideDFTRank(int num);                   //定义产品等级
 	void CreateFlag(CDC &mDC, int x, int y, int kind);
 	void DrawPartial(int test);
 	void InitialScaleFlag();
@@ -121,10 +123,6 @@ private:
 public:
 	BOOL SaveUserInfo();
 	BOOL GetUserInfo(std::string &num, std::string &width, std::string &id, std::string &user);
-
-	void RecordWarning(const std::wstring& str);
-	void RecordLog(const std::wstring& str);
-
 public:
 	std::string m_work_path;                             //工作路径
 	std::string m_fold_name;                             //文件夹名称
@@ -133,8 +131,12 @@ public:
 	int m_system_state;                                  //系统状态
 	//普通， 一级， 二级， 三级， 严重
 	enum{RANK_COMMON = 0, RANK_GRADE1, RANK_GRADE2, RANK_GRADE3, RANK_SERIOUS};
-	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };
+	int m_rank[5] = {0};
+	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };	
+	
 	int m_screen_state;                                  //屏幕状态
+
+
 	BOOL m_is_refrushThread_alive;
 
 	CTabCtrl        m_tab;
@@ -213,4 +215,7 @@ public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnIdok();
 	afx_msg void OnIdcancel();
+protected:
+	afx_msg LRESULT OnLoggingMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnWarningMsg(WPARAM wParam, LPARAM lParam);
 };

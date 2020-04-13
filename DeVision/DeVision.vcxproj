@@ -119,6 +119,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -197,6 +198,7 @@
     <ClInclude Include="CAnalysisDlg.h" />
     <ClInclude Include="CApplication.h" />
     <ClInclude Include="CCameraDlg.h" />
+    <ClInclude Include="CControl.h" />
     <ClInclude Include="CFont0.h" />
     <ClInclude Include="CHistoryDlg.h" />
     <ClInclude Include="CImageProcess.h" />
@@ -233,6 +235,7 @@
     <ClCompile Include="CAlgorithmDlg.cpp" />
     <ClCompile Include="CAnalysisDlg.cpp" />
     <ClCompile Include="CCameraDlg.cpp" />
+    <ClCompile Include="CControl.cpp" />
     <ClCompile Include="CHistoryDlg.cpp" />
     <ClCompile Include="CImageProcess.cpp" />
     <ClCompile Include="CInspectDlg.cpp" />

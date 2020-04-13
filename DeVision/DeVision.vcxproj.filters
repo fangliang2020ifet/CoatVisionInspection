@@ -123,6 +123,9 @@
     <ClInclude Include="CShapeRange.h">
       <Filter>Table</Filter>
     </ClInclude>
+    <ClInclude Include="CControl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">
@@ -186,6 +189,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CLoad.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CControl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

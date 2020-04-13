@@ -26,6 +26,8 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	HWND hMainWnd;                           //主窗口句柄
+
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	virtual void OnOK();

@@ -17,6 +17,8 @@ public:
 	CCameraDlg(CWnd* pParent = nullptr);   // 标准构造函数
 	virtual ~CCameraDlg();
 
+public:
+	HWND hMainWnd;                           //主窗口句柄
 
 	//串口类
 	bool isOpened = false;

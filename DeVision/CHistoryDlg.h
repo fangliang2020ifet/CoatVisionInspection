@@ -23,6 +23,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
+	HWND hMainWnd;                           //主窗口句柄
+
 	//std::string m_strPath;	                           //历史图像路径
 
 	//std::vector<std::string> m_vImages;

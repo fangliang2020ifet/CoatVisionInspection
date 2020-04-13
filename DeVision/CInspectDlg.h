@@ -25,6 +25,8 @@ public:
 
 // Enumerations
 public:
+	HWND hMainWnd;                           //主窗口句柄
+
 	enum ServerCategory
 	{
 		ServerAll,
@@ -34,7 +36,7 @@ public:
 
 public:
 	BOOL FREE_RUN = FALSE;           //相机内部触发模式
-	int SCANE_RATE = 10000; 
+	int SCANE_RATE = 20000; 
 
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 	CFont m_font;
@@ -48,7 +50,10 @@ public:
 
 
 	void RecordWarning(const std::wstring& str);   //记录报警信息
+	void RecordWarning(int test, CString cstr);
 	void RecordLogList(const std::wstring& str);   //记录日志
+	void RecordLogList(int test, CString cstr);
+
 	void UpdateDFTinformation(size_t total_num, int great_dft_num, float longth);
 	void RestartInspect();
 

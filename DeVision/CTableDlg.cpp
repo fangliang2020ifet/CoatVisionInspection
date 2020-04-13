@@ -32,11 +32,11 @@ CTableDlg::CTableDlg(CWnd* pParent /*=nullptr*/)
 	//初始化画笔
 	m_pen[0].CreatePen(PS_SOLID, 3, RGB(0, 0, 0));           //黑色实线，1像素宽---参数：样式、宽度、颜色
 	m_pen[1].CreatePen(PS_SOLID, 3, RGB(255, 35, 15));       //红色实线，6像素宽
-	m_pen[2].CreatePen(PS_SOLID, 3, RGB(25, 255, 35));      //绿色虚线，必须为一个像素宽
+	m_pen[2].CreatePen(PS_SOLID, 3, RGB(25, 255, 35));       //绿色虚线，必须为一个像素宽
 	m_pen[3].CreatePen(PS_SOLID, 3, RGB(35, 55, 225));       //蓝色点线，必须为一个像素宽
 	m_pen[4].CreatePen(PS_SOLID, 3, RGB(255, 255, 0));       //黄色点线，必须为一个像素宽
-	m_pen[5].CreatePen(PS_DOT, 1, RGB(88, 88, 88));      //灰色虚线，必须为一个像素宽
-
+	m_pen[5].CreatePen(PS_SOLID, 3, RGB(255, 0, 255));       //黄色点线，必须为一个像素宽
+	m_pen[6].CreatePen(PS_DOT, 1, RGB(88, 88, 88));          //灰色虚线，必须为一个像素宽
 }
 
 CTableDlg::~CTableDlg()
@@ -76,23 +76,21 @@ END_MESSAGE_MAP()
 
 
 // CTableDlg 消息处理程序
-
-
 BOOL CTableDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
 	m_font.CreatePointFont(80, _T("Times New Roman"));
 	m_current_position = 0.0f;
 
 	InitialHistoryList();
 
 	InitialDetailList();
-
-	//获取父窗口指针
-	//CDeVisionDlg * pMainDlg = (CDeVisionDlg*)this->GetParent();
-
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -150,6 +148,16 @@ BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 	return TRUE;
 }
 
+void CTableDlg::GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4)
+{
+	m_DFT_rank[0] = rank0;
+	m_DFT_rank[1] = rank1;
+	m_DFT_rank[2] = rank2;
+	m_DFT_rank[3] = rank3;
+	m_DFT_rank[4] = rank4;
+
+}
+
 void CTableDlg::InitialHistoryList()
 {
 	LONG styles;
@@ -171,7 +179,6 @@ void CTableDlg::InitialHistoryList()
 	m_ListCtrlHis.InsertColumn(2, L"型号", LVCFMT_CENTER, 120);
 	m_ListCtrlHis.InsertColumn(3, L"长度", LVCFMT_CENTER, 80);
 	m_ListCtrlHis.InsertColumn(4, L"操作员", LVCFMT_CENTER, 80);
-
 }
 
 void CTableDlg::InitialDetailList()
@@ -195,8 +202,6 @@ void CTableDlg::InitialDetailList()
 	m_ListCtrlDetail.InsertColumn(2, L"位置", LVCFMT_LEFT, 40);
 	m_ListCtrlDetail.InsertColumn(3, L"直径", LVCFMT_LEFT, 40);
 	m_ListCtrlDetail.InsertColumn(4, L"等级", LVCFMT_LEFT, 40);
-
-
 }
 
 //绘制虚线表格
@@ -205,7 +210,7 @@ void CTableDlg::DrawTable(CDC *mDC, CRect rect, float x, float y)
 	//CPen black_pen;
 	//black_pen.CreatePen(PS_DOT, 1, RGB(88, 88, 88));
 
-	mDC->SelectObject(&m_pen[5]);
+	mDC->SelectObject(&m_pen[6]);
 	mDC->SetBkColor(RGB(255, 255, 255));
 
 	int high_size = (int)rect.Height() / 11;
@@ -258,6 +263,11 @@ void CTableDlg::CreateFlag(CDC *mDC, int x, int y, int kind)
 	}
 	case 3: {
 		mDC->SelectObject(&m_pen[4]);
+		mDC->Rectangle(x, y, x + 3, y + 3);
+		break;
+	}
+	case 4: {
+		mDC->SelectObject(&m_pen[5]);
 		mDC->Rectangle(x, y, x + 3, y + 3);
 		break;
 	}
@@ -510,7 +520,6 @@ bool CTableDlg::SaveBitmapToFile(HBITMAP hBitmap, LPSTR lpFileName)
 		return true;
 	}
 }
-
 
 void CTableDlg::GenerateReportName(std::wstring &wstrname)
 {
@@ -858,8 +867,21 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 
 }
 
+//使用模板保存
 void CTableDlg::SaveToExcelUseDefault(CString &name)
 {
+	//打开模板文件
+	TCHAR path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, path);
+	CString cpath = path;
+	cpath = cpath + L"\\temp\\example.xlsx";
+	std::ifstream fexist(CT2A(cpath.GetBuffer()));
+	if (!fexist) {
+		CString cstr = L"打开Excel模板失败，请检查.temp\\example.xlsx文件是否存在";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
+	}
+
 	CApplication app;
 	CWorkbooks books;
 	CWorkbook book;
@@ -873,11 +895,6 @@ void CTableDlg::SaveToExcelUseDefault(CString &name)
 		return;
 	}
 	books.AttachDispatch(app.get_Workbooks());
-	//打开模板文件
-	TCHAR path[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, path);
-	CString cpath = path;
-	cpath = cpath + L"\\temp\\example.xlsx";
 
 	lpDisp = books.Open(cpath, covOptional, covOptional, covOptional, covOptional, covOptional
 		, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
@@ -964,7 +981,7 @@ void CTableDlg::FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead)
 
 }
 
-
+//保存报表
 void CTableDlg::BeginSaveTable()
 {
 	if (m_SaveTable != NULL) {
@@ -975,7 +992,8 @@ void CTableDlg::BeginSaveTable()
 	//SaveToExcelUseDefault(m_current_excel_name);
 
 	if (!(m_SaveTable = AfxBeginThread(SaveTableThreadDefault, this))) {
-		Win::log("报表保存失败");
+		CString cstr = L"报表保存失败,保存线程创建失败";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return;
 	}
 
@@ -1019,14 +1037,10 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	//1.创建Excel实例
 	if (!App.CreateDispatch(_T("Excel.Application"), NULL))
 	{
-		Win::log("创建Excel实例失败");
-		//pMainDlg->RecordWarning(L"创建Excel实例失败");		
+		CString cstr = L"创建Excel失败，请检查Excel是否正常";
+		::SendNotifyMessageW(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
-	else
-	{
-		Win::log("创建报表成功");
-		//pMainDlg->RecordLog(L"创建报表成功");
-	}
+
 	App.put_Visible(FALSE);	//打开Excel, 也可设置为不打开
 	App.put_UserControl(FALSE);
 
@@ -1158,8 +1172,6 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
 
 	//5.设置对齐方式
-	//水平对齐：默认 1 居中 -4108， 左= -4131，右=-4152
-	//垂直对齐：默认 2 居中 -4108， 左= -4160，右=-4107
 	range.put_VerticalAlignment(COleVariant((long)-4108));
 	range.put_HorizontalAlignment(COleVariant((long)-4108));
 	//6.设置字体颜色
@@ -1176,7 +1188,7 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	ft.put_ColorIndex(COleVariant((long)1));    //颜色	
 	ft.put_Size(COleVariant((long)18));         //大小
 
-		//*****************************************************创建瑕疵分布图**********************************/
+	//*****************************************************创建瑕疵分布图**********************************/
 	LPDISPATCH lpDisp;
 	LPDISPATCH lpDispLast = sheets.get_Item(COleVariant(sheets.get_Count()));
 	lpDisp = sheets.Add(vtMissing, _variant_t(lpDispLast), _variant_t((long)1), vtMissing);
@@ -1323,6 +1335,17 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	CTableDlg *pThis = (CTableDlg *)pParam;
 	pThis->m_save_successfully = FALSE;
 
+	TCHAR excel_path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, excel_path);
+	CString cpath = excel_path;
+	cpath = cpath + L"\\temp\\example.xlsx";
+	std::ifstream fexist(CT2A(cpath.GetBuffer()));
+	if (!fexist) {
+		CString cstr = L"打开Excel模板失败，请检查\\temp\\目录下文件example.xlsx是否存在";
+		::SendMessage(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return -1;
+	}
+
 	//1.创建基本对象
 	CApplication App;                //创建应用程序实例
 	CWorkbooks Books;                //工作簿，多个Excel文件
@@ -1334,17 +1357,13 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	LPDISPATCH lpDisp;
 	COleVariant vResult;
 	COleVariant  covOptional((long)DISP_E_PARAMNOTFOUND, VT_ERROR);
-	if (!App.CreateDispatch(L"Excel.Application"))
-	{
-		Win::log("创建Excel实例失败");
+	if (!App.CreateDispatch(L"Excel.Application")){
+		CString cstr = L"打开Excel失败，请检查Excel状态";
+		::SendMessage(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return -1;
 	}
 	Books.AttachDispatch(App.get_Workbooks());
 	//打开模板文件
-	TCHAR excel_path[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, excel_path);
-	CString cpath = excel_path;
-	cpath = cpath + L"\\temp\\example.xlsx";
 	lpDisp = Books.Open(cpath, covOptional, covOptional, covOptional, covOptional, covOptional
 		, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
 		covOptional, covOptional);
@@ -1408,18 +1427,18 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	for (int k = 0; k < 7; k++)
 	{
 		if (k < 5) {
-			COleVariant vkind_stastic((long)k);   //类型统计
+			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]);   //类型统计
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
 		}
 		if (k == 5) {
-			CString cserious;
-			cserious.Format(_T("0000"));
-			COleVariant vserious(cserious);   //严重缺陷
+			//CString cserious;
+			//cserious.Format(_T(""));
+			COleVariant vserious((long)pThis->m_serious_num);   //严重缺陷
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
 		}
 		if (k == 6) {
-			CString cout;
-			cout.Format(_T("一级"));
+			CString cout = pThis->GenerateRankText(pThis->m_product_rank);
+			//cout.Format(_T("一级"));
 			COleVariant vout(cout);   //检测结果
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
 		}
@@ -1504,18 +1523,18 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	for (int k = 0; k < 7; k++)
 	{
 		if (k < 5) {
-			COleVariant vkind_stastic((long)k);   //类型统计
+			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]);   //类型统计
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
 		}
 		if (k == 5) {
-			CString cserious;
-			cserious.Format(_T("0000"));
-			COleVariant vserious(cserious);   //严重缺陷
+			//CString cserious;
+			//cserious.Format(_T(""));
+			COleVariant vserious((long)pThis->m_serious_num);   //严重缺陷
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
 		}
 		if (k == 6) {
-			CString cout;
-			cout.Format(_T("一级"));
+			CString cout = pThis->GenerateRankText(pThis->m_product_rank);
+			//cout.Format(_T("一级"));
 			COleVariant vout(cout);   //检测结果
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
 		}
@@ -1551,6 +1570,10 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 		//shapeRange.put_Height(float(600));
 		//shapeRange.put_Width(float(500));
 	}
+	else {
+		CString cstr = L"插入瑕疵分布图失败，\\temp\\目录下未生成分布图";
+		::SendMessage(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+	}
 	//*************************************************************
 
 	Book.Save(); //保存
@@ -1571,10 +1594,36 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 
 	pThis->m_vecDFT.clear();
 
-	Win::log("报表已保存");
+	CString cstr = L"报表已保存: " + strExcelFile;
+	::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 	pThis->m_save_successfully = TRUE;
 
 	return 0;
+}
+
+CString CTableDlg::GenerateRankText(int rank)
+{
+	CString crank;
+	switch (rank)
+	{
+	case 0:
+		crank.Format(_T("合格"));
+		break;
+	case 1:
+		crank.Format(_T("A级"));
+		break;
+	case 2:
+		crank.Format(_T("B级"));
+		break;
+	case 3:
+		crank.Format(_T("C级"));
+		break;
+	case 4:
+		crank.Format(_T("D级"));
+		break;
+	}
+	return crank;
 }
 
 //查找目录下的所有文件
@@ -1643,13 +1692,9 @@ void CTableDlg::OpenExcelFile(std::wstring excelname)
 	//1.创建Excel实例
 	if (!App.CreateDispatch(_T("Excel.Application"), NULL))
 	{
-		Win::log("创建Excel实例失败");
-		//pMainDlg->RecordWarning(L"创建Excel实例失败");		
-	}
-	else
-	{
-		Win::log("创建报表成功");
-		//pMainDlg->RecordLog(L"创建报表成功");
+		CString cstr = L"打开Excel失败，请检查Excel软件状态";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
 	}
 	App.put_Visible(TRUE);	//打开Excel, 也可设置为不打开
 	App.put_UserControl(FALSE);
@@ -1707,6 +1752,9 @@ void CTableDlg::OnBnClickedBtnRefrush()
 
 	Invalidate();
 	UpdateWindow();
+
+	CString cstr = L"瑕疵分布图已刷新";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
 //查询
@@ -1718,8 +1766,11 @@ void CTableDlg::OnBnClickedButtonSearch()
 	//SaveToExcel(*m_pvDFT);
 	//CString excel_name;
 	//SaveToExcelUseDefault(excel_name);
-}
 
+	CString cstr = L"查询到： 0 条记录";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+}
 
 //全部显示
 void CTableDlg::OnBnClickedButtonShowall()
@@ -1761,6 +1812,9 @@ void CTableDlg::OnBnClickedButtonShowall()
 		m_ListCtrlHis.SetItemText(nItem, 4, CA2W(operators.c_str()));
 	}
 
+	CString cstr;
+	cstr.Format(_T("已找到报表记录： %d 条"), vsize);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
 //程序窗口中打开
@@ -1790,7 +1844,12 @@ void CTableDlg::OnBnClickedButtonOpenexcel()
 
 	std::wstring excelname((LPCTSTR)CA2W(filename.c_str()));
 
+	//打开 Excel 文件
 	OpenExcelFile(excelname);
+
+	CString cfilename = excelname.c_str();
+	CString cstr = L"打开报表：" + cfilename;
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 }
 
@@ -1814,8 +1873,10 @@ void CTableDlg::OnBnClickedButtonDelselect()
 
 	//删除文件
 	DeleteFileA(filename.c_str());
-	Win::log("删除一条历史记录:%s", filename.c_str());
-	return;
+
+	CString cfilename = CA2W(filename.c_str());
+	CString cstr = L"删除报表：" + cfilename;
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
 //全部删除
@@ -1823,30 +1884,41 @@ void CTableDlg::OnBnClickedButtonDelall()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
+	CString cstr = L"全部删除：";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 //打印选中
 void CTableDlg::OnBnClickedButtonPrint()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	
+
+	CString cstr = L"打印报表：";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 //选中另存为
 void CTableDlg::OnBnClickedButtonSaveas()
 {
 	// TODO: 在此添加控件通知处理程序代码
+
+	CString cstr = L"报表另存为：";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 //打开文件夹
 void CTableDlg::OnBnClickedButtonOpenexcelpath()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	std::string path((LPCSTR)CW2A(m_save_path.c_str()));
+	CString cpath = CA2W(path.c_str());
+	ShellExecute(NULL, L"explore", cpath, NULL, NULL, SW_SHOW);
 
-		// get root path
-	std::string _path((LPCSTR)CW2A(m_save_path.c_str()));
-	ShellExecute(NULL, L"explore", L"D://report", NULL, NULL, SW_SHOW);
-
+	CString cstr = L"打开文件夹：" + cpath;
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
 //双击ListBox某一瑕疵

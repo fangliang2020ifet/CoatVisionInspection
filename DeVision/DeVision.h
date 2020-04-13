@@ -15,6 +15,8 @@
 //
 
 #define STRINGLENGTH 64
+#define WM_LOGGING_MSG WM_USER+0x01001
+#define WM_WARNING_MSG WM_USER+0x02001
 
 class CDeVisionApp : public CWinApp
 {

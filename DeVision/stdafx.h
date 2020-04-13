@@ -58,6 +58,7 @@
 #include "CWorkbooks.h"
 #include "CWorksheet.h"
 #include "CWorksheets.h"
+#include <afxwin.h>
 
 
 

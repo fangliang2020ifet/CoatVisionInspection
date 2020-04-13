@@ -22,6 +22,8 @@ public:
 #endif
 
 public:
+	HWND hMainWnd;                           //主窗口句柄
+
 	std::string m_DFT_img_path;
 	std::wstring m_save_path = L"D:\\report\\";
 	std::wstring m_wstr_num;               //批号
@@ -29,7 +31,11 @@ public:
 	std::wstring m_wstr_width;
 	std::wstring m_wstr_user;
 	std::wstring m_wstr_speed = L"20";              //速度
+	int m_product_rank = 0;
+	int m_DFT_rank[5] = { 0 };
+	int m_serious_num = 0;
 
+	void GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4);
 	void DrawTable(CDC *mDC, CRect rect, float x, float y);
 	void CreateFlag(CDC *mDC, int x, int y, int kind);
 	void DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height);
@@ -55,7 +61,7 @@ public:
 	CRITICAL_SECTION m_csvec;                  //定义一个临界区
 
 private:
-	CPen m_pen[6];
+	CPen m_pen[7];
 	COLORREF red_color = RGB(255, 35, 15);             //红色
 	COLORREF green_color = RGB(25, 255, 35);          //绿色
 	COLORREF blue_color = RGB(35, 55, 225);            //蓝色
@@ -72,7 +78,7 @@ private:
 	void GenerateReportName(std::wstring &wstrname);
 	void InitialHistoryList();
 	void InitialDetailList();
-
+	CString GenerateRankText(int rank);
 	std::vector<std::string> m_vstring;
 	void GetExcelsInfo(std::string filename, std::string &time, std::string &number,
 		std::string &ID, std::string &longth, std::string &operators);

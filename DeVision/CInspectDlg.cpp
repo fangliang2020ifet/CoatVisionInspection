@@ -91,6 +91,10 @@ BOOL CInspectDlg::OnInitDialog()
 	__super::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
 	m_font.CreatePointFont(300, _T("Times New Roman"));
 
 	camera1_show_buffer = TRUE;
@@ -132,8 +136,15 @@ BOOL CInspectDlg::OnInitDialog()
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
 	pcolorbtn->SetColor(RGB(155, 155, 85));
 
-	RecordWarning(L"报警信息");
-	RecordLogList(L"主窗口创建");
+	m_listLog.SetHorizontalExtent(1000);
+	CString clog = L"***********************操作记录***********************";
+	m_listLog.AddString(clog);
+	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
+
+	m_listWarning.SetHorizontalExtent(1000);
+	CString cwarning = L"***********************报警信息***********************";
+	m_listWarning.AddString(cwarning);
+	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -297,6 +308,24 @@ void CInspectDlg::RecordWarning(const std::wstring& str)
 	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
+void CInspectDlg::RecordWarning(int test, CString cstr)
+{
+	CString cstr_log;
+	CString strSpace, strNextLine, strTime;
+	strSpace.Format(_T("%s"), _T("  "));
+	strNextLine.Format(_T("%s"), _T("\r\n"));
+
+	CTime tm; tm = CTime::GetCurrentTime();
+	strTime = tm.Format("%X:");
+	cstr_log += strTime;
+	cstr_log += strSpace;
+	cstr_log += cstr;
+	cstr_log += strNextLine;
+
+	m_listWarning.AddString(cstr_log);
+	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+}
+
 void CInspectDlg::RecordLogList(const std::wstring& str)
 {
 	CString cstr_log;
@@ -314,6 +343,24 @@ void CInspectDlg::RecordLogList(const std::wstring& str)
 	m_listLog.AddString(cstr_log);
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 
+}
+
+void CInspectDlg::RecordLogList(int test, CString cstr)
+{
+	CString cstr_log;
+	CString strSpace, strNextLine, strTime;
+	strSpace.Format(_T("%s"), _T("  "));
+	strNextLine.Format(_T("%s"), _T("\r\n"));
+
+	CTime tm; tm = CTime::GetCurrentTime();
+	strTime = tm.Format("%X:");
+	cstr_log += strTime;
+	cstr_log += strSpace;
+	cstr_log += cstr;
+	cstr_log += strNextLine;
+
+	m_listLog.AddString(cstr_log);
+	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 //修改产品信息
@@ -362,6 +409,10 @@ void CInspectDlg::OnBnClickedButton1()
 	Invalidate();
 	UpdateData(FALSE);
 	m_bUpdateUserInfo = TRUE;
+
+	CString cstr = L"修改产品信息";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 BOOL CInspectDlg::InitServer()
@@ -397,14 +448,14 @@ BOOL CInspectDlg::InitServer()
 	// At least one server must be available
 	if (m_vServerName.size() <= 0)
 	{
-		Win::log("未发现采集设备");
-		RecordLogList(L"未发现采集设备");
+		CString cstr = L"未发现采集设备，请检查线路和电源连接";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 	if (m_vServerName.size() < 4)
 	{
-		Win::log("采集设备数量少于 4");
-		RecordLogList(L"采集设备数量少于 4");
+		CString cstr = L"采集设备数量少于 4，请检查线路和电源连接";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 
@@ -417,8 +468,6 @@ BOOL CInspectDlg::CameraSystemInitial()
 
 		
 		if (!InitServer()) {
-			Win::log("采集设备异常");
-			RecordWarning(L"采集设备异常");
 			return FALSE;
 		}
 		/*
@@ -460,9 +509,9 @@ BOOL CInspectDlg::CameraSystemInitial()
 	}
 
 	m_camera_system_initialled = TRUE;
-	Win::log("采集系统初始化完成");
-	RecordLogList(L"采集系统初始化完成");
-
+	
+	CString cstr = L"采集系统初始化完成";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	return TRUE;
 }
 
@@ -478,6 +527,8 @@ BOOL CInspectDlg::InitialAllBoards()
 		memcpy(configFilename2, free_run_2, sizeof(free_run_2));
 		memcpy(configFilename3, free_run_3, sizeof(free_run_3));
 		memcpy(configFilename4, free_run_4, sizeof(free_run_4));
+		CString cstr = L"已设为内部触发模式";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else {
 		char encode_trigger_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board1_ROI.ccf";
@@ -488,6 +539,8 @@ BOOL CInspectDlg::InitialAllBoards()
 		memcpy(configFilename2, encode_trigger_2, sizeof(encode_trigger_2));
 		memcpy(configFilename3, encode_trigger_3, sizeof(encode_trigger_3));
 		memcpy(configFilename4, encode_trigger_4, sizeof(encode_trigger_4));
+		CString cstr = L"已设为外部触发模式";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 
 	if (1)
@@ -516,7 +569,6 @@ BOOL CInspectDlg::InitialAllBoards()
 		m_Buffers4 = new SapBufferWithTrash(2, m_Acq4);  // 双缓存
 		m_Xfer4 = new SapAcqToBuf(m_Acq4, m_Buffers4, AcqCallback4, this);
 		m_View4 = new SapView(m_Buffers4);
-
 	}
 	if (1)
 	{
@@ -1047,18 +1099,30 @@ BOOL CInspectDlg::DestroyObjects()
 //开始连续采集
 int CInspectDlg::Grab()
 {
+	//读取测试图像
+	if (m_pImgProc.TEST_MODEL) {
+		std::string test_name = "C:/DeVisionProject/sample0408/test01";
+		m_pImgProc.LoadSingleImage(test_name);
+		CString cpath = CA2W(test_name.c_str());
+		CString cstr = L"已加载测试图像: " + cpath;
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	}
+
 	if (m_Xfer1->Grab() && m_Xfer2->Grab() && m_Xfer3->Grab() && m_Xfer4->Grab()) {
 		m_camera1_thread_alive = TRUE;
 		m_camera2_thread_alive = TRUE;
 		m_camera3_thread_alive = TRUE;
 		m_camera4_thread_alive = TRUE;
 
-		Win::log("开始采集图像Grab");
-		RecordLogList(L"开始采集图像");
-
+		CString cstr = L"开始采集图像";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 		return 0;
 	}
-	else return -1;
+	else {
+		CString cstr = L"图像采集失败";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return -1;
+	}
 }
 
 //采集一帧
@@ -1085,8 +1149,8 @@ void CInspectDlg::Snap()
 		return;
 	}
 
-	Win::log("采集一张图像Snap");
-	RecordLogList(L"采集一张图像");
+	CString cstr = L"采集一张图像";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	return;
 }
 
@@ -1108,12 +1172,16 @@ int CInspectDlg::Freeze()
 		m_camera3_thread_alive = FALSE;
 		m_camera4_thread_alive = FALSE;
 
-		Win::log("停止采集Freeze");
-		RecordLogList(L"停止采集");
+		CString cstr = L"停止采集";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 		return 0;
 	}
-	else return -1;
+	else {
+		CString cstr = L"停止图像采集失败";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return -1;
+	}
 }
 
 //重启检测
@@ -1136,6 +1204,7 @@ void CInspectDlg::RestartInspect()
 	return;
 }
 
+//计算编码器速度
 float CInspectDlg::CalculateEncoderSpeed()
 {
 	SapXferFrameRateInfo* pStats = m_Xfer1->GetFrameRateStatistics();
@@ -1153,6 +1222,7 @@ float CInspectDlg::CalculateEncoderSpeed()
 	}
 }
 
+//计算总帧数
 UINT64 CInspectDlg::GetTotalFrameCount()
 {
 	total_frame_count = camera1_frame_count + camera2_frame_count +
@@ -1216,6 +1286,8 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 	if (pInfo->IsTrash())
 	{
 		pDlg->camera1_trash_count += 1;
+		CString cstr = L"1#相机丢帧";
+		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else
 	{
@@ -1288,7 +1360,8 @@ void CInspectDlg::AcqCallback2(SapXferCallbackInfo *pInfo)
 	if (pInfo->IsTrash())
 	{
 		pDlg->camera2_trash_count += 1;
-
+		CString cstr = L"2#相机丢帧";
+		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else
 	{
@@ -1357,7 +1430,8 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 	if (pInfo->IsTrash())
 	{
 		pDlg->camera3_trash_count += 1;
-
+		CString cstr = L"3#相机丢帧";
+		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else
 	{
@@ -1428,6 +1502,8 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 	if (pInfo->IsTrash())
 	{
 		pDlg->camera4_trash_count += 1;
+		CString cstr = L"4#相机丢帧";
+		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else
 	{

@@ -43,6 +43,10 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
 	m_combo_global_threshold.AddString(L"3");
 	m_combo_global_threshold.AddString(L"4");
 	m_combo_global_threshold.AddString(L"5");
@@ -93,6 +97,9 @@ void CAlgorithmDlg::OnOK()
 	// TODO: 在此添加专用代码和/或调用基类
 	int index_global = m_combo_global_threshold.GetCurSel();
 	m_global_threshold = index_global + 3;
+	CString cstr;
+	cstr.Format(_T("设置检测算法概率密度为： %d"), m_global_threshold);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 	int index_select = m_combo_select_threshold.GetCurSel();
 	switch (index_select)
@@ -124,12 +131,18 @@ void CAlgorithmDlg::OnOK()
 	default:
 		break;
 	}
+	cstr.Format(_T("设置检测算法图像滤波器大小为： %d"), m_select_threshold);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 
 	int state = m_btn_load_default.GetCheck();
 	if(state == 0)
 		m_load_default = FALSE;
 	else if(state == 1)
 		m_load_default = TRUE;
+	cstr.Format(_T("设置检测算法使用默认参考图像： %d"), (int)m_load_default);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 
 	CDialogEx::OnOK();
 }

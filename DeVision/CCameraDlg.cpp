@@ -74,6 +74,9 @@ BOOL CCameraDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
 
 	//***********************相机******************************
 	//获取父窗口指针
@@ -444,6 +447,10 @@ void CCameraDlg::OnBnClickedButton3()
 		std::string str = "SH#";
 		CStringA cstrtmp(str.c_str());
 		OnChangeEditTxData(cstrtmp);
+
+		CString cstr = L"光源设置为常亮";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 	}
 }
 
@@ -456,6 +463,10 @@ void CCameraDlg::OnBnClickedButton4()
 		std::string str = "SL#";
 		CStringA cstrtmp(str.c_str());
 		OnChangeEditTxData(cstrtmp);
+
+		CString cstr = L"光源设置为常灭";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 	}
 
 }
@@ -524,6 +535,11 @@ void CCameraDlg::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 			}
 		}
 		*/
+	
+		CString cstr;
+		cstr.Format(_T("设置光源亮度为： %d"), position);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 	}
 
 	*pResult = 0;

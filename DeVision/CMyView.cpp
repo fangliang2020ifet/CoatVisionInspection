@@ -174,6 +174,11 @@ void CMyView::CreateFlag(CDC &mDC, int x, int y, int kind)
 		mDC.TextOutW(x, y, _T("D"));
 		break;
 	}
+	case 4: {
+		mDC.SetBkColor(RGB(225, 0, 225));
+		mDC.TextOutW(x, y, _T("E"));
+		break;
+	}
 	default: {
 		mDC.SetBkColor(RGB(0, 0, 0));
 	}

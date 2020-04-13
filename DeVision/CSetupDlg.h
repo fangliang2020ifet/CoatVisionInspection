@@ -22,6 +22,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
+	HWND hMainWnd;                           //主窗口句柄
+
 	float m_wnd1_range = 0.0f;
 	float m_wnd2_range = 0.0f;
 

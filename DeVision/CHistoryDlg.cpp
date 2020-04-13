@@ -63,7 +63,7 @@ IMPLEMENT_DYNAMIC(CHistoryDlg, CDialogEx)
 CHistoryDlg::CHistoryDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_HISTORY, pParent)
 {
-
+	m_pages = 0;
 }
 
 CHistoryDlg::~CHistoryDlg()
@@ -105,6 +105,11 @@ BOOL CHistoryDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
+
 	pwnd1 = GetDlgItem(IDC_HISTORY_IMG1);
 	pwnd2 = GetDlgItem(IDC_HISTORY_IMG2);
 	pwnd3 = GetDlgItem(IDC_HISTORY_IMG3);
@@ -154,6 +159,10 @@ void CHistoryDlg::OnBnClickedButtonPrePage()
 
 	RefrushImgWnd(m_file_path, m_vImage_name);
 
+	CString cstr;
+	cstr.Format(_T("历史图像：第 %d 页"), m_pages);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 //下一页
@@ -174,19 +183,23 @@ void CHistoryDlg::OnBnClickedButtonNextPage()
 		m_pages += 1;
 
 	RefrushImgWnd(m_file_path, m_vImage_name);
+
+	CString cstr;
+	cstr.Format(_T("历史图像：第 %d 页"), m_pages);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 }
 
 //打开目录
 void CHistoryDlg::OnBnClickedButtonOpenhistorypath()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	CString cpath = CA2W(m_file_path.c_str());
+	ShellExecute(NULL, L"explore", cpath, NULL, NULL, SW_SHOW);
 
-	CStringW wpath = CA2W(m_file_path.c_str());
-
-	ShellExecute(NULL, L"explore", wpath, NULL, NULL, SW_SHOW);
-
+	CString cstr = L"打开历史图像目录：" + cpath;
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
-
 
 //刷新历史窗口
 void CHistoryDlg::RefrushImgWnd(std::string path, std::vector<std::string> vstring)
@@ -411,8 +424,11 @@ void CHistoryDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
 	/**************************************************************************/
 	HBITMAP m_hBitmap;
 	m_hBitmap = (HBITMAP)LoadImage(NULL, BmpName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
-	if (m_hBitmap == NULL)
+	if (m_hBitmap == NULL) {
+		CString cstr = L"加载历史图像失败，图像名：" + BmpName;
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return;
+	}
 
 	if (m_bitmap.m_hObject)
 	{
@@ -422,8 +438,11 @@ void CHistoryDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
 
 	//定义并创建一个内存设备环境DC  
 	CDC dcBmp;
-	if (!dcBmp.CreateCompatibleDC(pDC))   //创建兼容性的DC  
+	if (!dcBmp.CreateCompatibleDC(pDC)) {
+		CString cstr = L"加载历史图像失败，创建内存DC失败";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return;
+	}
 
 	//定义BITMAP变量,调用函数GetBitmap将图片载入位图中,该定义是为获取图像的长宽等信息
 	BITMAP m_bmp;                          //临时bmp图片变量  
@@ -441,5 +460,4 @@ void CHistoryDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
 	dcBmp.DeleteDC();                      //删除CreateCompatibleDC得到的图片DC  
 
 }
-
 

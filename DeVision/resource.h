@@ -287,6 +287,7 @@
 #define IDC_COMBO_GLOBAL_THRESHOLD      1245
 #define IDC_COMBO_SELECT_THRESHOLD      1246
 #define IDC_CHECK_LOAD_DEFAULT          1247
+#define IDC_BUTTON_RESET                1248
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -339,7 +340,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        177
 #define _APS_NEXT_COMMAND_VALUE         32816
-#define _APS_NEXT_CONTROL_VALUE         1248
+#define _APS_NEXT_CONTROL_VALUE         1249
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

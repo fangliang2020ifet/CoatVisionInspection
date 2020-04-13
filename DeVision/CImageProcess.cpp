@@ -1,6 +1,7 @@
 
 
 #include "stdafx.h"
+#include "DeVision.h"
 #include "DeVisionDlg.h"
 #include "CImageProcess.h"
 #include "Log.h"
@@ -24,6 +25,20 @@ CImageProcess::CImageProcess()
 	m_camera2_reference_image_acquired = FALSE;
 	m_camera3_reference_image_acquired = FALSE;
 	m_camera4_reference_image_acquired = FALSE;
+
+
+	//hMainWnd = AfxGetMainWnd()->m_hWnd;
+	//if (hMainWnd == NULL)
+	//	AfxMessageBox(L"无法获取父窗口");
+
+	//CWnd *inspectDlg = AfxGetMainWnd();
+	//CDeVisionDlg * pMainDlg = (CDeVisionDlg*)inspectDlg->GetParent();
+	//hMainWnd = FindWindow(NULL, L"薄膜瑕疵检测系统");
+	//hMainWnd = GetTopWindow(NULL);
+
+	//hMainWnd = inspectDlg->GetParent()->m_hWnd;
+	//if (hMainWnd == NULL)
+	//	AfxMessageBox(L"无法获取父窗口");
 
 }
 
@@ -71,6 +86,11 @@ CImageProcess::~CImageProcess()
 
 BOOL CImageProcess::BeginProcess()
 {
+	//CString cstr = L"创建计算线程";
+	////SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	//SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+
 	std::string str_path;
 	if (!GetSavePath(str_path)) return FALSE;
 	
@@ -174,15 +194,19 @@ BOOL CImageProcess::BeginProcess()
 
 BOOL CImageProcess::StopProcess()
 {
+	//CString cstr = L"结束计算线程";
+	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	////SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 	// 线程停止
 	StopManage_Event.SetEvent();
 
-	while (is_manage_thread_alive)
-	{
-		is_manage_thread_alive = FALSE;
-	}
+	//while (is_manage_thread_alive)
+	//{
+	//	is_manage_thread_alive = FALSE;
+	//}
 
-	StopCalculateThreads();
+	//StopCalculateThreads();
 
 	return TRUE;
 }
@@ -1486,7 +1510,8 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 	//读取待检测图像
 	ho_Image_def = hi_img;
 	GetImageSize(ho_Image_def, &hv_Width, &hv_Height);
-	GaussFilter(ho_Image_def, &ho_ImageGauss1, 5);
+	//GaussFilter(ho_Image_def, &ho_ImageGauss1, 5);
+	HalconCpp::MedianImage(ho_Image_def, &ho_ImageGauss1, "square", m_median_filter_size, "mirrored");
 
 	//待检图 - 参考图
 	AbsDiffImage(ho_ImageGauss1, ho_Image_ref, &ho_ImageAbsDiff1, 1);
@@ -1499,6 +1524,8 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 	GrayRangeRect(ho_ImageAbsDiff1, &ho_ImageResult, 10, 10);
 	MinMaxGray(ho_ImageResult, ho_ImageResult, 0, &hv_Min, &hv_Max, &hv_Range);
 	Threshold(ho_ImageResult, &ho_Regions, (HTuple(5.55).TupleConcat(hv_Max*0.8)).TupleMax(), 255);
+	//Threshold(ho_ImageResult, &ho_Regions, 200, 255);
+
 	Connection(ho_Regions, &ho_ConnectedRegions);
 	//区域选择参数：1.轮廓周长(pixel)  2.最大内接圆半径(pixel)
 	SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, (HTuple("contlength").Append("inner_radius")),
@@ -1618,6 +1645,7 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	ho_ImageDeviation = hi_deviation;
 	HalconCpp::GetImageSize(ho_Image, &hv_Width, &hv_Height);
 	HalconCpp::MedianImage(ho_Image, &ho_ImageMedianDFT, "square", m_median_filter_size, "mirrored");
+	//HalconCpp::MedianRect(ho_Image, &ho_ImageMedianDFT, 1, 11);
 
 	//参考文献：一种基于多目机器视觉的光学薄膜瑕疵检测系统
 	//如果相减后像素值小于零，其结果图中会被置0；同理，如果像素值大于255，也会被截断使其最大值为255
@@ -1796,97 +1824,102 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 	while (pThis->is_manage_thread_alive)
 	{
 		//加载默认均值图像和标准差图像
-		if (pThis->m_bLoad_Default_Ref_Dev) {
+		if (pThis->m_bLoad_Default_Ref_Dev && !pThis->m_default_ref_dev_path.empty()) {
 			if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
 				pThis->m_referenceImage_OK = TRUE;
+				//pThis->is_manage_thread_alive = FALSE;
+				//break;
+			}
+		}
+
+		if (!pThis->m_referenceImage_OK) {
+			if (!pThis->TEST_MODEL) {
+				if (!got_ref1) {
+					got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
+					if (got_ref1)
+						Win::log("获取1#参考图像");
+				}
+				if (!got_ref2) {
+					got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
+					if (got_ref2)
+						Win::log("获取2#参考图像");
+				}
+				if (!got_ref3) {
+					got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
+					if (got_ref3)
+						Win::log("获取3#参考图像");
+				}
+				if (!got_ref4) {
+					got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
+					if (got_ref4)
+						Win::log("获取4#参考图像");
+				}
+			}
+			else {
+				if (pThis->LoadRefImage("C:/DeVisionProject/sample0408/")) {
+					got_ref1 = TRUE;
+					got_ref2 = TRUE;
+					got_ref3 = TRUE;
+					got_ref4 = TRUE;
+				}				
+			}
+
+			if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
+				if (pThis->SAVE_REFERENCE_IMAGE) {
+					pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
+					pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
+					pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
+				}
+
+				if (pThis->REDUCE_BLACK_EDGE) {
+					pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
+					if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
+						HObject ho_ImagePart, ho_Region, ho_ImageReduced;
+						HTuple hv_width_ref1, hv_height_ref1;
+
+						HalconCpp::GetImageSize(pThis->m_hi_ref1, &hv_width_ref1, &hv_height_ref1);
+						HalconCpp::GenRectangle1(&ho_Region, 0, pThis->m_camera1_invalid_area, hv_height_ref1, hv_width_ref1);
+						HalconCpp::ReduceDomain(pThis->m_hi_ref1, ho_Region, &ho_ImageReduced);
+						HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+						pThis->m_hi_ref1 = ho_ImagePart;
+					}
+
+					pThis->m_camera4_invalid_area = pThis->ProduceReferenceImage4(pThis->m_hi_ref4, pThis->m_hi_ref3);
+					if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
+						HObject ho_ImagePart, ho_Region, ho_ImageReduced;
+						HTuple hv_width_ref4, hv_height_ref4;
+
+						HalconCpp::GetImageSize(pThis->m_hi_ref4, &hv_width_ref4, &hv_height_ref4);
+						HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_ref4, hv_width_ref4 - (HTuple)pThis->m_camera4_invalid_area);
+						HalconCpp::ReduceDomain(pThis->m_hi_ref4, ho_Region, &ho_ImageReduced);
+						HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+						pThis->m_hi_ref4 = ho_ImagePart;
+					}
+				}
+
+				pThis->m_referenceImage_OK = TRUE;
 				pThis->is_manage_thread_alive = FALSE;
-				break;
 			}
 		}
 
-		if (!pThis->TEST_MODEL) {
-			if (!got_ref1) {
-				got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-				if (got_ref1)
-					Win::log("获取1#参考图像");
-			}
-			if (!got_ref2) {
-				got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-				if (got_ref2)
-					Win::log("获取2#参考图像");
-			}
-			if (!got_ref3) {
-				got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
-				if (got_ref3)
-					Win::log("获取3#参考图像");
-			}
-			if (!got_ref4) {
-				got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
-				if (got_ref4)
-					Win::log("获取4#参考图像");
-			}
+		if (WAIT_OBJECT_0 == WaitForSingleObject(StopManage_Event, INFINITE)) {
+
+			//AfxMessageBox(L"Stop Manage Thread");
+			//while (pThis->CheckTotalListSize() > 0)
+			//{
+			//	Sleep(200);
+			//}
+
+			pThis->StopCalculateThreads();
+			break;
+			//return 0;
 		}
-		else {
-			pThis->LoadRefImage("C:/DeVisionProject/sample0408/");
-		}
-
-		if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
-			if (pThis->SAVE_REFERENCE_IMAGE) {
-				pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
-				pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
-				pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
-			}
-
-			if (pThis->REDUCE_BLACK_EDGE) {
-				pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
-				if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-					HObject ho_ImagePart, ho_Region, ho_ImageReduced;
-					HTuple hv_width_ref1, hv_height_ref1;
-
-					HalconCpp::GetImageSize(pThis->m_hi_ref1, &hv_width_ref1, &hv_height_ref1);
-					HalconCpp::GenRectangle1(&ho_Region, 0, pThis->m_camera1_invalid_area, hv_height_ref1, hv_width_ref1);
-					HalconCpp::ReduceDomain(pThis->m_hi_ref1, ho_Region, &ho_ImageReduced);
-					HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-					pThis->m_hi_ref1 = ho_ImagePart;
-				}
-
-				pThis->m_camera4_invalid_area = pThis->ProduceReferenceImage4(pThis->m_hi_ref4, pThis->m_hi_ref3);
-				if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-					HObject ho_ImagePart, ho_Region, ho_ImageReduced;
-					HTuple hv_width_ref4, hv_height_ref4;
-
-					HalconCpp::GetImageSize(pThis->m_hi_ref4, &hv_width_ref4, &hv_height_ref4);
-					HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_ref4, hv_width_ref4 - (HTuple)pThis->m_camera4_invalid_area);
-					HalconCpp::ReduceDomain(pThis->m_hi_ref4, ho_Region, &ho_ImageReduced);
-					HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-					pThis->m_hi_ref4 = ho_ImagePart;
-				}
-			}
-
-			pThis->m_referenceImage_OK = TRUE;
-			pThis->is_manage_thread_alive = FALSE;
-		}
-		else
-			Sleep(50);
-
-
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopManage_Event, INFINITE)) {
-
-		//	//AfxMessageBox(L"Stop Manage Thread");
-		//	while (pThis->CheckTotalListSize())
-		//	{
-		//		Sleep(200);
-		//	}
-
-		//	pThis->StopCalculateThreads();
-		//	return 0;
-		//}
 	}
 	pThis->is_manage_thread_alive = FALSE;
 

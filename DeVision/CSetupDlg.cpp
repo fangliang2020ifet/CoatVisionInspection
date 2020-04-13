@@ -40,6 +40,10 @@ BOOL CSetupDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
 	m_wnd1_range = 20.0f;
 	CString ctext1, ctext2;
 	ctext1.Format(_T("%.2f"), m_wnd1_range);
@@ -85,7 +89,18 @@ void CSetupDlg::OnOK()
 	// TODO: 在此添加专用代码和/或调用基类
 
 	m_wnd1_range = GetWnd1DisplayRange();
+
 	m_wnd2_range = GetWnd2DisplayRange();
+
+	CString cstr;
+	cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	CString cstr2;
+	cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
+
+
 
 	CDialogEx::OnOK();
 }
