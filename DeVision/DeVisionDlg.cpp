@@ -68,6 +68,9 @@ CDeVisionDlg::CDeVisionDlg(CWnd* pParent /*=nullptr*/)
 	m_hUnlockIcon = AfxGetApp()->LoadIcon(IDI_ICON_UNLOCK);
 	m_hExitIcon = AfxGetApp()->LoadIconW(IDI_ICON_EXIT);
 
+	//初始化算法类
+	m_inspectDlg.m_pImgProc = &m_ImgProc;
+
 	m_system_state = SYSTEM_STATE_OFFLINE;
 	m_screen_state = SCREEN_UNLOCK;
 
@@ -237,8 +240,8 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetTimer(1, 1000, 0);
 
 	m_iAllThread_stopped = 0;
-	m_inspectDlg.FREE_RUN = TRUE;
-	m_inspectDlg.m_pImgProc.TEST_MODEL = TRUE;
+	m_inspectDlg.FREE_RUN = FALSE;
+	m_ImgProc.TEST_MODEL = FALSE;
 
 	std::string struser((LPCSTR)CW2A(m_tableDlg.m_wstr_user.c_str()));
 	CString cuser = CA2W(struser.c_str());
@@ -269,7 +272,7 @@ void CDeVisionDlg::OnIdcancel()
 
 int CDeVisionDlg::CheckThreadStatue()
 {
-	if (m_inspectDlg.m_pImgProc.IsThreadsAlive())
+	if (m_ImgProc.IsThreadsAlive())
 		return 1;
 
 	if (!m_tableDlg.m_save_successfully)
@@ -459,7 +462,7 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	{
 	case 1: 
 		//获取图像 List 大小
-		m_ImgList_size = m_inspectDlg.m_pImgProc.CheckTotalListSize();
+		m_ImgList_size = m_ImgProc.CheckTotalListSize();
 		//获取当前线程状态
 		if(m_system_state == SYSTEM_STATE_STOP || m_system_state == SYSTEM_STATE_OFFLINE)
 			m_iAllThread_stopped = CheckThreadStatue();
@@ -468,7 +471,7 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 		//更新状态栏
 		UpdateSysStatus();
 		//更新当前位置
-		current_position = m_inspectDlg.m_pImgProc.m_current_position;
+		current_position = m_ImgProc.m_current_position;
 		m_tableDlg.m_current_position = current_position;
 		//更新刻度
 		UpdateScaleValue(1650.0f, current_position);
@@ -758,17 +761,17 @@ BOOL CDeVisionDlg::InitialTotalDefect()
 void CDeVisionDlg::DelQueueFromSource()
 {
 	//重新排序
-	m_inspectDlg.m_pImgProc.ReSortDefectQueue();
+	m_ImgProc.ReSortDefectQueue();
 
 	EnterCriticalSection(&m_csVecDFT);
 	//从原始队列中取出
-	if (!m_inspectDlg.m_pImgProc.m_Sorted_DFTList.empty()) {
+	if (!m_ImgProc.m_Sorted_DFTList.empty()) {
 		DefectType crt_defect;
-		auto queue_length = m_inspectDlg.m_pImgProc.m_Sorted_DFTList.size();
+		auto queue_length = m_ImgProc.m_Sorted_DFTList.size();
 		for (auto i = 0; i < queue_length; i++)
 		{
-			crt_defect = m_inspectDlg.m_pImgProc.m_Sorted_DFTList.front();
-			m_inspectDlg.m_pImgProc.m_Sorted_DFTList.pop_front();
+			crt_defect = m_ImgProc.m_Sorted_DFTList.front();
+			m_ImgProc.m_Sorted_DFTList.pop_front();
 
 			m_vDFT.push_back(crt_defect);
 			pView->m_vDefect.push_back(crt_defect);     
@@ -1094,7 +1097,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		break;
 	case SYSTEM_STATE_RUN:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
-		if (m_inspectDlg.m_pImgProc.m_referenceImage_OK) {
+		if (m_ImgProc.m_referenceImage_OK) {
 			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
 			GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(true);
 		}
@@ -1309,6 +1312,9 @@ void CDeVisionDlg::ReStartPrepare()
 	memset(m_rank, 0, sizeof(m_rank));
 
 	m_vDFT.clear();
+
+	m_ImgProc.RestartProcess();
+
 	pView->m_vDefect.clear();
 
 	m_inspectDlg.RestartInspect();
@@ -1318,7 +1324,7 @@ void CDeVisionDlg::ReStartPrepare()
 	//创建工作目录
 	CreateWorkPath(m_work_path);
 	//获取瑕疵图像保存路径
-	m_inspectDlg.m_pImgProc.m_strPath = m_work_path;
+	m_ImgProc.m_strPath = m_work_path;
 	m_tableDlg.m_DFT_img_path         = m_work_path;
 	m_historyDlg.m_file_path          = m_work_path;
 
@@ -1341,10 +1347,13 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 
 		//获取瑕疵信息数据
 		pDlg->DelQueueFromSource();
-
 		pDlg->DrawPartial(5);
+
+		////刷新报表页面瑕疵分布图
+		//if (pDlg->m_CurSelTab == 2 && pDlg->m_system_state == SYSTEM_STATE_RUN)
+		//	pDlg->m_tableDlg.RefrushDistributeWnd();
 		
-		float position = pDlg->m_inspectDlg.m_pImgProc.m_current_position;
+		float position = pDlg->m_ImgProc.m_current_position;
 		pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range, position);
 
 		if (1) {
@@ -1354,25 +1363,22 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		}
 
 		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopRefrush_Event, INFINITE)) {
-		//	CWaitCursor wait;
-
-		//	while (pDlg->m_inspectDlg.m_pImgProc.IsThreadsAlive())
-		//	{
-		//		Sleep(200);
-		//	}
-
-		//	AfxMessageBox(L"Stop Manage Thread");
-
-		//	////结束历史图像刷新定时器
-		//	//pDlg->KillTimer(2);
-		//	////保存检测记录
-		//	//EnterCriticalSection(&pDlg->m_csVecDFT);
-		//	//pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
-		//	//pDlg->m_tableDlg.BeginSaveTable();
-		//	//LeaveCriticalSection(&pDlg->m_csVecDFT);
+		////	CWaitCursor wait;
+		////	//while (pDlg->m_ImgProc.IsThreadsAlive())
+		////	//{
+		////	//	Sleep(200);
+		////	//}
+		////	////结束历史图像刷新定时器
+		////	//pDlg->KillTimer(2);
+		////	////保存检测记录
+		////	//EnterCriticalSection(&pDlg->m_csVecDFT);
+		////	//pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
+		////	//pDlg->m_tableDlg.BeginSaveTable();
+		////	//LeaveCriticalSection(&pDlg->m_csVecDFT);
+		//	AfxMessageBox(L"Stop Refrush Thread");
 		//	break;
 		//}
-			   
+
 		Sleep(2000);
 	}
 	pDlg->m_is_refrushThread_alive = FALSE;
@@ -1442,9 +1448,10 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		//启动图像采集
 		if (m_inspectDlg.Grab() == 0) {
 
-			if (m_inspectDlg.m_pImgProc.BeginProcess()) {
+			if (m_ImgProc.BeginProcess()) {
 				
 				//启动主界面刷新线程
+				StopRefrush_Event.ResetEvent();
 				m_RefrushThread = AfxBeginThread(RefrushWnd, this);
 
 				//启动历史页面刷新
@@ -1497,7 +1504,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 			StopRefrush_Event.SetEvent();
 
 			//结束计算线程
-			m_inspectDlg.m_pImgProc.StopProcess();
+			m_ImgProc.StopProcess();
 
 			m_tableDlg.m_product_rank = DevideDFTRank(total_number_def);
 			m_tableDlg.m_serious_num = serious_def_num;
@@ -1562,6 +1569,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		if (!m_inspectDlg.CameraSystemInitial()) {
 			return;
 		}
+
+		//初始化算法类
+		m_ImgProc.InitialImageProcess();
 
 		CString cstr = L"当前模式：在线，采集系统初始化成功";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1704,12 +1714,12 @@ void CDeVisionDlg::OnDefectAnalysis()
 
 	//标准差倍数
 	if (algorithmDlg.m_global_threshold != 0)
-		m_inspectDlg.m_pImgProc.m_k_normal_distribution = algorithmDlg.m_global_threshold;
+		m_ImgProc.m_k_normal_distribution = algorithmDlg.m_global_threshold;
 	//滤波器大小
 	if (algorithmDlg.m_select_threshold != 0)
-		m_inspectDlg.m_pImgProc.m_median_filter_size = algorithmDlg.m_select_threshold;
+		m_ImgProc.m_median_filter_size = algorithmDlg.m_select_threshold;
 	//是否使用默认参考图像
-	m_inspectDlg.m_pImgProc.m_bLoad_Default_Ref_Dev = algorithmDlg.m_load_default;
+	m_ImgProc.m_bLoad_Default_Ref_Dev = algorithmDlg.m_load_default;
 
 
 }

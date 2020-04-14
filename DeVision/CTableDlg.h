@@ -23,6 +23,8 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+	
+	//int system_state;                        //系统状态
 
 	std::string m_DFT_img_path;
 	std::wstring m_save_path = L"D:\\report\\";
@@ -35,6 +37,7 @@ public:
 	int m_DFT_rank[5] = { 0 };
 	int m_serious_num = 0;
 
+	void RefrushDistributeWnd();
 	void GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4);
 	void DrawTable(CDC *mDC, CRect rect, float x, float y);
 	void CreateFlag(CDC *mDC, int x, int y, int kind);

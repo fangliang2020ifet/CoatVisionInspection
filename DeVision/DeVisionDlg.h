@@ -9,6 +9,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include "CImageProcess.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
 #include "CTableDlg.h"
@@ -95,7 +96,6 @@ protected:
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;
 
-
 	void TestLoadAndWrite();
 	BOOL test_clicked = FALSE;
 	int test_num = 0;
@@ -139,10 +139,13 @@ public:
 
 	BOOL m_is_refrushThread_alive;
 
+	CImageProcess  m_ImgProc;
+
 	CTabCtrl        m_tab;
 	CInspectDlg     m_inspectDlg;
 	CAnalysisDlg    m_analysisDlg;
 	CTableDlg       m_tableDlg;
+
 	CHistoryDlg     m_historyDlg;
 	CDialog         *pDialog[4];  //用来保存对话框对象指针
 	CStatusBar     m_StatusBar;     //状态栏

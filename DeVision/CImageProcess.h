@@ -100,7 +100,7 @@ public:
 	~CImageProcess();
 
 public:
-	//HWND hMainWnd;                           //主窗口句柄
+	HWND hMainWnd;                           //主窗口句柄
 
 	BOOL TEST_MODEL = FALSE;               //使用本地图像运行程序
 	BOOL REDUCE_BLACK_EDGE = FALSE;
@@ -112,6 +112,7 @@ public:
 	int m_k_min_select_area = 5;		   //面积删选
 	int m_median_filter_size = 5;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
 
+	BOOL InitialImageProcess();
 	BOOL BeginProcess();
 	BOOL StopProcess();
 	void RestartProcess();

@@ -16,6 +16,7 @@ class CInspectDlg : public CDialogEx, public CImageExWndEventHandler, public Sap
 
 public:
 	CInspectDlg(CWnd* pParent = nullptr);   // 标准构造函数
+
 	virtual ~CInspectDlg();
 
 // 对话框数据
@@ -27,6 +28,8 @@ public:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
+	CImageProcess *m_pImgProc;
+
 	enum ServerCategory
 	{
 		ServerAll,
@@ -37,6 +40,7 @@ public:
 public:
 	BOOL FREE_RUN = FALSE;           //相机内部触发模式
 	int SCANE_RATE = 20000; 
+
 
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 	CFont m_font;
@@ -154,7 +158,6 @@ private:
 	HObject CopyHobject(HObject ho_image);
 
 public:
-	CImageProcess  m_pImgProc;
 
 	void GenerateHImage(SapBuffer* m_Buffers, int index, HImage &m_HImage);
 	void SaveImageFromBuffer(SapBuffer* m_Buffer, int index);

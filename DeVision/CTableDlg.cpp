@@ -111,6 +111,7 @@ void CTableDlg::OnPaint()
 					   // 不为绘图消息调用 CDialogEx::OnPaint()
 	CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
 	CBrush brush(red_color);
+
 	OnPaintClipboard(pwnd, brush);
 }
 
@@ -125,18 +126,41 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
 	scale_y = wnd_height / m_current_position;
 
+	//dc->SelectObject(&m_font);
+	//FillRect(*dc, &rect, CBrush(RGB(255, 255, 255)));     //填充白色
+	//DrawTable(dc, rect, 1650.0f, 10.0f);
+	//DrawAllFlag(dc, wnd_width, wnd_height);
+	//DrawSelectDFT(dc, m_selected_x, m_selected_y);
 
-	dc->SelectObject(&m_font);
-	FillRect(*dc, &rect, CBrush(RGB(255, 255, 255)));     //填充白色
-	DrawTable(dc, rect, 1650.0f, 10.0f);
+	CBrush brush(RGB(255, 255, 255));
+	// 定义一个内存显示设备对象
+	CDC MemDC; 
+	// 定义一个位图对象
+	CBitmap MemBitmap; 
+	//建立与屏幕显示兼容的内存显示设备
+	MemDC.CreateCompatibleDC(dc);
+	//建立一个与屏幕显示兼容的位图，位图的大小可选用窗口客户区的大小
+	MemBitmap.CreateCompatibleBitmap(dc, wnd_width, wnd_height);
+	//将位图选入到内存显示设备中，只有选入了位图的内存显示设备才有地方绘图，画到指定的位图上
+	MemDC.SelectObject(&MemBitmap);
+	//CBitmap *pOldBit = MemDC.SelectObject(&MemBitmap);
 
-	DrawAllFlag(dc, wnd_width, wnd_height);
-
-	DrawSelectDFT(dc, m_selected_x, m_selected_y);
+	//绘图部分
+	MemDC.SelectObject(&m_font);
+	MemDC.FillRect(&rect, &brush);     //填充白色
+	DrawTable(&MemDC, rect, 1650.0f, 10.0f);
+	DrawAllFlag(&MemDC, wnd_width, wnd_height);
+	DrawSelectDFT(&MemDC, m_selected_x, m_selected_y);
+	
+	//将内存中的图拷贝到屏幕上进行显示
+	dc->BitBlt(0, 0, wnd_width, wnd_height, &MemDC, 0, 0, SRCCOPY);
+	//绘图完成后的清理
+	//MemDC.SelectObject(pOldBit);
+	MemBitmap.DeleteObject();
+	MemDC.DeleteDC();
 
 	//保存图像， 窗口必须切换至 tab3
 	SaveDistributeImage();
-
 	CDialogEx::OnPaintClipboard(pClipAppWnd, hPaintStruct);
 }
 
@@ -146,6 +170,17 @@ BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 
 	//return CDialogEx::OnEraseBkgnd(pDC);
 	return TRUE;
+}
+
+void CTableDlg::RefrushDistributeWnd()
+{
+	CWaitCursor wait;
+
+	//清除列表
+	m_ListCtrlDetail.DeleteAllItems();
+
+	Invalidate();
+	UpdateWindow();
 }
 
 void CTableDlg::GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4)

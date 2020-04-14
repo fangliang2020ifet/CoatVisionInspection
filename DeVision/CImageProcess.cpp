@@ -20,26 +20,6 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread4);
 	//InitializeCriticalSection(&m_csNO_dft);
 
-	m_referenceImage_OK = FALSE;
-	m_camera1_reference_image_acquired = FALSE;
-	m_camera2_reference_image_acquired = FALSE;
-	m_camera3_reference_image_acquired = FALSE;
-	m_camera4_reference_image_acquired = FALSE;
-
-
-	//hMainWnd = AfxGetMainWnd()->m_hWnd;
-	//if (hMainWnd == NULL)
-	//	AfxMessageBox(L"无法获取父窗口");
-
-	//CWnd *inspectDlg = AfxGetMainWnd();
-	//CDeVisionDlg * pMainDlg = (CDeVisionDlg*)inspectDlg->GetParent();
-	//hMainWnd = FindWindow(NULL, L"薄膜瑕疵检测系统");
-	//hMainWnd = GetTopWindow(NULL);
-
-	//hMainWnd = inspectDlg->GetParent()->m_hWnd;
-	//if (hMainWnd == NULL)
-	//	AfxMessageBox(L"无法获取父窗口");
-
 }
 
 CImageProcess::~CImageProcess()
@@ -84,13 +64,24 @@ CImageProcess::~CImageProcess()
 }
 
 
+BOOL CImageProcess::InitialImageProcess()
+{
+	hMainWnd = AfxGetMainWnd()->m_hWnd;
+	if (hMainWnd == NULL)
+		return FALSE;
+
+	m_referenceImage_OK = FALSE;
+	m_camera1_reference_image_acquired = FALSE;
+	m_camera2_reference_image_acquired = FALSE;
+	m_camera3_reference_image_acquired = FALSE;
+	m_camera4_reference_image_acquired = FALSE;
+
+	return TRUE;
+}
+
+
 BOOL CImageProcess::BeginProcess()
 {
-	//CString cstr = L"创建计算线程";
-	////SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-	//SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-
 	std::string str_path;
 	if (!GetSavePath(str_path)) return FALSE;
 	
@@ -186,18 +177,14 @@ BOOL CImageProcess::BeginProcess()
 	}
 	
 
-	Win::log("创建图像处理线程");
-
+	CString cstr = L"创建处理线程";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 	return TRUE;
 }
 
 BOOL CImageProcess::StopProcess()
 {
-	//CString cstr = L"结束计算线程";
-	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-	////SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
 	// 线程停止
 	StopManage_Event.SetEvent();
 
@@ -207,6 +194,7 @@ BOOL CImageProcess::StopProcess()
 	//}
 
 	//StopCalculateThreads();
+
 
 	return TRUE;
 }
@@ -307,7 +295,8 @@ BOOL CImageProcess::IsPathExist(const std::string &pathname)
 BOOL CImageProcess::LoadRefImage(std::string folder_path)
 {
 	if (!IsPathExist(folder_path)) {
-		Win::log("工作目录不存在");
+		CString cstr = L"参考图像目录不存在";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 	//设置工作路径
@@ -318,7 +307,8 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		std::string ref_image_name1 = "reference_image1.bmp";
 		HTuple hv_ref_image_name1 = (HTuple)((folder_path + ref_image_name1).c_str());
 		if (!IsFileExist(folder_path + ref_image_name1)) {
-			Win::log("参考图像1不存在");
+			CString cstr = L"参考图像1不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		HImage img1;
@@ -361,7 +351,8 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		std::string ref_image_name2 = "reference_image2.bmp";
 		HTuple hv_ref_image_name2 = (HTuple)((folder_path + ref_image_name2).c_str());
 		if (!IsFileExist(folder_path + ref_image_name2)) {
-			Win::log(L"参考图像2不存在");
+			CString cstr = L"参考图像2不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		HImage img2;
@@ -404,7 +395,8 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		std::string ref_image_name3 = "reference_image3.bmp";
 		HTuple hv_ref_image_name3 = (HTuple)((folder_path + ref_image_name3).c_str());
 		if (!IsFileExist(folder_path + ref_image_name3)) {
-			Win::log(L"参考图像3不存在");
+			CString cstr = L"参考图像3不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		HImage img3;
@@ -446,7 +438,8 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		std::string ref_image_name4 = "reference_image4.bmp";
 		HTuple hv_ref_image_name4 = (HTuple)((folder_path + ref_image_name4).c_str());
 		if (!IsFileExist(folder_path + ref_image_name4)) {
-			Win::log(L"参考图像4不存在");
+			CString cstr = L"参考图像4不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		HImage img4;
@@ -585,8 +578,6 @@ BOOL CImageProcess::LoadSingleImage(std::string image_name)
 	//ReadImage(&ho_test4, hv_image_name4);
 	m_hi_test4.ReadImage(hv_image_name4);
 
-	Win::log("读取test图像完成");
-
 	return TRUE;
 }
 
@@ -623,24 +614,29 @@ BOOL CImageProcess::LoadDefaultRefAndDevImage(std::string path)
 	std::string dev_image_name4 = "dev4.bmp";
 
 	if (!IsPathExist(path)) {
-		Win::log("工作目录不存在");
+		CString cstr = L"读取图像失败：默认参考图像目录不存在";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 	else {
 		if (!IsFileExist(path + ref_image_name1) || !IsFileExist(path + dev_image_name1)) {
-			Win::log("参考图像1不存在");
+			CString cstr = L"读取图像失败：默认参考图像1不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		if (!IsFileExist(path + ref_image_name2) || !IsFileExist(path + dev_image_name2)) {
-			Win::log("参考图像2不存在");
+			CString cstr = L"读取图像失败：默认参考图像2不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		if (!IsFileExist(path + ref_image_name3) || !IsFileExist(path + dev_image_name3)) {
-			Win::log("参考图像3不存在");
+			CString cstr = L"读取图像失败：默认参考图像3不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 		if (!IsFileExist(path + ref_image_name4) || !IsFileExist(path + dev_image_name4)) {
-			Win::log("参考图像4不存在");
+			CString cstr = L"读取图像失败：默认参考图像4不存在";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return FALSE;
 		}
 	}
@@ -997,6 +993,7 @@ BOOL CImageProcess::CheckReferenceImageState()
 	else return FALSE;
 }
 
+//生成去掉黑边的图像
 int CImageProcess::ProduceReferenceImage1(HImage hi_ref1, HImage hi_ref2)
 {
 	HTuple hv_width_ref1, hv_height_ref1, hv_width_ref2, hv_height_ref2;
@@ -1082,6 +1079,10 @@ BOOL CImageProcess::SaveReferenceImage()
 	SaveDefectImage(m_hi_ref3, "D:/SaveImage/ref3.bmp");
 	SaveDefectImage(m_hi_ref4, "D:/SaveImage/ref4.bmp");
 
+	CString cstr = L"图像已保存";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+
 	return TRUE;
 }
 
@@ -1092,6 +1093,8 @@ BOOL CImageProcess::GetSavePath(std::string &path)
 	//检查保存路径是否存在
 	if (!IsPathExist(path)) {
 		Win::log("图片保存路径不存在");
+		CString cstr = L"图像处理失败：图片保存路径不存在";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 	else
@@ -1664,7 +1667,10 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	{
 		//当单张图像中选择的区域超过 100 个，则认为此图计算失败
 		if (hv_Number > 64) {
-			Win::log("相机 %d 处理失败,当前位置 %.3f，请检测图像是否正常", cameraNO, m_current_position);
+			CString cstr;
+			cstr.Format(_T("图像处理失败：超出检测阈值（64），相机 %d, 当前位置 %.3f, 请检查膜面是否正常"),
+				cameraNO, m_current_position);
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return -1;
 		}
 
@@ -1836,23 +1842,31 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 			if (!pThis->TEST_MODEL) {
 				if (!got_ref1) {
 					got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-					if (got_ref1)
-						Win::log("获取1#参考图像");
+					if (got_ref1) {
+						CString cstr = L"获取1#参考图像";
+						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+					}
 				}
 				if (!got_ref2) {
 					got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-					if (got_ref2)
-						Win::log("获取2#参考图像");
+					if (got_ref2) {
+						CString cstr = L"获取#参考图像";
+						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+					}
 				}
 				if (!got_ref3) {
 					got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
-					if (got_ref3)
-						Win::log("获取3#参考图像");
+					if (got_ref3) {
+						CString cstr = L"获取3#参考图像";
+						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+					}
 				}
 				if (!got_ref4) {
 					got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
-					if (got_ref4)
-						Win::log("获取4#参考图像");
+					if (got_ref4) {
+						CString cstr = L"获取4#参考图像";
+						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+					}
 				}
 			}
 			else {
@@ -1861,6 +1875,8 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 					got_ref2 = TRUE;
 					got_ref3 = TRUE;
 					got_ref4 = TRUE;
+					CString cstr = L"已加载测试参考图像";
+					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 				}				
 			}
 
@@ -1901,6 +1917,9 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 						HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
 						pThis->m_hi_ref4 = ho_ImagePart;
 					}
+
+					CString cstr = L"已对图像进行黑边切除";
+					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 				}
 
 				pThis->m_referenceImage_OK = TRUE;
@@ -1917,6 +1936,10 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 			//}
 
 			pThis->StopCalculateThreads();
+
+			CString cstr = L"结束处理线程";
+			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
 			break;
 			//return 0;
 		}

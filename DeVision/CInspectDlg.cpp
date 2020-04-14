@@ -9,6 +9,8 @@
 
 // CInspectDlg 对话框
 
+//图像采集类
+
 IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
@@ -183,9 +185,9 @@ void CInspectDlg::OnDestroy()
 	if (m_Acq4)			delete m_Acq4;
 
 
-	while (m_pImgProc.IsThreadsAlive())
+	while (m_pImgProc->IsThreadsAlive())
 	{
-		m_pImgProc.StopProcess();
+		m_pImgProc->StopProcess();
 		Sleep(50);
 	}
 }
@@ -519,10 +521,10 @@ BOOL CInspectDlg::CameraSystemInitial()
 BOOL CInspectDlg::InitialAllBoards()
 {
 	if ( FREE_RUN ) {
-		char free_run_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_1_ROI.ccf";
+		char free_run_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_1.ccf";
 		char free_run_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_2.ccf";
 		char free_run_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_3.ccf";
-		char free_run_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_4_ROI.ccf";
+		char free_run_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun_4.ccf";
 		memcpy(configFilename1, free_run_1, sizeof(free_run_1));
 		memcpy(configFilename2, free_run_2, sizeof(free_run_2));
 		memcpy(configFilename3, free_run_3, sizeof(free_run_3));
@@ -531,10 +533,10 @@ BOOL CInspectDlg::InitialAllBoards()
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else {
-		char encode_trigger_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board1_ROI.ccf";
+		char encode_trigger_1[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board1.ccf";
 		char encode_trigger_2[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board2.ccf";
 		char encode_trigger_3[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board3.ccf";
-		char encode_trigger_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board4_ROI.ccf";
+		char encode_trigger_4[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External_Trigger_Board4.ccf";
 		memcpy(configFilename1, encode_trigger_1, sizeof(encode_trigger_1));
 		memcpy(configFilename2, encode_trigger_2, sizeof(encode_trigger_2));
 		memcpy(configFilename3, encode_trigger_3, sizeof(encode_trigger_3));
@@ -1100,9 +1102,9 @@ BOOL CInspectDlg::DestroyObjects()
 int CInspectDlg::Grab()
 {
 	//读取测试图像
-	if (m_pImgProc.TEST_MODEL) {
+	if (m_pImgProc->TEST_MODEL) {
 		std::string test_name = "C:/DeVisionProject/sample0408/test01";
-		m_pImgProc.LoadSingleImage(test_name);
+		m_pImgProc->LoadSingleImage(test_name);
 		CString cpath = CA2W(test_name.c_str());
 		CString cstr = L"已加载测试图像: " + cpath;
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1198,8 +1200,6 @@ void CInspectDlg::RestartInspect()
 	camera2_trash_count = 0;
 	camera3_trash_count = 0;
 	camera4_trash_count = 0;
-
-	m_pImgProc.RestartProcess();
 
 	return;
 }
@@ -1300,6 +1300,7 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 		//切换双缓存
 		pDlg->GenerateHImage(pDlg->m_Buffers1, static_count,ho_image);
 		
+		//是否需要增加判断 camera1  List 的大小总计不超过 100帧
 		if (!pDlg->m_is_system_pause) {
 			pDlg->camera1_frame_count += 1;
 
@@ -1307,34 +1308,34 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 			switch (change_index)
 			{
 			case 1:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList1_1.push_back(pDlg->m_pImgProc.m_hi_test1);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList1_1.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
-					pDlg->m_pImgProc.m_ImgList1_1.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList1_1.push_back(ho_image);
 				break;
 			case 2:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList1_2.push_back(pDlg->m_pImgProc.m_hi_test1);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList1_2.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
-					pDlg->m_pImgProc.m_ImgList1_2.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList1_2.push_back(ho_image);
 				break;
 			case 3:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList1_3.push_back(pDlg->m_pImgProc.m_hi_test1);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList1_3.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
-					pDlg->m_pImgProc.m_ImgList1_3.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList1_3.push_back(ho_image);
 				break;
 			case 4:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList1_4.push_back(pDlg->m_pImgProc.m_hi_test1);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList1_4.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
-					pDlg->m_pImgProc.m_ImgList1_4.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList1_4.push_back(ho_image);
 				break;
 			case 0:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList1_5.push_back(pDlg->m_pImgProc.m_hi_test1);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList1_5.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
-					pDlg->m_pImgProc.m_ImgList1_5.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList1_5.push_back(ho_image);
 				break;
 			default:
 				break;
@@ -1380,34 +1381,34 @@ void CInspectDlg::AcqCallback2(SapXferCallbackInfo *pInfo)
 			switch (change_index)
 			{
 			case 1:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList2_1.push_back(pDlg->m_pImgProc.m_hi_test2);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList2_1.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
-					pDlg->m_pImgProc.m_ImgList2_1.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList2_1.push_back(ho_image);
 				break;
 			case 2:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList2_2.push_back(pDlg->m_pImgProc.m_hi_test2);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList2_2.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
-					pDlg->m_pImgProc.m_ImgList2_2.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList2_2.push_back(ho_image);
 				break;
 			case 3:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList2_3.push_back(pDlg->m_pImgProc.m_hi_test2);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList2_3.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
-					pDlg->m_pImgProc.m_ImgList2_3.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList2_3.push_back(ho_image);
 				break;
 			case 4:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList2_4.push_back(pDlg->m_pImgProc.m_hi_test2);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList2_4.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
-					pDlg->m_pImgProc.m_ImgList2_4.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList2_4.push_back(ho_image);
 				break;
 			case 0:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList2_5.push_back(pDlg->m_pImgProc.m_hi_test2);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList2_5.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
-					pDlg->m_pImgProc.m_ImgList2_5.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList2_5.push_back(ho_image);
 				break;
 			default:
 				break;
@@ -1450,34 +1451,34 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 			switch (change_index)
 			{
 			case 1:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList3_1.push_back(pDlg->m_pImgProc.m_hi_test3);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList3_1.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
-					pDlg->m_pImgProc.m_ImgList3_1.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList3_1.push_back(ho_image);
 				break;
 			case 2:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList3_2.push_back(pDlg->m_pImgProc.m_hi_test3);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList3_2.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
-					pDlg->m_pImgProc.m_ImgList3_2.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList3_2.push_back(ho_image);
 				break;
 			case 3:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList3_3.push_back(pDlg->m_pImgProc.m_hi_test3);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList3_3.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
-					pDlg->m_pImgProc.m_ImgList3_3.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList3_3.push_back(ho_image);
 				break;
 			case 4:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList3_4.push_back(pDlg->m_pImgProc.m_hi_test3);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList3_4.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
-					pDlg->m_pImgProc.m_ImgList3_4.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList3_4.push_back(ho_image);
 				break;
 			case 0:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList3_5.push_back(pDlg->m_pImgProc.m_hi_test3);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList3_5.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
-					pDlg->m_pImgProc.m_ImgList3_5.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList3_5.push_back(ho_image);
 				break;
 			default:
 				break;
@@ -1522,34 +1523,34 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 			switch (change_index)
 			{
 			case 1:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList4_1.push_back(pDlg->m_pImgProc.m_hi_test4);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList4_1.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
-					pDlg->m_pImgProc.m_ImgList4_1.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList4_1.push_back(ho_image);
 				break;
 			case 2:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList4_2.push_back(pDlg->m_pImgProc.m_hi_test4);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList4_2.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
-					pDlg->m_pImgProc.m_ImgList4_2.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList4_2.push_back(ho_image);
 				break;
 			case 3:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList4_3.push_back(pDlg->m_pImgProc.m_hi_test4);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList4_3.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
-					pDlg->m_pImgProc.m_ImgList4_3.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList4_3.push_back(ho_image);
 				break;
 			case 4:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList4_4.push_back(pDlg->m_pImgProc.m_hi_test4);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList4_4.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
-					pDlg->m_pImgProc.m_ImgList4_4.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList4_4.push_back(ho_image);
 				break;
 			case 0:
-				if (pDlg->m_pImgProc.TEST_MODEL)
-					pDlg->m_pImgProc.m_ImgList4_5.push_back(pDlg->m_pImgProc.m_hi_test4);
+				if (pDlg->m_pImgProc->TEST_MODEL)
+					pDlg->m_pImgProc->m_ImgList4_5.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
-					pDlg->m_pImgProc.m_ImgList4_5.push_back(ho_image);
+					pDlg->m_pImgProc->m_ImgList4_5.push_back(ho_image);
 				break;
 			default:
 				break;
