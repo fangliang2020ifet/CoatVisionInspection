@@ -108,9 +108,9 @@ public:
 
 	BOOL m_referenceImage_OK = FALSE;
 	BOOL m_bLoad_Default_Ref_Dev = TRUE;
-	int m_k_normal_distribution = 5;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
+	int m_k_normal_distribution = 15;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
 	int m_k_min_select_area = 5;		   //面积删选
-	int m_median_filter_size = 5;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
+	int m_median_filter_size = 1;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
 
 	BOOL InitialImageProcess();
 	BOOL BeginProcess();
@@ -120,7 +120,7 @@ public:
 	int CheckTotalListSize();
 
 	BOOL LoadRefImage(std::string folder_path);
-	BOOL LoadImageToQueue(std::string folder_path, int numbers);
+	void LoadImageToQueue();
 	BOOL LoadOneImageToQueue(std::string folder_path, int next_number);
 	BOOL LoadSingleImage(std::string image_name);
 	HObject CopyHobject(HObject ho_image);
@@ -275,6 +275,8 @@ private:
 	BOOL is_thread4_4_alive;
 	BOOL is_thread4_5_alive;
 	static UINT ManageThread(LPVOID pParam);
+	static UINT ManageThread2(LPVOID pParam);
+
 	static UINT ImageCalculate1_1(LPVOID pParam);
 	static UINT ImageCalculate1_2(LPVOID pParam);
 	static UINT ImageCalculate1_3(LPVOID pParam);

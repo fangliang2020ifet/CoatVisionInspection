@@ -27,15 +27,17 @@ public:
 	void UpdateScreen(CFont &mfont, float display_range, float position);
 	void Redraw();
 
-	COLORREF red_color = RGB(255, 35, 15);             //红色
-	COLORREF green_color = RGB(25, 255, 35);          //绿色
-	COLORREF blue_color = RGB(35, 55, 225);            //蓝色
-	COLORREF yellow_color = RGB(255, 255, 0);          //黄色
+	int wnd_width;
+	int wnd_height;
+	int wnd_scroll_scale_size;                     //窗口滚动范围
+
 	std::vector<DefectType> m_vDefect;
+	COLORREF m_acolor[5];
 
 private:
 	float scale_x = 0.0f;
 	float scale_y = 0.0f;
+
 
 	float m_current_position = 0.0f;   //当前检测位置，单位: 米
 	float m_previous_position = 0.0f;  //前次刷新位置

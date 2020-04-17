@@ -187,6 +187,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 
 	//禁止关闭按钮
 	GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
+	ShowWindow(SW_MAXIMIZE);//对话框默认最大化弹出
 
 	//创建字体
 	flag_font.CreatePointFont(200, _T("Times New Roman"));
@@ -210,19 +211,9 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//用户数据加载
 	LoadCustomerDate();
 
-	// 获取工作区的大小, 设置窗口最大化显示
-	CRect rcWorkArea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0,(PVOID)&rcWorkArea, 0);
-	MoveWindow(&rcWorkArea);
-
-	//初始化全局瑕疵显示区
+	//初始化全局瑕疵显示区, 设置显示范围
 	InitialTotalDefect();
-	//刻度显示初始化
-	InitialScaleFlag();
 	m_display_range = 100.0f;
-	CString ctext;
-	ctext.Format(_T("%.2f"), m_display_range);
-	m_edisplay_range.SetWindowTextW(ctext);
 
 	// 报表页面初始化
 	m_tableDlg.m_pvDFT = &m_vDFT;
@@ -234,14 +225,13 @@ BOOL CDeVisionDlg::OnInitDialog()
 	m_work_path = "D:\\history\\";
 	m_fold_name = "";
 
-	//设置系统状态
-	m_system_state = SYSTEM_STATE_OFFLINE;
+
 	//主界面信息刷新定时器
 	SetTimer(1, 1000, 0);
 
 	m_iAllThread_stopped = 0;
-	m_inspectDlg.FREE_RUN = FALSE;
-	m_ImgProc.TEST_MODEL = FALSE;
+	//m_inspectDlg.FREE_RUN = FALSE;
+	m_ImgProc.TEST_MODEL = TRUE;
 
 	std::string struser((LPCSTR)CW2A(m_tableDlg.m_wstr_user.c_str()));
 	CString cuser = CA2W(struser.c_str());
@@ -668,6 +658,7 @@ void CDeVisionDlg::OnSize(UINT nType, int cx, int cy)
 	
 	//根据窗口的大小自动调整工具栏、状态栏的大小
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
+
 	//根据窗口的大小自动调整 Tab页的大小
 	if (isTabInitialized)
 		TabDlgResize();
@@ -677,60 +668,7 @@ void CDeVisionDlg::OnSize(UINT nType, int cx, int cy)
 	{
 
 	}
-}
 
-//局部瑕疵显示区初始化
-BOOL CDeVisionDlg::InitialPartialDefect()
-{	
-	CRect rect;
-	m_partical_picture.GetClientRect(&rect);
-	//获取窗口DC
-	CDC* p_screenDC = m_partical_picture.GetDC();
-
-	//CDC       m_memeryDC;                              //屏幕DC兼容的内存DC
-	//CBitmap*   m_bmpPartial;                                  //正常的位图
-	
-	/*
-	// 创建内存DC  m_memertDC, 使其与窗口DC p_screenDC 兼容
-	if (!m_memeryDC.CreateCompatibleDC(p_screenDC))//
-	{
-		::PostQuitMessage(0);
-		return FALSE;
-	}
-
-	// 创建位图,不能是m_memDC，否则无颜色
-	m_bmpPartial = new CBitmap;
-	m_bmpPartial->CreateCompatibleBitmap(p_screenDC, rect.Width(), rect.Height());
-	// 相当于选择画布,m_pDrawWnd->
-	m_memeryDC.SelectObject(*m_bmpPartial);
-	m_memeryDC.SelectObject(&flag_font);
-	m_memeryDC.FillSolidRect(5, 0, rect.Width() - 10, rect.Height(), RGB(128, 128, 128));
-	p_screenDC->BitBlt(0, 0, rect.Width(), rect.Height(), &m_memeryDC, 0, 0, SRCCOPY);
-
-	//释放窗口DC
-	pwnd->ReleaseDC(p_screenDC);
-	*/
-
-	CDC MemDC; // 定义一个内存显示设备对象
-	CBitmap MemBitmap; // 定义一个位图对象
-	//建立与屏幕显示兼容的内存显示设备
-	MemDC.CreateCompatibleDC(p_screenDC);
-	//建立一个与屏幕显示兼容的位图，位图的大小可选用窗口客户区的大小
-	MemBitmap.CreateCompatibleBitmap(p_screenDC, rect.Width(), rect.Height());
-	//将位图选入到内存显示设备中，只有选入了位图的内存显示设备才有地方绘图，画到指定的位图上
-	CBitmap *pOldBit = MemDC.SelectObject(&MemBitmap);
-	//先用背景色将位图清除干净，否则是黑色。这里用的是白色作为背景
-	MemDC.FillSolidRect(5, 0, rect.Width()-10, rect.Height(), RGB(128, 128, 128));
-
-
-	//将内存中的图拷贝到屏幕上进行显示
-	p_screenDC->BitBlt(0, 0, rect.Width(), rect.Height(), &MemDC, 0, 0, SRCCOPY);
-	//绘图完成后的清理
-	MemDC.SelectObject(pOldBit);
-	MemBitmap.DeleteObject();
-	m_partical_picture.ReleaseDC(p_screenDC);
-
-	return TRUE;
 }
 
 //全局瑕疵显示区初始化
@@ -739,20 +677,31 @@ BOOL CDeVisionDlg::InitialTotalDefect()
 	//   3
 	CCreateContext pContext;
 	CWnd* pFrameWnd = this->GetDlgItem(IDC_PICTURE_TOTAL);
+	CRect rectWindow;
+	pFrameWnd->GetWindowRect(rectWindow);
+
 	pContext.m_pCurrentDoc = new CMyDocument;
 	pContext.m_pNewViewClass = RUNTIME_CLASS(CMyView);
 	pView = (CMyView *)((CFrameWnd*)pFrameWnd)->CreateView(&pContext);
 	ASSERT(pView);
+	pView->wnd_width = rectWindow.Width();
+	pView->wnd_height = rectWindow.Height();
+	pView->wnd_scroll_scale_size = 10;
 	pView->OnInitialUpdate();
 	//pView->m_nMapMode = MM_TEXT;   //映射模式
 	pView->ShowWindow(SW_NORMAL);
-	CRect rectWindow;
-	pFrameWnd->GetWindowRect(rectWindow);
 	rectWindow.top -= 135;
 	rectWindow.left -= 20;
-	rectWindow.right -= 15;
-	rectWindow.bottom -= 130;
+	rectWindow.right -= 5;
+	rectWindow.bottom -= 100;
 	pView->MoveWindow(rectWindow);
+
+	//刻度显示初始化
+	InitialScaleFlag();
+
+	CString ctext;
+	ctext.Format(_T("%.2f"), m_display_range);
+	m_edisplay_range.SetWindowTextW(ctext);
 
 	return TRUE;
 }
@@ -830,31 +779,32 @@ void CDeVisionDlg::CreateFlag(CDC &mDC, int x, int y, int kind)
 	switch (kind)
 	{
 	case 0: {
-		mDC.SetBkColor(red_color);
+		mDC.SetBkColor(pView->m_acolor[0]);
 		mDC.TextOutW(x, y, _T("A"));
 		break;
 	}
 	case 1: {
-		mDC.SetBkColor(green_color);
+		mDC.SetBkColor(pView->m_acolor[1]);
 		mDC.TextOutW(x, y, _T("B"));
 		break;
 	}
 	case 2: {
-		mDC.SetBkColor(blue_color);
+		mDC.SetBkColor(pView->m_acolor[2]);
 		mDC.TextOutW(x, y, _T("C"));
 		break;
 	}
 	case 3: {
-		mDC.SetBkColor(yellow_color);
+		mDC.SetBkColor(pView->m_acolor[3]);
 		mDC.TextOutW(x, y, _T("D"));
 		break;
 	}
 	case 4:
-		mDC.SetBkColor(RGB(225, 0, 225));
+		mDC.SetBkColor(pView->m_acolor[4]);
 		mDC.TextOutW(x, y, _T("E"));
 		break;
 	default: {
 		mDC.SetBkColor(RGB(0, 0, 0));
+		break;
 	}
 	}
 }
@@ -888,20 +838,11 @@ void CDeVisionDlg::DrawPartial(int test)
 
 		//方法III：反向迭代器输出
 		std::vector<DefectType>::reverse_iterator it = m_vDFT.rbegin();
-		//temp_def = *(it);
-		//const float image_size = IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;   //单位：米
-		//float origin_point_y = temp_def.image_order * image_size;
 		for (; it != m_vDFT.rend(); ++it)
 		{
 			temp_def = *it;
 			int itvalue = (int)(std::distance(m_vDFT.rbegin(), it));
-			//float current_origin_point_y = temp_def.image_order * image_size;
 			int x_coord = (int)(temp_def.center_x * scale_x);
-			//int y_coord = (int)((temp_def.absolute_position - current_origin_point_y + 1 * (origin_point_y - current_origin_point_y)) / scale_y);
-
-			//if (y_coord > wnd_height)
-			//	break;
-
 			int y_coord = wnd_height - (int)((temp_def.absolute_position - m_previous_position) / scale_y);
 
 			if (y_coord < 0)
@@ -925,11 +866,6 @@ void CDeVisionDlg::DrawPartial(int test)
 				m_ewidth2.SetWindowTextW(cwidth);
 				m_elongth2.SetWindowTextW(cposition);
 			}
-
-			//TRACE("absolute_position = %.3f\n", temp_def.absolute_position);
-			//TRACE("previous_position = %.3f\n", m_previous_position);
-			//TRACE("y_coord__________ = %d\n", y_coord);
-
 		}
 	}
 
@@ -1200,7 +1136,9 @@ void CDeVisionDlg::UpdateSysStatus()
 			m_StatusBar.SetPaneText(3, cst_current_pos, 1);
 		}
 
-		float speed = m_inspectDlg.CalculateEncoderSpeed();
+		float speed = 0.0f;
+		if(!m_ImgProc.TEST_MODEL)
+			speed = m_inspectDlg.CalculateEncoderSpeed();
 		if (speed > 0)
 		{
 			CString cstr_speed, cstr_unit;
@@ -1446,10 +1384,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		ReStartPrepare();
 
 		//启动图像采集
-		if (m_inspectDlg.Grab() == 0) {
-
-			if (m_ImgProc.BeginProcess()) {
-				
+		//if (m_inspectDlg.Grab() == 0)
+		if (1) {
+			if (m_ImgProc.BeginProcess()) {				
 				//启动主界面刷新线程
 				StopRefrush_Event.ResetEvent();
 				m_RefrushThread = AfxBeginThread(RefrushWnd, this);
@@ -1498,7 +1435,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
 
-		if (m_inspectDlg.Freeze() == 0) {
+		//if (m_inspectDlg.Freeze() == 0) 
+		if (1) {
 
 			//等待列表中的图像都处理完成, 之后结束处理线程
 			StopRefrush_Event.SetEvent();
@@ -1566,9 +1504,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
 
 		//采集系统初始化
-		if (!m_inspectDlg.CameraSystemInitial()) {
-			return;
-		}
+		//if (!m_inspectDlg.CameraSystemInitial()) {
+		//	return;
+		//}
 
 		//初始化算法类
 		m_ImgProc.InitialImageProcess();

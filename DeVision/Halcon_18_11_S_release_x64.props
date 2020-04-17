@@ -3,13 +3,13 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>D:\Program Files\MVTec\HALCON-18.11-Progress\include\halconcpp;D:\Program Files\MVTec\HALCON-18.11-Progress\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Program Files\MVTec\HALCON-18.11-Progress\lib\x64-win64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\MVTec\HALCON-18.11-Progress\include\halconcpp;C:\Program Files\MVTec\HALCON-18.11-Progress\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\MVTec\HALCON-18.11-Progress\lib\x64-win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
       <AdditionalDependencies>halconcpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Program Files\MVTec\HALCON-18.11-Progress\lib\x64-win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\MVTec\HALCON-18.11-Progress\lib\x64-win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

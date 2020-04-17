@@ -467,11 +467,10 @@ BOOL CInspectDlg::InitServer()
 BOOL CInspectDlg::CameraSystemInitial()
 {
 	if (!m_camera_system_initialled) {
-
-		
 		if (!InitServer()) {
 			return FALSE;
 		}
+
 		/*
 		if (!InitialBoard1())
 		{
@@ -507,11 +506,9 @@ BOOL CInspectDlg::CameraSystemInitial()
 		*/
 
 		InitialAllBoards();
-
 	}
-
 	m_camera_system_initialled = TRUE;
-	
+
 	CString cstr = L"采集系统初始化完成";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	return TRUE;
@@ -1103,7 +1100,7 @@ int CInspectDlg::Grab()
 {
 	//读取测试图像
 	if (m_pImgProc->TEST_MODEL) {
-		std::string test_name = "C:/DeVisionProject/sample0408/test01";
+		std::string test_name = "E:/DeVisionProject/OneCamera_0417/test1";
 		m_pImgProc->LoadSingleImage(test_name);
 		CString cpath = CA2W(test_name.c_str());
 		CString cstr = L"已加载测试图像: " + cpath;

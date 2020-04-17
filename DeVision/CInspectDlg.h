@@ -39,7 +39,7 @@ public:
 
 public:
 	BOOL FREE_RUN = FALSE;           //相机内部触发模式
-	int SCANE_RATE = 20000; 
+	int SCANE_RATE = 10000; 
 
 
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";

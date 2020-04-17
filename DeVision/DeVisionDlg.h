@@ -66,7 +66,6 @@ protected:
 	void InitialBtnIcon();
 	void LoadCustomerDate();
 	BOOL InitialTotalDefect();                    //全部瑕疵显示区
-	BOOL InitialPartialDefect();                  //初始化瑕疵标记区域
 	void DelQueueFromSource();
 	int DevideDFTRank(int num);                   //定义产品等级
 	void CreateFlag(CDC &mDC, int x, int y, int kind);
@@ -87,11 +86,14 @@ protected:
 
 	CMyView* pView;                                   //全局瑕疵滚动显示区域
 
-	//当前检测区域瑕疵的标记显示（大区）
-	COLORREF red_color = RGB(255, 35, 15);             //红色
-	COLORREF green_color = RGB(25, 255, 35);          //绿色
-	COLORREF blue_color = RGB(35, 55, 225);            //蓝色
-	COLORREF yellow_color = RGB(255, 255, 0);          //黄色
+	////当前检测区域瑕疵的标记显示（大区）
+	//COLORREF red_color = RGB(255, 35, 15);             //红色
+	//COLORREF green_color = RGB(25, 255, 35);          //绿色
+	//COLORREF blue_color = RGB(35, 55, 225);            //蓝色
+	//COLORREF yellow_color = RGB(255, 255, 0);          //黄色
+
+
+
 	CFont flag_font;                                   //大字体
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;

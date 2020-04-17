@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Program Files\Teledyne DALSA\Sapera\Classes\Gui;D:\Program Files\Teledyne DALSA\Sapera\Classes\Basic;D:\Program Files\Teledyne DALSA\Sapera\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Teledyne DALSA\Sapera\Classes\Gui;C:\Program Files\Teledyne DALSA\Sapera\Classes\Basic;C:\Program Files\Teledyne DALSA\Sapera\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>D:\Program Files\Teledyne DALSA\Sapera\Lib\Win64;D:\Program Files\Teledyne DALSA\Sapera\Lib\Win64\VS2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\Teledyne DALSA\Sapera\Lib\Win64;C:\Program Files\Teledyne DALSA\Sapera\Lib\Win64\VS2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SapClassBasic.lib;corapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
