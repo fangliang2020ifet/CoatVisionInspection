@@ -86,14 +86,6 @@ protected:
 
 	CMyView* pView;                                   //全局瑕疵滚动显示区域
 
-	////当前检测区域瑕疵的标记显示（大区）
-	//COLORREF red_color = RGB(255, 35, 15);             //红色
-	//COLORREF green_color = RGB(25, 255, 35);          //绿色
-	//COLORREF blue_color = RGB(35, 55, 225);            //蓝色
-	//COLORREF yellow_color = RGB(255, 255, 0);          //黄色
-
-
-
 	CFont flag_font;                                   //大字体
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;
@@ -105,6 +97,9 @@ protected:
 private:
 	LPCWSTR CUSTOMER_FILEPATH = L"inis\\system.ini";
 	
+	CEvent StopRefrush_Event;
+	CEvent RefrushThreadStopped_Event;
+
 	int m_iAllThread_stopped;
 	CRITICAL_SECTION m_csVecDFT;                  //定义一个临界区
 	CWinThread *m_RefrushThread;
@@ -134,12 +129,8 @@ public:
 	//普通， 一级， 二级， 三级， 严重
 	enum{RANK_COMMON = 0, RANK_GRADE1, RANK_GRADE2, RANK_GRADE3, RANK_SERIOUS};
 	int m_rank[5] = {0};
-	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };	
-	
+	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };		
 	int m_screen_state;                                  //屏幕状态
-
-
-	BOOL m_is_refrushThread_alive;
 
 	CImageProcess  m_ImgProc;
 

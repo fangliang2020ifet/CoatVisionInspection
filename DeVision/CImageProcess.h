@@ -93,6 +93,8 @@ typedef std::list<HImage> ImgList;
 typedef std::list<DefectType> DFTList;
 
 
+
+
 class CImageProcess
 {
 public:
@@ -101,6 +103,10 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+
+	CEvent StopManage_Event;
+	CEvent AllCalculateThreadStopped_Event;
+
 
 	BOOL TEST_MODEL = FALSE;               //使用本地图像运行程序
 	BOOL REDUCE_BLACK_EDGE = FALSE;

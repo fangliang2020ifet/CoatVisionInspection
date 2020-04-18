@@ -9,8 +9,8 @@
 #include <winbase.h>
 #include <windows.h>
 
-CEvent StopManage_Event;
-//CEvent StopCalculate_Event;
+//CEvent StopManage_Event;
+//CEvent AllCalculateThreadStopped_Event;
 
 CImageProcess::CImageProcess()
 {
@@ -176,6 +176,8 @@ BOOL CImageProcess::BeginProcess()
 		return FALSE;
 	}
 	
+	StopManage_Event.ResetEvent();
+	AllCalculateThreadStopped_Event.ResetEvent();
 
 	CString cstr = L"创建处理线程";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1927,7 +1929,7 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 		Sleep(1000);
 
 		//线程阻塞
-		if (WAIT_OBJECT_0 == WaitForSingleObject(StopManage_Event, INFINITE)) {
+		if (WAIT_OBJECT_0 == WaitForSingleObject(pThis->StopManage_Event, INFINITE)) {
 
 			//AfxMessageBox(L"Stop Manage Thread");
 			//while (pThis->CheckTotalListSize() > 0)
@@ -1953,15 +1955,84 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 	CImageProcess *pThis = (CImageProcess *)pParam;
 	DWORD dwStop = 0;
 
-	pThis->is_manage_thread_alive = TRUE;
 	pThis->m_referenceImage_OK = FALSE;
 	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
 
-	pThis->m_camera1_invalid_area = 0;
-	pThis->m_camera1_invalid_area = 0;
-	while (1)
+	for(;;)
 	{
-		dwStop = WaitForSingleObject(StopManage_Event, 2000);
+		if (!pThis->m_referenceImage_OK) {
+			//加载默认均值图像和标准差图像
+			if (pThis->m_bLoad_Default_Ref_Dev && !pThis->m_default_ref_dev_path.empty()) {
+				if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
+					pThis->m_referenceImage_OK = TRUE;
+				}
+			}
+			else {
+				if (!pThis->TEST_MODEL) {
+					if (!got_ref1) {
+						got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
+						if (got_ref1) {
+							CString cstr = L"获取1#参考图像";
+							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+						}
+					}
+					if (!got_ref2) {
+						got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
+						if (got_ref2) {
+							CString cstr = L"获取#参考图像";
+							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+						}
+					}
+					if (!got_ref3) {
+						got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
+						if (got_ref3) {
+							CString cstr = L"获取3#参考图像";
+							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+						}
+					}
+					if (!got_ref4) {
+						got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
+						if (got_ref4) {
+							CString cstr = L"获取4#参考图像";
+							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+						}
+					}
+
+				}
+				else {
+					if (pThis->LoadRefImage("E:/DeVisionProject/OneCamera_0417/")) {
+						got_ref1 = TRUE;
+						got_ref2 = TRUE;
+						got_ref3 = TRUE;
+						got_ref4 = TRUE;
+						CString cstr = L"已加载测试参考图像";
+						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+					}
+
+					pThis->LoadSingleImage("E:/DeVisionProject/OneCamera_0417/test1");
+					CString cstr = L"已加载测试图";
+					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+				}
+
+				//四台相机都获取到后保存图像并结束获取
+				if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
+					if (pThis->SAVE_REFERENCE_IMAGE) {
+						pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
+						pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
+						pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
+					}
+					pThis->m_referenceImage_OK = TRUE;
+				}
+			}
+		}
+
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 2000);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
@@ -1975,91 +2046,21 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 		case WAIT_FAILED:
 			return -1;
 		case WAIT_OBJECT_0: {
-			pThis->StopCalculateThreads();
+			while (pThis->CheckTotalListSize() > 0)
+			{
+				Sleep(200);
+			}
 
+			pThis->StopCalculateThreads();
+			pThis->AllCalculateThreadStopped_Event.SetEvent();
 			CString cstr = L"结束处理线程";
 			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
 			return 0;
 		}
-		}
-
-		//加载默认均值图像和标准差图像
-		if (pThis->m_bLoad_Default_Ref_Dev && !pThis->m_default_ref_dev_path.empty()) {
-			if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
-				pThis->m_referenceImage_OK = TRUE;
-			}
-		}
-
-		if (!pThis->m_referenceImage_OK) {
-			if (!pThis->TEST_MODEL) {
-				if (!got_ref1) {
-					got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-					if (got_ref1) {
-						CString cstr = L"获取1#参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-				}
-				if (!got_ref2) {
-					got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-					if (got_ref2) {
-						CString cstr = L"获取#参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-				}
-				if (!got_ref3) {
-					got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
-					if (got_ref3) {
-						CString cstr = L"获取3#参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-				}
-				if (!got_ref4) {
-					got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
-					if (got_ref4) {
-						CString cstr = L"获取4#参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-				}
-			}
-			else {
-				if (pThis->LoadRefImage("E:/DeVisionProject/OneCamera_0417/")) {
-					got_ref1 = TRUE;
-					got_ref2 = TRUE;
-					got_ref3 = TRUE;
-					got_ref4 = TRUE;
-					CString cstr = L"已加载测试参考图像";
-					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-				}
-
-				pThis->LoadSingleImage("E:/DeVisionProject/OneCamera_0417/test1");
-				CString cstr = L"已加载测试图";
-				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			}
-
-			if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
-				if (pThis->SAVE_REFERENCE_IMAGE) {
-					pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
-					pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
-				}
-				pThis->m_referenceImage_OK = TRUE;
-				pThis->is_manage_thread_alive = FALSE;
-			}
-		}
-			   
+		}   
 
 	}
-	pThis->is_manage_thread_alive = FALSE;
-
 	return 0;
-
 }
 
 //  1# 相机处理线程

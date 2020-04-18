@@ -8,7 +8,6 @@
 #include "afxdialogex.h"
 
 
-CEvent StopRefrush_Event;
 
 
 #ifdef _DEBUG
@@ -272,9 +271,6 @@ int CDeVisionDlg::CheckThreadStatue()
 			      		|| m_inspectDlg.m_camera3_thread_alive || m_inspectDlg.m_camera4_thread_alive;
 	if (camera_thread)
 		return 3;
-
-	if (m_is_refrushThread_alive)
-		return 4;
 
 	return 0;
 }
@@ -1273,54 +1269,52 @@ void CDeVisionDlg::ReStartPrepare()
 UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 {
 	CDeVisionDlg *pDlg = (CDeVisionDlg *)pParam;
-	pDlg->m_is_refrushThread_alive = TRUE;
+	DWORD dwStop = 0;
+
 	CString cstr = L"启动界面刷新线程";
 	::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
-	while (pDlg->m_is_refrushThread_alive)
+	for(;;)
 	{
-		while (pDlg->m_system_state == SYSTEM_STATE_PAUSE) {
-			Sleep(500);
+		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2000);
+		switch (dwStop)
+		{
+		case WAIT_TIMEOUT: {
+			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
+				//获取瑕疵信息数据
+				pDlg->DelQueueFromSource();
+				pDlg->DrawPartial(5);
+				float position = pDlg->m_ImgProc.m_current_position;
+				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range, position);
+
+				CString cwidth;
+				cwidth.Format(_T("####毫米"));
+				pDlg->m_etotal.SetWindowTextW(cwidth);
+			}
+			break;
 		}
+		case WAIT_FAILED:
+			return -1;
+		case WAIT_OBJECT_0: {
+			if (WAIT_OBJECT_0 == WaitForSingleObject(pDlg->m_ImgProc.AllCalculateThreadStopped_Event, INFINITE)) {
+				//结束历史图像刷新定时器
+				pDlg->KillTimer(2);
+				//保存检测记录
+				EnterCriticalSection(&pDlg->m_csVecDFT);
+				pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
+				pDlg->m_tableDlg.BeginSaveTable();
+				LeaveCriticalSection(&pDlg->m_csVecDFT);
+			}
+			pDlg->m_system_state = SYSTEM_STATE_STOP;
 
-		//获取瑕疵信息数据
-		pDlg->DelQueueFromSource();
-		pDlg->DrawPartial(5);
-
-		////刷新报表页面瑕疵分布图
-		//if (pDlg->m_CurSelTab == 2 && pDlg->m_system_state == SYSTEM_STATE_RUN)
-		//	pDlg->m_tableDlg.RefrushDistributeWnd();
-		
-		float position = pDlg->m_ImgProc.m_current_position;
-		pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range, position);
-
-		if (1) {
-			CString cwidth, cposition;
-			cwidth.Format(_T("####毫米"));
-			pDlg->m_etotal.SetWindowTextW(cwidth);
+			CString cstr = L"结束界面刷新线程";
+			::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			return 0;
 		}
-
-		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopRefrush_Event, INFINITE)) {
-		////	CWaitCursor wait;
-		////	//while (pDlg->m_ImgProc.IsThreadsAlive())
-		////	//{
-		////	//	Sleep(200);
-		////	//}
-		////	////结束历史图像刷新定时器
-		////	//pDlg->KillTimer(2);
-		////	////保存检测记录
-		////	//EnterCriticalSection(&pDlg->m_csVecDFT);
-		////	//pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
-		////	//pDlg->m_tableDlg.BeginSaveTable();
-		////	//LeaveCriticalSection(&pDlg->m_csVecDFT);
-		//	AfxMessageBox(L"Stop Refrush Thread");
-		//	break;
-		//}
-
-		Sleep(2000);
+		default:
+			break;							
+		}
 	}
-	pDlg->m_is_refrushThread_alive = FALSE;
-
 	CString cstop = L"结束界面刷新线程";
 	::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstop, NULL);
 
@@ -1389,6 +1383,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 			if (m_ImgProc.BeginProcess()) {				
 				//启动主界面刷新线程
 				StopRefrush_Event.ResetEvent();
+				RefrushThreadStopped_Event.ResetEvent();
 				m_RefrushThread = AfxBeginThread(RefrushWnd, this);
 
 				//启动历史页面刷新
@@ -1448,20 +1443,20 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 			m_tableDlg.m_serious_num = serious_def_num;
 			m_tableDlg.GetDetectResult(m_rank[0], m_rank[1], m_rank[2], m_rank[3], m_rank[4]);
 
-			//结束瑕疵界面刷新线程
-			while (m_is_refrushThread_alive)
-			{
-				m_is_refrushThread_alive = FALSE;
-			}
+			////结束瑕疵界面刷新线程
+			//while (m_is_refrushThread_alive)
+			//{
+			//	m_is_refrushThread_alive = FALSE;
+			//}
 
-			//结束历史图像刷新定时器
-			KillTimer(2);
+			////结束历史图像刷新定时器
+			//KillTimer(2);
 
-			//保存检测记录
-			EnterCriticalSection(&m_csVecDFT);
-			m_tableDlg.m_vecDFT = m_vDFT;
-			m_tableDlg.BeginSaveTable();
-			LeaveCriticalSection(&m_csVecDFT);
+			////保存检测记录
+			//EnterCriticalSection(&m_csVecDFT);
+			//m_tableDlg.m_vecDFT = m_vDFT;
+			//m_tableDlg.BeginSaveTable();
+			//LeaveCriticalSection(&m_csVecDFT);
 
 			m_inspectDlg.m_is_system_pause = FALSE;
 		}
@@ -1475,9 +1470,12 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CString cstr = L"停止检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
-	if(m_system_state != SYSTEM_STATE_STOP)
-		m_system_state = SYSTEM_STATE_STOP;
-
+	//WaitForSingleObject(m_RefrushThread->m_hThread, INFINITE);
+	//m_system_state = SYSTEM_STATE_STOP;
+	//if (WAIT_OBJECT_0 == WaitForSingleObject(RefrushThreadStopped_Event, INFINITE)) {
+	//	if (m_system_state != SYSTEM_STATE_STOP)
+	//		m_system_state = SYSTEM_STATE_STOP;
+	//}
 }
 
 //暂停  按钮
