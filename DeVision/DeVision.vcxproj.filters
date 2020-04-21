@@ -138,6 +138,21 @@
     <ClInclude Include="CChart.h">
       <Filter>Table</Filter>
     </ClInclude>
+    <ClInclude Include="CBorder.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlotArea.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CGridlines.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CAxes.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CAxis.h">
+      <Filter>Table</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">
@@ -246,9 +261,6 @@
     <Image Include="res\start_ss.ico">
       <Filter>资源文件</Filter>
     </Image>
-    <Image Include="res\bitmap1.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="start.bmp">
       <Filter>资源文件</Filter>
     </Image>
@@ -277,6 +289,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\load.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\wait.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

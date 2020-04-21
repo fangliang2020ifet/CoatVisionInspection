@@ -153,6 +153,7 @@ public:
 	int total_number_def = 0;                             //当前检测到的瑕疵总数
 	int serious_def_num = 0;                              //严重瑕疵个数
 	float total_def_length = 0.0f;							  //瑕疵总米数
+
 protected:
 	CEdit m_edisplay_range;
 	CEdit m_eselectwidth;

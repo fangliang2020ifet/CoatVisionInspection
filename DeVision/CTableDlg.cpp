@@ -965,7 +965,7 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	TCHAR excel_path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, excel_path);
 	CString cpath = excel_path;
-	cpath = L"D:\\temp\\example.xlsx";
+	cpath = L"D:\\temp\\test.xlsx";
 	std::ifstream fexist(CT2A(cpath.GetBuffer()));
 	if (!fexist) {
 		CString cstr = L"打开Excel模板失败，请检查\\temp\\目录下文件example.xlsx是否存在";
@@ -1053,8 +1053,14 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	}
 
 	chartobject = chartobjects.Add(fleft, ftop, fwidth, fheight);
-	chart.AttachDispatch(chartobject.get_Chart());
+	//设置图表区边框
+	LPDISPATCH lpDispBorder = chartobject.get_Border();
+	CBorder border;
+	border.AttachDispatch(lpDispBorder);
+	border.put_LineStyle(COleVariant((short)-4142));       // No line
+
 	//散点图样式设置
+	chart.AttachDispatch(chartobject.get_Chart());
 	chart.put_ChartType(-4169);
 	VARIANT var;
 	var.vt = VT_DISPATCH;
@@ -1071,12 +1077,38 @@ void CTableDlg::SaveScatterPlotUseDefault()
 		covOptional,// ValueTitles.
 		covOptional  // ExtraTitle.
 	);
-	   	  
+	//设置网格线
+	CAxis axis;
+	CGridlines gridlines;
+	lpDisp = chart.Axes(COleVariant((short)1), 1);  //Axis displays categories, X轴
+	axis.AttachDispatch(lpDisp);
+	axis.get_HasMajorGridlines();
+	lpDisp = axis.get_MajorGridlines();
+	gridlines.AttachDispatch(lpDisp);
+	lpDisp = gridlines.get_Border();
+	border.AttachDispatch(lpDisp);
+	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
+
+	lpDisp = chart.Axes(COleVariant((short)2), 1);  //Axis displays values ， Y轴
+	axis.AttachDispatch(lpDisp);
+	axis.get_HasMajorGridlines();
+	lpDisp = axis.get_MajorGridlines();
+	gridlines.AttachDispatch(lpDisp);
+	lpDisp = gridlines.get_Border();
+	border.AttachDispatch(lpDisp);
+	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
+
 
 	Book.Save(); //保存
 	Book.put_Saved(TRUE);
 
 	//8.释放资源
+	border.ReleaseDispatch();
+	gridlines.ReleaseDispatch();
+	axis.ReleaseDispatch();
+	chart.ReleaseDispatch();
+	chartobject.ReleaseDispatch();
+	chartobjects.ReleaseDispatch();
 	range.ReleaseDispatch();
 	sheet.ReleaseDispatch();
 	sheets.ReleaseDispatch();
@@ -1179,7 +1211,6 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	AfxEnableControlContainer();	
 
 	CTableDlg *pThis = (CTableDlg *)pParam;
-	pThis->m_save_successfully = FALSE;
 
 	//1.创建基本对象
 	CApplication App;  //创建应用程序实例
@@ -1489,8 +1520,6 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	pThis->m_vecDFT.clear();
 
 	Win::log("报表已保存");
-	pThis->m_save_successfully = TRUE;
-
 
 	return 0;
 }
@@ -1503,7 +1532,6 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	AfxEnableControlContainer();
 
 	CTableDlg *pThis = (CTableDlg *)pParam;
-	pThis->m_save_successfully = FALSE;
 
 	TCHAR excel_path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, excel_path);
@@ -1739,10 +1767,15 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	{
 		chartobjects.Delete();
 	}
-
 	chartobject = chartobjects.Add(fleft, ftop, fwidth, fheight);
-	chart.AttachDispatch(chartobject.get_Chart());
+	//设置图表区边框
+	LPDISPATCH lpDispBorder = chartobject.get_Border();
+	CBorder border;
+	border.AttachDispatch(lpDispBorder);
+	border.put_LineStyle(COleVariant((short)-4142));       // No line
+
 	//散点图样式设置
+	chart.AttachDispatch(chartobject.get_Chart());
 	chart.put_ChartType(-4169);
 	VARIANT var;
 	var.vt = VT_DISPATCH;
@@ -1759,7 +1792,26 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 		covOptional,// ValueTitles.
 		covOptional  // ExtraTitle.
 	);
+	//设置网格线
+	CAxis axis;
+	CGridlines gridlines;
+	lpDisp = chart.Axes(COleVariant((short)1), 1);  //Axis displays categories, X轴
+	axis.AttachDispatch(lpDisp);
+	axis.get_HasMajorGridlines();
+	lpDisp = axis.get_MajorGridlines();
+	gridlines.AttachDispatch(lpDisp);
+	lpDisp = gridlines.get_Border();
+	border.AttachDispatch(lpDisp);
+	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
 
+	lpDisp = chart.Axes(COleVariant((short)2), 1);  //Axis displays values ， Y轴
+	axis.AttachDispatch(lpDisp);
+	axis.get_HasMajorGridlines();
+	lpDisp = axis.get_MajorGridlines();
+	gridlines.AttachDispatch(lpDisp);
+	lpDisp = gridlines.get_Border();
+	border.AttachDispatch(lpDisp);
+	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
 
 	/*
 	//添加图片
@@ -1803,6 +1855,13 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	Book.put_Saved(TRUE);
 
 	//8.释放资源
+	border.ReleaseDispatch();
+	gridlines.ReleaseDispatch();
+	axis.ReleaseDispatch();
+	chart.ReleaseDispatch();
+	chartobject.ReleaseDispatch();
+	chartobjects.ReleaseDispatch();
+
 	range.ReleaseDispatch();
 	sheet.ReleaseDispatch();
 	sheets.ReleaseDispatch();
@@ -1820,7 +1879,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	CString cstr = L"报表已保存: " + strExcelFile;
 	::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
-	pThis->m_save_successfully = TRUE;
+	pThis->TableSaved_Event.SetEvent();
 
 	return 0;
 }

@@ -244,10 +244,6 @@ void CImageProcess::RestartProcess()
 	m_DFTList4.clear();
 	m_Sorted_DFTList.clear();
 
-	m_NO_produced1 = 0;
-	m_NO_produced2 = 0;
-	m_NO_produced3 = 0;
-	m_NO_produced4 = 0;
 	m_current_position = 0.0f;
 
 	m_referenceImage_OK = FALSE;
@@ -482,28 +478,28 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 void CImageProcess::LoadImageToQueue()
 {
 	m_ImgList1_1.push_back(m_hi_test1);
-	m_ImgList1_2.push_back(m_hi_test1);
-	m_ImgList1_3.push_back(m_hi_test1);
-	m_ImgList1_4.push_back(m_hi_test1);
-	m_ImgList1_5.push_back(m_hi_test1);
+	//m_ImgList1_2.push_back(m_hi_test1);
+	//m_ImgList1_3.push_back(m_hi_test1);
+	//m_ImgList1_4.push_back(m_hi_test1);
+	//m_ImgList1_5.push_back(m_hi_test1);
 
 	m_ImgList2_1.push_back(m_hi_test2);
-	m_ImgList2_2.push_back(m_hi_test2);
-	m_ImgList2_3.push_back(m_hi_test2);
-	m_ImgList2_4.push_back(m_hi_test2);
-	m_ImgList2_5.push_back(m_hi_test2);
+	//m_ImgList2_2.push_back(m_hi_test2);
+	//m_ImgList2_3.push_back(m_hi_test2);
+	//m_ImgList2_4.push_back(m_hi_test2);
+	//m_ImgList2_5.push_back(m_hi_test2);
 
 	m_ImgList3_1.push_back(m_hi_test3);
-	m_ImgList3_2.push_back(m_hi_test3);
-	m_ImgList3_3.push_back(m_hi_test3);
-	m_ImgList3_4.push_back(m_hi_test3);
-	m_ImgList3_5.push_back(m_hi_test3);
+	//m_ImgList3_2.push_back(m_hi_test3);
+	//m_ImgList3_3.push_back(m_hi_test3);
+	//m_ImgList3_4.push_back(m_hi_test3);
+	//m_ImgList3_5.push_back(m_hi_test3);
 
 	m_ImgList4_1.push_back(m_hi_test4);
-	m_ImgList4_2.push_back(m_hi_test4);
-	m_ImgList4_3.push_back(m_hi_test4);
-	m_ImgList4_4.push_back(m_hi_test4);
-	m_ImgList4_5.push_back(m_hi_test4);
+	//m_ImgList4_2.push_back(m_hi_test4);
+	//m_ImgList4_3.push_back(m_hi_test4);
+	//m_ImgList4_4.push_back(m_hi_test4);
+	//m_ImgList4_5.push_back(m_hi_test4);
 }
 
 BOOL CImageProcess::LoadOneImageToQueue(std::string folder_path, int next_number)
@@ -1589,7 +1585,7 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 
 //检测算法：一种基于多目机器视觉的光学薄膜瑕疵检测系统
 int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
-											HImage hi_img, std::vector<DefectType> &vDFT)
+											HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT)
 {
 	HObject  ho_Image, ho_ImageAverage, ho_ImageDeviation, ho_ImageMedianDFT;
 	HObject  ho_ImageSub1, ho_ImageSub2, ho_ImageAddSub, ho_ImageResult;
@@ -1732,7 +1728,8 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 				DefectType dtype;
 				dtype.type              = ImageClassification(ho_ImagePart);
 				dtype.center_x          = ((float)region.hv_Column_Center.D() + IMAGE_WIDTH * (cameraNO - 1))*HORIZON_PRECISION;
-				dtype.absolute_position = m_current_position + (float)region.hv_Row_Center.D() * VERTICAL_PRECISION / 1000.0f;
+				//dtype.absolute_position = m_current_position + (float)region.hv_Row_Center.D() * VERTICAL_PRECISION / 1000.0f;
+				dtype.absolute_position = (produced_num * IMAGE_HEIGHT + (float)region.hv_Row_Center.D()) * VERTICAL_PRECISION / 1000.0f;
 				dtype.area              = region.area * HORIZON_PRECISION * VERTICAL_PRECISION;
 				dtype.circle_radius     = region.radius * HORIZON_PRECISION;
 				dtype.contlength        = region.contlength * HORIZON_PRECISION;
@@ -2005,7 +2002,7 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 			}
 		}
 
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 2000);
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 3000);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
@@ -2020,10 +2017,10 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 		case WAIT_FAILED:
 			return -1;
 		case WAIT_OBJECT_0: {
-			while (pThis->CheckTotalListSize() > 0)
-			{
-				Sleep(200);
-			}
+			//while (pThis->CheckTotalListSize() > 0)
+			//{
+			//	//Sleep(200);
+			//}
 
 			pThis->StopCalculateThreads();
 			pThis->AllCalculateThreadStopped_Event.SetEvent();
@@ -2054,6 +2051,7 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average1;
 	HImage hi_deviation = pImgProc->m_hi_deviation1;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread1_1_alive)
 	{
 
@@ -2082,7 +2080,10 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, produced_num*5, vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2095,10 +2096,8 @@ UINT CImageProcess::ImageCalculate1_1(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}			
-			//已处理的图像总数
-			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
-			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
+			pImgProc->m_current_position = (produced_num * 5) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 
@@ -2132,6 +2131,7 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average1;
 	HImage hi_deviation = pImgProc->m_hi_deviation1;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread1_2_alive)
 	{
 		if (!pImgProc->m_ImgList1_2.empty())
@@ -2159,7 +2159,10 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, produced_num*5+1,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2172,10 +2175,8 @@ UINT CImageProcess::ImageCalculate1_2(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
-			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
+			pImgProc->m_current_position = (produced_num * 5 + 1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 
@@ -2208,6 +2209,7 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average1;
 	HImage hi_deviation = pImgProc->m_hi_deviation1;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread1_3_alive)
 	{
 		if (!pImgProc->m_ImgList1_3.empty())
@@ -2236,7 +2238,10 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, produced_num*5+2,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2249,12 +2254,9 @@ UINT CImageProcess::ImageCalculate1_3(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
-			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
+			pImgProc->m_current_position = (produced_num * 5 + 2) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
-
 		} 
 		
 		//if (WAIT_OBJECT_0 == WaitForSingleObject(StopCalculate_Event, INFINITE)) {
@@ -2288,6 +2290,7 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average1;
 	HImage hi_deviation = pImgProc->m_hi_deviation1;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread1_4_alive)
 	{
 		if (!pImgProc->m_ImgList1_4.empty())
@@ -2316,7 +2319,10 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, produced_num*5+3,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2329,10 +2335,8 @@ UINT CImageProcess::ImageCalculate1_4(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
-			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
+			pImgProc->m_current_position = (produced_num * 5 + 3) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 		
@@ -2366,7 +2370,7 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average1;
 	HImage hi_deviation = pImgProc->m_hi_deviation1;
 
-	std::vector<DefectType> vdef;
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread1_5_alive)
 	{
 		if (!pImgProc->m_ImgList1_5.empty())
@@ -2395,7 +2399,10 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_1, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_1, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_1, hi_average, hi_deviation, hi_def, produced_num*5+4, vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread1);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2408,10 +2415,8 @@ UINT CImageProcess::ImageCalculate1_5(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced1 += 1;
 			//更新位置信息: 总帧数 * 图像高度 * 纵向精度
-			pImgProc->m_current_position = (pImgProc->m_NO_produced1) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
+			pImgProc->m_current_position = (produced_num * 5 + 4) * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread1);
 		}
 		
@@ -2445,6 +2450,7 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average2;
 	HImage hi_deviation = pImgProc->m_hi_deviation2;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread2_1_alive)
 	{
 		if (!pImgProc->m_ImgList2_1.empty())
@@ -2458,7 +2464,10 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, produced_num*5,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2471,8 +2480,6 @@ UINT CImageProcess::ImageCalculate2_1(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
 		}
 		
@@ -2502,6 +2509,7 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average2;
 	HImage hi_deviation = pImgProc->m_hi_deviation2;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread2_2_alive)
 	{
 		if (!pImgProc->m_ImgList2_2.empty())
@@ -2515,7 +2523,10 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, produced_num*5+1,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2528,8 +2539,6 @@ UINT CImageProcess::ImageCalculate2_2(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
 		}
 		
@@ -2560,6 +2569,7 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average2;
 	HImage hi_deviation = pImgProc->m_hi_deviation2;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread2_3_alive)
 	{
 		if (!pImgProc->m_ImgList2_3.empty())
@@ -2573,7 +2583,10 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, produced_num*5+2,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2586,8 +2599,6 @@ UINT CImageProcess::ImageCalculate2_3(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
 		}
 		
@@ -2618,6 +2629,7 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average2;
 	HImage hi_deviation = pImgProc->m_hi_deviation2;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread2_4_alive)
 	{
 		if (!pImgProc->m_ImgList2_4.empty())
@@ -2631,7 +2643,10 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, produced_num*5+3, vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2644,8 +2659,6 @@ UINT CImageProcess::ImageCalculate2_4(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
 		}
 		
@@ -2676,6 +2689,7 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average2;
 	HImage hi_deviation = pImgProc->m_hi_deviation2;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread2_5_alive)
 	{
 		if (!pImgProc->m_ImgList2_5.empty())
@@ -2689,7 +2703,10 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_2, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_2, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_2, hi_average, hi_deviation, hi_def, produced_num*5+4,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread2);
 
@@ -2703,8 +2720,6 @@ UINT CImageProcess::ImageCalculate2_5(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced2 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread2);
 		}
 		
@@ -2736,6 +2751,7 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average3;
 	HImage hi_deviation = pImgProc->m_hi_deviation3;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread3_1_alive)
 	{
 		if (!pImgProc->m_ImgList3_1.empty())
@@ -2749,7 +2765,10 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, produced_num*5,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2762,8 +2781,6 @@ UINT CImageProcess::ImageCalculate3_1(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
 		}
 		
@@ -2794,6 +2811,7 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average3;
 	HImage hi_deviation = pImgProc->m_hi_deviation3;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread3_2_alive)
 	{
 		if (!pImgProc->m_ImgList3_2.empty())
@@ -2807,7 +2825,10 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, produced_num*5+1,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2820,8 +2841,6 @@ UINT CImageProcess::ImageCalculate3_2(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
 		}
 		
@@ -2841,7 +2860,6 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 {
 	CImageProcess *pImgProc = (CImageProcess *)pParam;
 	pImgProc->is_thread3_3_alive = TRUE;
-	pImgProc->m_NO_produced3 = 0;
 
 	//处理参考图像
 	HImage hi_ref;
@@ -2853,6 +2871,7 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average3;
 	HImage hi_deviation = pImgProc->m_hi_deviation3;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread3_3_alive)
 	{
 		if (!pImgProc->m_ImgList3_3.empty())
@@ -2866,7 +2885,10 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, produced_num*5+2,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2879,8 +2901,6 @@ UINT CImageProcess::ImageCalculate3_3(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
 		}
 		
@@ -2911,6 +2931,7 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average3;
 	HImage hi_deviation = pImgProc->m_hi_deviation3;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread3_4_alive)
 	{
 		if (!pImgProc->m_ImgList3_4.empty())
@@ -2924,7 +2945,10 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, produced_num*5+3,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2937,8 +2961,6 @@ UINT CImageProcess::ImageCalculate3_4(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
 		}
 		
@@ -2969,6 +2991,7 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average3;
 	HImage hi_deviation = pImgProc->m_hi_deviation3;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread3_5_alive)
 	{
 		if (!pImgProc->m_ImgList3_5.empty())
@@ -2982,7 +3005,10 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_3, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_3, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_3, hi_average, hi_deviation, hi_def, produced_num*5+4,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread3);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -2995,8 +3021,6 @@ UINT CImageProcess::ImageCalculate3_5(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced3 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread3);
 		}
 		
@@ -3029,6 +3053,7 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average4;
 	HImage hi_deviation = pImgProc->m_hi_deviation4;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread4_1_alive)
 	{
 		if (!pImgProc->m_ImgList4_1.empty())
@@ -3057,7 +3082,10 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, produced_num*5, vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -3070,8 +3098,6 @@ UINT CImageProcess::ImageCalculate4_1(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
 		}
 		
@@ -3103,6 +3129,7 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average4;
 	HImage hi_deviation = pImgProc->m_hi_deviation4;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread4_2_alive)
 	{
 		if (!pImgProc->m_ImgList4_2.empty())
@@ -3131,7 +3158,10 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, produced_num*5+1,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -3144,8 +3174,6 @@ UINT CImageProcess::ImageCalculate4_2(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
 		}
 		
@@ -3177,6 +3205,7 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average4;
 	HImage hi_deviation = pImgProc->m_hi_deviation4;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread4_3_alive)
 	{
 		if (!pImgProc->m_ImgList4_3.empty())
@@ -3204,7 +3233,10 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, produced_num*5+2,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -3218,8 +3250,6 @@ UINT CImageProcess::ImageCalculate4_3(LPVOID pParam)
 				}
 			}
 
-			//已处理的图像总数
-			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
 		}
 		
@@ -3251,6 +3281,7 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average4;
 	HImage hi_deviation = pImgProc->m_hi_deviation4;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread4_4_alive)
 	{
 		if (!pImgProc->m_ImgList4_4.empty())
@@ -3278,7 +3309,10 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, produced_num*5+3,vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -3291,8 +3325,6 @@ UINT CImageProcess::ImageCalculate4_4(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
 		}
 		
@@ -3324,6 +3356,7 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 	HImage hi_average = pImgProc->m_hi_average4;
 	HImage hi_deviation = pImgProc->m_hi_deviation4;
 
+	UINT64 produced_num = 0;
 	while (pImgProc->is_thread4_5_alive)
 	{
 		if (!pImgProc->m_ImgList4_5.empty())
@@ -3352,7 +3385,10 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 			//瑕疵检测算法
 			//pImgProc->DetectAlgorithem(CAMERA_4, hi_ref, hi_def, vdef);
 			//pImgProc->DetectAlgorithemSimple(CAMERA_4, hi_ref, hi_def, vdef);
-			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, vdef);
+			pImgProc->StandDeviationAlgorithm(CAMERA_4, hi_average, hi_deviation, hi_def, produced_num*5+4, vdef);
+
+			//已处理的图像总数
+			produced_num += 1;
 
 			EnterCriticalSection(&pImgProc->m_csCalculateThread4);
 			//根据瑕疵绝对位置排序后存入瑕疵队列
@@ -3365,8 +3401,6 @@ UINT CImageProcess::ImageCalculate4_5(LPVOID pParam)
 					//pImgProc->m_NO_dft += 1;
 				}
 			}
-			//已处理的图像总数
-			pImgProc->m_NO_produced4 += 1;
 			LeaveCriticalSection(&pImgProc->m_csCalculateThread4);
 		}
 		

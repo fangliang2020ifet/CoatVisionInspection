@@ -60,7 +60,9 @@ public:
 	float m_current_position;
 	float scale_x;
 	float scale_y;
-	BOOL m_save_successfully = TRUE;
+	//BOOL m_save_successfully = TRUE;
+
+	CEvent TableSaved_Event;
 
 	CRITICAL_SECTION m_csvec;                  //定义一个临界区
 

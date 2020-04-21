@@ -197,6 +197,9 @@
     <ClInclude Include="CAlgorithmDlg.h" />
     <ClInclude Include="CAnalysisDlg.h" />
     <ClInclude Include="CApplication.h" />
+    <ClInclude Include="CAxes.h" />
+    <ClInclude Include="CAxis.h" />
+    <ClInclude Include="CBorder.h" />
     <ClInclude Include="CCameraDlg.h" />
     <ClInclude Include="CChart.h" />
     <ClInclude Include="CChartObject.h" />
@@ -204,12 +207,14 @@
     <ClInclude Include="CCharts.h" />
     <ClInclude Include="CControl.h" />
     <ClInclude Include="CFont0.h" />
+    <ClInclude Include="CGridlines.h" />
     <ClInclude Include="CHistoryDlg.h" />
     <ClInclude Include="CImageProcess.h" />
     <ClInclude Include="CInspectDlg.h" />
     <ClInclude Include="CLoad.h" />
     <ClInclude Include="CMyDocument.h" />
     <ClInclude Include="CMyView.h" />
+    <ClInclude Include="CPlotArea.h" />
     <ClInclude Include="CProductInfo.h" />
     <ClInclude Include="CRange.h" />
     <ClInclude Include="CSetupDlg.h" />
@@ -270,7 +275,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\..\ImageTest\11.bmp" />
-    <Image Include="res\bitmap1.bmp" />
+    <Image Include="res\wait.bmp" />
     <Image Include="res\DeVision.ico" />
     <Image Include="res\exit.ico" />
     <Image Include="res\go_down.ico" />

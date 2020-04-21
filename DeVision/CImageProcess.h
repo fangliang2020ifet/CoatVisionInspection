@@ -133,14 +133,13 @@ public:
 	void ReSortDefectQueue();
 
 	std::string m_strPath;                  //保存路径
-	int m_NO_produced1 = 0;
-	int m_NO_produced2 = 0;
-	int m_NO_produced3 = 0;
-	int m_NO_produced4 = 0;
+	//int m_NO_produced1 = 0;
+	//int m_NO_produced2 = 0;
+	//int m_NO_produced3 = 0;
+	//int m_NO_produced4 = 0;
 
 	float m_current_position = 0.0f;
-	int m_total_list_size = 0;
-
+	int m_total_list_size = 0;              //  list 的总大小,待处理的图像数量
 	ImgList m_ImgList1_1;
 	ImgList m_ImgList1_2;
 	ImgList m_ImgList1_3;
@@ -214,7 +213,7 @@ private:
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
-		HImage hi_img, std::vector<DefectType> &vDFT);
+		HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT);
 
 protected:
 

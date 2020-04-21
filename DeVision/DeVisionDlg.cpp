@@ -264,9 +264,6 @@ int CDeVisionDlg::CheckThreadStatue()
 	if (m_ImgProc.IsThreadsAlive())
 		return 1;
 
-	if (!m_tableDlg.m_save_successfully)
-		return 2;
-
 	BOOL camera_thread = m_inspectDlg.m_camera1_thread_alive || m_inspectDlg.m_camera2_thread_alive
 			      		|| m_inspectDlg.m_camera3_thread_alive || m_inspectDlg.m_camera4_thread_alive;
 	if (camera_thread)
@@ -1008,13 +1005,11 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 
 		break;
 	case SYSTEM_STATE_ONLINE:
-		if (m_tableDlg.m_save_successfully) {
-			GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-			GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-			m_button_online.SetWindowTextW(_T("离线"));
-		}
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
+		m_button_online.SetWindowTextW(_T("离线"));
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 		if (pMenu){
 			pMenu->EnableMenuItem(ID_SETUP, MF_DISABLED);
@@ -1060,8 +1055,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 
 		break;
 	case SYSTEM_STATE_STOP:
-		if (m_tableDlg.m_save_successfully)
-			GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
@@ -1144,7 +1138,7 @@ void CDeVisionDlg::UpdateSysStatus()
 
 		//总处理数量
 		UINT64 acquire_frame_count = m_inspectDlg.GetTotalFrameCount();
-		if (acquire_frame_count > 0)
+		if (acquire_frame_count >= 0)
 		{
 			CString cstr_frame_count, cstr_unit;
 			cstr_frame_count.Format(L"总帧数：%d 帧(%d)", acquire_frame_count, m_ImgProc.m_total_list_size);
@@ -1244,13 +1238,8 @@ void CDeVisionDlg::ReStartPrepare()
 	memset(m_rank, 0, sizeof(m_rank));
 
 	m_vDFT.clear();
-
 	m_ImgProc.RestartProcess();
-
-	pView->m_vDefect.clear();
-
 	m_inspectDlg.RestartInspect();
-
 	pView->Redraw();
 
 	//创建工作目录
@@ -1294,16 +1283,35 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		case WAIT_FAILED:
 			return -1;
 		case WAIT_OBJECT_0: {
+			//显示等待界面
+			CLoad  wndLoad;
+			wndLoad.Create(IDB_BITMAP_WAIT);
+			wndLoad.UpdateWindow();
+			HWND hwnd = wndLoad.GetSafeHwnd();
+
 			if (WAIT_OBJECT_0 == WaitForSingleObject(pDlg->m_ImgProc.AllCalculateThreadStopped_Event, INFINITE)) {
 				//结束历史图像刷新定时器
 				pDlg->KillTimer(2);
 				//保存检测记录
 				EnterCriticalSection(&pDlg->m_csVecDFT);
 				pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
+				pDlg->m_tableDlg.m_product_rank = pDlg->DevideDFTRank(pDlg->total_number_def);
+				pDlg->m_tableDlg.m_serious_num = pDlg->serious_def_num;
+				pDlg->m_tableDlg.GetDetectResult(
+					pDlg->m_rank[0], 
+					pDlg->m_rank[1], 
+					pDlg->m_rank[2], 
+					pDlg->m_rank[3], 
+					pDlg->m_rank[4]);
+
 				pDlg->m_tableDlg.BeginSaveTable();
 				LeaveCriticalSection(&pDlg->m_csVecDFT);
 			}
+			WaitForSingleObject(pDlg->m_tableDlg.TableSaved_Event, INFINITE);
 			pDlg->m_system_state = SYSTEM_STATE_STOP;
+
+			//关闭等待界面
+			wndLoad.DestroyWindow();
 
 			CString cstr = L"结束界面刷新线程";
 			::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1437,30 +1445,11 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 			//结束计算线程
 			m_ImgProc.StopProcess();
 
-			m_tableDlg.m_product_rank = DevideDFTRank(total_number_def);
-			m_tableDlg.m_serious_num = serious_def_num;
-			m_tableDlg.GetDetectResult(m_rank[0], m_rank[1], m_rank[2], m_rank[3], m_rank[4]);
-
-			////结束瑕疵界面刷新线程
-			//while (m_is_refrushThread_alive)
-			//{
-			//	m_is_refrushThread_alive = FALSE;
-			//}
-
-			////结束历史图像刷新定时器
-			//KillTimer(2);
-
-			////保存检测记录
-			//EnterCriticalSection(&m_csVecDFT);
-			//m_tableDlg.m_vecDFT = m_vDFT;
-			//m_tableDlg.BeginSaveTable();
-			//LeaveCriticalSection(&m_csVecDFT);
+			m_tableDlg.TableSaved_Event.ResetEvent();
 
 			m_inspectDlg.m_is_system_pause = FALSE;
 		}
 		else {
-			//Win::log("相机停止失败");
-			//RecordWarning(L"相机停止失败");
 			return;
 		}
 	}
@@ -1468,12 +1457,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CString cstr = L"停止检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
-	//WaitForSingleObject(m_RefrushThread->m_hThread, INFINITE);
 	//m_system_state = SYSTEM_STATE_STOP;
-	//if (WAIT_OBJECT_0 == WaitForSingleObject(RefrushThreadStopped_Event, INFINITE)) {
-	//	if (m_system_state != SYSTEM_STATE_STOP)
-	//		m_system_state = SYSTEM_STATE_STOP;
-	//}
 }
 
 //暂停  按钮

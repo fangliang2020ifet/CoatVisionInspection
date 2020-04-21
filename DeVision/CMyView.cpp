@@ -229,15 +229,9 @@ void CMyView::AddFlag(CDC &mDC, int test)
 	if (!m_vDefect.empty()) {
 		//方法III：反向迭代器输出
 		std::vector<DefectType>::reverse_iterator it = m_vDefect.rbegin();
-		//temp_def = *(it);
-		//const float image_size = IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;   //单位：米
-		//float origin_point_y = temp_def.image_order * image_size;
-
-		for (; it != m_vDefect.rend(); ++it)
+		for (; it != m_vDefect.rend(); it++)
 		{
 			temp_def = *it;
-			//int itvalue = (int)(std::distance(m_vDefect.rbegin(), it));
-			//float current_origin_point_y = temp_def.image_order * image_size;
 			int x_coord = (int)(temp_def.center_x * scale_x);
 			int y_coord = wnd_height * wnd_scroll_scale_size - (int)((temp_def.absolute_position - m_previous_position) / scale_y);
 
@@ -247,12 +241,6 @@ void CMyView::AddFlag(CDC &mDC, int test)
 				break;
 
 			CreateFlag(mDC, x_coord, y_coord, temp_def.type);
-
-			//TRACE("absolute_position = %.3f\n", temp_def.absolute_position);
-			//TRACE("m_display_range   = %.3f\n", m_display_range);
-			//TRACE("previous_position = %.3f\n", m_previous_position);
-			//TRACE("y_coord__________ = %d\n", y_coord);
-
 		}
 
 	}

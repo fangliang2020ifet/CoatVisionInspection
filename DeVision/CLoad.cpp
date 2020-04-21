@@ -48,7 +48,7 @@ BOOL CLoad::Create()
 BOOL CLoad::Create(UINT nBitmapID)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-	m_bitmap.LoadBitmapW(IDB_BITMAP_LOADDING);
+	m_bitmap.LoadBitmapW(nBitmapID);
 	BITMAP bitmap;
 	m_bitmap.GetBitmap(&bitmap);
 	int x = (::GetSystemMetrics(SM_CXSCREEN) - bitmap.bmWidth) / 2;

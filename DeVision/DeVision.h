@@ -10,6 +10,8 @@
 
 #include "resource.h"		// 主符号
 
+#include "CLoad.h"
+
 // CDeVisionApp:
 // 有关此类的实现，请参阅 DeVision.cpp
 //
