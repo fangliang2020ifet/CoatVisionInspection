@@ -114,6 +114,7 @@ public:
 
 	BOOL m_referenceImage_OK = FALSE;
 	BOOL m_bLoad_Default_Ref_Dev = TRUE;
+	//算法参数
 	int m_k_normal_distribution = 15;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
 	int m_k_min_select_area = 5;		   //面积删选
 	int m_median_filter_size = 1;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
@@ -124,7 +125,6 @@ public:
 	void RestartProcess();
 	BOOL IsThreadsAlive();
 	int CheckTotalListSize();
-
 	BOOL LoadRefImage(std::string folder_path);
 	void LoadImageToQueue();
 	BOOL LoadOneImageToQueue(std::string folder_path, int next_number);
@@ -133,16 +133,13 @@ public:
 	void ReSortDefectQueue();
 
 	std::string m_strPath;                  //保存路径
-	int m_NO_IMG;                          //已处理的图像总数
 	int m_NO_produced1 = 0;
 	int m_NO_produced2 = 0;
 	int m_NO_produced3 = 0;
 	int m_NO_produced4 = 0;
-	int FindMaxProducedNO();                       //找到已处理最多图像的线程
 
 	float m_current_position = 0.0f;
-	//瑕疵序号
-	int m_NO_dft = 0;
+	int m_total_list_size = 0;
 
 	ImgList m_ImgList1_1;
 	ImgList m_ImgList1_2;
@@ -171,7 +168,6 @@ public:
 	DFTList m_Sorted_DFTList;
 
 	//测试变量
-	std::string file_path;    //文件路径,参考图像
 	HImage m_hi_test1;
 	HImage m_hi_test2;
 	HImage m_hi_test3;

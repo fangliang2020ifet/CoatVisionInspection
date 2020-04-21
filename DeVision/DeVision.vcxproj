@@ -198,6 +198,10 @@
     <ClInclude Include="CAnalysisDlg.h" />
     <ClInclude Include="CApplication.h" />
     <ClInclude Include="CCameraDlg.h" />
+    <ClInclude Include="CChart.h" />
+    <ClInclude Include="CChartObject.h" />
+    <ClInclude Include="CChartObjects.h" />
+    <ClInclude Include="CCharts.h" />
     <ClInclude Include="CControl.h" />
     <ClInclude Include="CFont0.h" />
     <ClInclude Include="CHistoryDlg.h" />

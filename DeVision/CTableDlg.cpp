@@ -959,6 +959,141 @@ void CTableDlg::SaveToExcelUseDefault(CString &name)
 	name = cpath;
 }
 
+//使用模板并插入散点图
+void CTableDlg::SaveScatterPlotUseDefault()
+{
+	TCHAR excel_path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, excel_path);
+	CString cpath = excel_path;
+	cpath = L"D:\\temp\\example.xlsx";
+	std::ifstream fexist(CT2A(cpath.GetBuffer()));
+	if (!fexist) {
+		CString cstr = L"打开Excel模板失败，请检查\\temp\\目录下文件example.xlsx是否存在";
+		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
+	}
+
+	//1.创建基本对象
+	CApplication App;                //创建应用程序实例
+	CWorkbooks Books;                //工作簿，多个Excel文件
+	CWorkbook Book_example, Book;    //单个工作簿
+	CWorksheets sheets;              //多个sheet页面
+	CWorksheet sheet;                //单个sheet页面
+	CRange range;                    //操作单元格
+
+	LPDISPATCH lpDisp;
+	COleVariant vResult;
+	COleVariant  covOptional((long)DISP_E_PARAMNOTFOUND, VT_ERROR);
+	if (!App.CreateDispatch(L"Excel.Application")) {
+		CString cstr = L"打开Excel失败，请检查Excel状态";
+		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
+	}
+	Books.AttachDispatch(App.get_Workbooks());
+	//打开模板文件
+	lpDisp = Books.Open(cpath, covOptional, covOptional, covOptional, covOptional, covOptional
+		, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
+		covOptional, covOptional);
+	//得到得到视图workbook
+	Book_example.AttachDispatch(lpDisp);
+
+	//另存为
+	CString strExcelFile = m_save_path.c_str();
+	std::wstring strname;
+	GenerateReportName(strname);
+	CString strdevName(strname.c_str());
+	strdevName += _T(".xlsx");
+	strExcelFile += strdevName;
+	COleVariant cvname(strExcelFile);
+	Book_example.SaveAs(cvname, covOptional, covOptional, covOptional, covOptional, covOptional
+		, 1, covOptional, covOptional, covOptional, covOptional, covOptional);
+
+	//打开另存的文件
+	lpDisp = Books.Open(strExcelFile, covOptional, covOptional, covOptional,
+		covOptional, covOptional, covOptional, covOptional, covOptional, covOptional,
+		covOptional, covOptional, covOptional, covOptional, covOptional);
+	//得到得到视图workbook
+	Book.AttachDispatch(lpDisp);
+	//得到worksheets
+	sheets.AttachDispatch(Book.get_Worksheets());
+	//得到sheet1
+	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)1)));	//获取sheet1
+	range.AttachDispatch(sheet.get_UsedRange());
+
+	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
+	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
+
+	//获取图表绘制的数据区域
+	LPDISPATCH lpDispXY = sheet.get_Range(COleVariant(_T("C7")), COleVariant(_T("D70")));
+
+	//写入瑕疵分布图 sheet2
+	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)2)));	//获取sheet2
+	//取得用户区
+	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
+	range.AttachDispatch(sheet.get_Range(COleVariant(_T("A7")), COleVariant(_T("H52"))), TRUE);
+	VARIANT rLeft = range.get_Left();
+	VARIANT rTop = range.get_Top();
+	VARIANT rWidth = range.get_Width();
+	VARIANT rHeight = range.get_Height();
+	double fleft = (double)rLeft.dblVal + 10.0;
+	double ftop = (double)rTop.dblVal + 10.0;
+	double fwidth = (double)rWidth.dblVal - 20.0;
+	double fheight = (double)rHeight.dblVal - 20.0;
+
+	CChartObjects chartobjects;       //chart对象所在的容器
+	CChartObject  chartobject;
+	CChart        chart;                  //图表
+
+	lpDisp = sheet.ChartObjects(covOptional);
+	ASSERT(lpDisp);
+	chartobjects.AttachDispatch(lpDisp);
+	if (chartobjects.get_Count() != 0) //当excel中存在原有图表时，删除之
+	{
+		chartobjects.Delete();
+	}
+
+	chartobject = chartobjects.Add(fleft, ftop, fwidth, fheight);
+	chart.AttachDispatch(chartobject.get_Chart());
+	//散点图样式设置
+	chart.put_ChartType(-4169);
+	VARIANT var;
+	var.vt = VT_DISPATCH;
+	var.pdispVal = lpDispXY;
+	chart.ChartWizard(var,// Source.
+		COleVariant((short)-4169),// Gallery, 散点图
+		COleVariant((short)3),// Format: 1~6.
+		COleVariant((short)2),// PlotBy: 指定系列中的数据是来自行(1)还是来自列(2).
+		COleVariant((short)1),// CategoryLabels.类别：第一行是分类标签
+		COleVariant((short)2),// SeriesLabels.系列：第一列是系列标签
+		COleVariant((short)FALSE),// HasLegend.
+		COleVariant(L"缺陷分布图"),// Title.
+		covOptional,// CategoryTitle.
+		covOptional,// ValueTitles.
+		covOptional  // ExtraTitle.
+	);
+	   	  
+
+	Book.Save(); //保存
+	Book.put_Saved(TRUE);
+
+	//8.释放资源
+	range.ReleaseDispatch();
+	sheet.ReleaseDispatch();
+	sheets.ReleaseDispatch();
+	Book.ReleaseDispatch();
+	Book_example.ReleaseDispatch();
+	Books.ReleaseDispatch();
+	Book.Close(covOptional, covOptional, covOptional);//关闭Workbook对象
+	Book_example.Close(covOptional, covOptional, covOptional);
+	Books.Close();           // 关闭Workbooks对象
+	App.Quit();          // 退出_Application
+	App.ReleaseDispatch();
+
+	CString cstr = L"报表已保存: " + strExcelFile;
+	::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+}
+
 void CTableDlg::FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead)
 {
 	//3. 加载要合并的单元格
@@ -1545,6 +1680,12 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
 	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
 
+	//获取图表绘制的数据区域
+	int row_num = (int)pThis->m_vecDFT.size() + 7;
+	CString cend;
+	cend.Format(_T("D%d"), row_num);
+	LPDISPATCH lpDispXY = sheet.get_Range(COleVariant(_T("C7")), COleVariant(cend));
+
 	//写入瑕疵分布图 sheet2
 	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)2)));	//获取sheet1
 	//取得用户区
@@ -1575,6 +1716,52 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 		}
 	}
 
+	//生成散点图
+	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
+	range.AttachDispatch(sheet.get_Range(COleVariant(_T("A7")), COleVariant(_T("H52"))), TRUE);
+	VARIANT rLeft = range.get_Left();
+	VARIANT rTop = range.get_Top();
+	VARIANT rWidth = range.get_Width();
+	VARIANT rHeight = range.get_Height();
+	double fleft = (double)rLeft.dblVal + 10.0;
+	double ftop = (double)rTop.dblVal + 10.0;
+	double fwidth = (double)rWidth.dblVal - 20.0;
+	double fheight = (double)rHeight.dblVal - 20.0;
+
+	CChartObjects chartobjects;       //chart对象所在的容器
+	CChartObject  chartobject;
+	CChart        chart;                  //图表
+
+	lpDisp = sheet.ChartObjects(covOptional);
+	ASSERT(lpDisp);
+	chartobjects.AttachDispatch(lpDisp);
+	if (chartobjects.get_Count() != 0) //当excel中存在原有图表时，删除之
+	{
+		chartobjects.Delete();
+	}
+
+	chartobject = chartobjects.Add(fleft, ftop, fwidth, fheight);
+	chart.AttachDispatch(chartobject.get_Chart());
+	//散点图样式设置
+	chart.put_ChartType(-4169);
+	VARIANT var;
+	var.vt = VT_DISPATCH;
+	var.pdispVal = lpDispXY;
+	chart.ChartWizard(var,// Source.
+		COleVariant((short)-4169),// Gallery, 散点图
+		COleVariant((short)3),// Format: 1~6.
+		COleVariant((short)2),// PlotBy: 指定系列中的数据是来自行(1)还是来自列(2).
+		COleVariant((short)1),// CategoryLabels.类别：第一行是分类标签
+		COleVariant((short)2),// SeriesLabels.系列：第一列是系列标签
+		COleVariant((short)FALSE),// HasLegend.
+		COleVariant(L"缺陷分布图"),// Title.
+		covOptional,// CategoryTitle.
+		covOptional,// ValueTitles.
+		covOptional  // ExtraTitle.
+	);
+
+
+	/*
 	//添加图片
 	char path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, (TCHAR*)path);//获取当前路径
@@ -1609,6 +1796,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 		CString cstr = L"插入瑕疵分布图失败，\\temp\\目录下未生成分布图";
 		::SendMessage(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
+	*/
 	//*************************************************************
 
 	Book.Save(); //保存
@@ -1801,6 +1989,7 @@ void CTableDlg::OnBnClickedButtonSearch()
 	//SaveToExcel(*m_pvDFT);
 	//CString excel_name;
 	//SaveToExcelUseDefault(excel_name);
+	SaveScatterPlotUseDefault();
 
 	CString cstr = L"查询到： 0 条记录";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);

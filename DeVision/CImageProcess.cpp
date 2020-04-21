@@ -244,13 +244,11 @@ void CImageProcess::RestartProcess()
 	m_DFTList4.clear();
 	m_Sorted_DFTList.clear();
 
-	m_NO_IMG = 0;
 	m_NO_produced1 = 0;
 	m_NO_produced2 = 0;
 	m_NO_produced3 = 0;
 	m_NO_produced4 = 0;
 	m_current_position = 0.0f;
-	m_NO_dft = 0;
 
 	m_referenceImage_OK = FALSE;
 	m_camera1_reference_image_acquired = FALSE;
@@ -301,8 +299,6 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
-	//设置工作路径
-	file_path = folder_path;
 
 	//读取参考图像1
 	if (1) {
@@ -1147,29 +1143,6 @@ void CImageProcess::ReSortDefectQueue()
 	}
 
 	return;
-}
-
-//处理最多的图像数量
-int CImageProcess::FindMaxProducedNO()
-{
-	int max1, max2;
-	if (m_NO_produced1 < m_NO_produced2)
-		max1 = m_NO_produced2;
-	else
-		max1 = m_NO_produced1;
-
-	if (m_NO_produced3 < m_NO_produced4)
-		max2 = m_NO_produced4;
-	else
-		max2 = m_NO_produced3;
-
-	if (max1 < max2) {
-		return max2;
-	}
-	else {
-		max1 = m_NO_IMG;
-		return max1;
-	}
 }
 
 //分割后的瑕疵图像处理
@@ -2041,6 +2014,7 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 				CString cstr = L"加载图像到处理队列";
 				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			}
+			pThis->m_total_list_size = pThis->CheckTotalListSize();
 			break;
 		}
 		case WAIT_FAILED:

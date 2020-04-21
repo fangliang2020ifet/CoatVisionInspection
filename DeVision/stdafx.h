@@ -49,6 +49,10 @@
 #include <afxwin.h>
 
 #include "CApplication.h"
+#include "CChart.h"
+#include "CChartObject.h"
+#include "CChartObjects.h"
+#include "CCharts.h"
 #include "CFont0.h"
 #include "CRange.h"
 #include "CShape.h"

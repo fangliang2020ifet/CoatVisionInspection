@@ -50,6 +50,7 @@ public:
 	bool SaveBitmapToFile(HBITMAP hBitmap, LPSTR lpFileName);
 	void SaveToExcel(std::vector<DefectType> vDFT);
 	void SaveToExcelUseDefault(CString &name);
+	void SaveScatterPlotUseDefault();
 	void FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead);
 	void BeginSaveTable();
 

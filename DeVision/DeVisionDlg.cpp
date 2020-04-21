@@ -447,8 +447,6 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	switch (nIDEvent)
 	{
 	case 1: 
-		//获取图像 List 大小
-		m_ImgList_size = m_ImgProc.CheckTotalListSize();
 		//获取当前线程状态
 		if(m_system_state == SYSTEM_STATE_STOP || m_system_state == SYSTEM_STATE_OFFLINE)
 			m_iAllThread_stopped = CheckThreadStatue();
@@ -1049,7 +1047,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		break;
 	case SYSTEM_STATE_PAUSE:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-		if(m_ImgList_size == 0)
+		if(m_ImgProc.m_total_list_size == 0)
 			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
@@ -1149,7 +1147,7 @@ void CDeVisionDlg::UpdateSysStatus()
 		if (acquire_frame_count > 0)
 		{
 			CString cstr_frame_count, cstr_unit;
-			cstr_frame_count.Format(L"总帧数：%d / %d 帧(%d)", acquire_frame_count - m_ImgList_size, acquire_frame_count, m_ImgList_size);
+			cstr_frame_count.Format(L"总帧数：%d 帧(%d)", acquire_frame_count, m_ImgProc.m_total_list_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
 		}
 
