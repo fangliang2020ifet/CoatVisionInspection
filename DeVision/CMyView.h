@@ -24,7 +24,7 @@ public:
 #endif
 
 public:
-	void UpdateScreen(CFont &mfont, float display_range, float position);
+	void UpdateScreen(CFont &mfont, float display_range);
 	void Redraw();
 
 	int wnd_width;
@@ -39,7 +39,7 @@ private:
 	float scale_y = 0.0f;
 
 
-	float m_current_position = 0.0f;   //当前检测位置，单位: 米
+	//float m_current_position = 0.0f;   //当前检测位置，单位: 米
 	float m_previous_position = 0.0f;  //前次刷新位置
 	float m_display_range = 0.0f;
 	CFont *m_font;

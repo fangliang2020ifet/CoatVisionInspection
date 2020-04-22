@@ -212,6 +212,7 @@
     <ClInclude Include="CImageProcess.h" />
     <ClInclude Include="CInspectDlg.h" />
     <ClInclude Include="CLoad.h" />
+    <ClInclude Include="CLogin.h" />
     <ClInclude Include="CMyDocument.h" />
     <ClInclude Include="CMyView.h" />
     <ClInclude Include="CPlotArea.h" />
@@ -249,6 +250,7 @@
     <ClCompile Include="CImageProcess.cpp" />
     <ClCompile Include="CInspectDlg.cpp" />
     <ClCompile Include="CLoad.cpp" />
+    <ClCompile Include="CLogin.cpp" />
     <ClCompile Include="CMyDocument.cpp" />
     <ClCompile Include="CMyView.cpp" />
     <ClCompile Include="CProductInfo.cpp" />

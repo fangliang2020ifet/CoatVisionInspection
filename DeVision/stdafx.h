@@ -68,10 +68,12 @@
 #include "CWorksheet.h"
 #include "CWorksheets.h"
 #include <afxwin.h>
+#include <afxcontrolbars.h>
 
 
-
-
+//#include <afxdb.h>
+//#import "C:\Program Files\Common Files\System\ado\msado15.dll" no_namespace rename("EOF","adoEOF")
+#import "msado15.dll" no_namespace rename("EOF","adoEOF"),rename("BOF","adoBOF")
 
 
 

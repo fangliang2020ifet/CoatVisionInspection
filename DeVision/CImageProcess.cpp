@@ -478,28 +478,28 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 void CImageProcess::LoadImageToQueue()
 {
 	m_ImgList1_1.push_back(m_hi_test1);
-	//m_ImgList1_2.push_back(m_hi_test1);
-	//m_ImgList1_3.push_back(m_hi_test1);
-	//m_ImgList1_4.push_back(m_hi_test1);
-	//m_ImgList1_5.push_back(m_hi_test1);
+	m_ImgList1_2.push_back(m_hi_test1);
+	m_ImgList1_3.push_back(m_hi_test1);
+	m_ImgList1_4.push_back(m_hi_test1);
+	m_ImgList1_5.push_back(m_hi_test1);
 
 	m_ImgList2_1.push_back(m_hi_test2);
-	//m_ImgList2_2.push_back(m_hi_test2);
-	//m_ImgList2_3.push_back(m_hi_test2);
-	//m_ImgList2_4.push_back(m_hi_test2);
-	//m_ImgList2_5.push_back(m_hi_test2);
+	m_ImgList2_2.push_back(m_hi_test2);
+	m_ImgList2_3.push_back(m_hi_test2);
+	m_ImgList2_4.push_back(m_hi_test2);
+	m_ImgList2_5.push_back(m_hi_test2);
 
 	m_ImgList3_1.push_back(m_hi_test3);
-	//m_ImgList3_2.push_back(m_hi_test3);
-	//m_ImgList3_3.push_back(m_hi_test3);
-	//m_ImgList3_4.push_back(m_hi_test3);
-	//m_ImgList3_5.push_back(m_hi_test3);
+	m_ImgList3_2.push_back(m_hi_test3);
+	m_ImgList3_3.push_back(m_hi_test3);
+	m_ImgList3_4.push_back(m_hi_test3);
+	m_ImgList3_5.push_back(m_hi_test3);
 
 	m_ImgList4_1.push_back(m_hi_test4);
-	//m_ImgList4_2.push_back(m_hi_test4);
-	//m_ImgList4_3.push_back(m_hi_test4);
-	//m_ImgList4_4.push_back(m_hi_test4);
-	//m_ImgList4_5.push_back(m_hi_test4);
+	m_ImgList4_2.push_back(m_hi_test4);
+	m_ImgList4_3.push_back(m_hi_test4);
+	m_ImgList4_4.push_back(m_hi_test4);
+	m_ImgList4_5.push_back(m_hi_test4);
 }
 
 BOOL CImageProcess::LoadOneImageToQueue(std::string folder_path, int next_number)
@@ -1354,8 +1354,8 @@ int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, 
 
 	GetImageSize(hi_ref, &hv_Width_ref, &hv_Height_ref);
 
-	Threshold(hi_img, &ho_Region_defth, 1, 255);
-	Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
+	HalconCpp::Threshold(hi_img, &ho_Region_defth, 1, 255);
+	HalconCpp::Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
 	SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
 		&hv_Row_end_def, &hv_Column_end_def);
 	ReduceDomain(hi_img, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
@@ -1422,7 +1422,7 @@ int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, 
 			Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
 
 			//连接区域
-			Connection(ho_Region, &ho_ConnectedRegions);
+			HalconCpp::Connection(ho_Region, &ho_ConnectedRegions);
 			//选择ROI
 			SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
 
@@ -1480,7 +1480,7 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 	Threshold(ho_ImageResult, &ho_Regions, (HTuple(5.55).TupleConcat(hv_Max*0.8)).TupleMax(), 255);
 	//Threshold(ho_ImageResult, &ho_Regions, 200, 255);
 
-	Connection(ho_Regions, &ho_ConnectedRegions);
+	HalconCpp::Connection(ho_Regions, &ho_ConnectedRegions);
 	//区域选择参数：1.轮廓周长(pixel)  2.最大内接圆半径(pixel)
 	SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, (HTuple("contlength").Append("inner_radius")),
 		"and", (HTuple(5).Append(1)), (HTuple(32768).Append(2048)));
@@ -2002,7 +2002,7 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 			}
 		}
 
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 3000);
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 5000);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {

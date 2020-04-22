@@ -76,10 +76,17 @@ BOOL CDeVisionApp::InitInstance()
 	HWND hwnd = wndLoad.GetSafeHwnd();
 
 	//初始化 Excel COM组件
-	if (CoInitialize(NULL) != 0)
-	{
+	if (CoInitialize(NULL) != 0) {
 		AfxMessageBox(_T("初始化Excel失败"));
+		return FALSE;
 	}
+
+	//这就是初始化Access COM库
+	if (!AfxOleInit()){
+		AfxMessageBox(L"OLE初始化失败!");
+		return FALSE;
+	}
+
 
 	CDeVisionDlg dlg;
 	m_pMainWnd = &dlg;	

@@ -153,6 +153,9 @@
     <ClInclude Include="CAxis.h">
       <Filter>Table</Filter>
     </ClInclude>
+    <ClInclude Include="CLogin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">
@@ -219,6 +222,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CControl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CLogin.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

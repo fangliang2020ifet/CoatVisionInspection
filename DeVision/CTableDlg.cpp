@@ -2048,7 +2048,8 @@ void CTableDlg::OnBnClickedButtonSearch()
 	//SaveToExcel(*m_pvDFT);
 	//CString excel_name;
 	//SaveToExcelUseDefault(excel_name);
-	SaveScatterPlotUseDefault();
+
+	//SaveScatterPlotUseDefault();
 
 	CString cstr = L"查询到： 0 条记录";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);

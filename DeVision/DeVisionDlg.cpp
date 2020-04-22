@@ -244,6 +244,11 @@ void CDeVisionDlg::ExitProgram()
 {
 	m_vDFT.clear();
 
+	SaveUserInfo();
+
+	//停止界面刷新
+	KillTimer(1);
+
 	return;
 }
 
@@ -291,9 +296,14 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 
 	// TODO:  在此添加您专用的创建代码
+	CLogin loginDlg;
+	m_pLoginDlg = &loginDlg;
+	loginDlg.DoModal();
 
-
-	return 0;
+	if (!loginDlg.ACCEPTED)
+		return -1;
+	else
+		return 0;
 }
 
 void CDeVisionDlg::OnPaint()
@@ -330,10 +340,7 @@ void CDeVisionDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	// TODO: 在此处添加消息处理程序代码
-	SaveUserInfo();
-
-	//停止界面刷新
-	KillTimer(1);
+	
 }
 
 BOOL CDeVisionDlg::LoadInitialInfo()
@@ -1263,19 +1270,19 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 
 	for(;;)
 	{
+		//获取瑕疵信息数据
+		pDlg->DelQueueFromSource();
+
 		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2000);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
-				//获取瑕疵信息数据
-				pDlg->DelQueueFromSource();
 				pDlg->DrawPartial(5);
-				float position = pDlg->m_ImgProc.m_current_position;
-				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range, position);
+				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range);
 
 				CString cwidth;
-				cwidth.Format(_T("####毫米"));
+				cwidth.Format(_T("当前选择：***米"));
 				pDlg->m_etotal.SetWindowTextW(cwidth);
 			}
 			break;
@@ -1519,12 +1526,28 @@ void CDeVisionDlg::OnBnClickedButtonLock()
 		m_button_lock.SetIcon(m_hLockIcon);
 		m_screen_state = SCREEN_LOCK;
 
+		
+		CWnd *pwnd = this->GetDlgItem(IDC_BUTTON_LOCK);
+		CRect rect;
+		pwnd->GetWindowRect(&rect);
+		ClipCursor(rect);
+		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
+		::ShowWindow(::FindWindow(L"Shell_TrayWnd", NULL), SW_HIDE);
+
+
 		CString cstr = L"系统已锁定";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else if (m_screen_state == SCREEN_LOCK) {
 		m_button_lock.SetIcon(m_hUnlockIcon);
 		m_screen_state = SCREEN_UNLOCK;
+
+		//密码输入正确则解锁
+
+		ClipCursor(NULL);
+		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, false, 0, SPIF_UPDATEINIFILE);
+		::ShowWindow(::FindWindow(L"Shell_TrayWnd", NULL), SW_SHOW);
+
 
 		CString cstr = L"系统解除锁定";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);

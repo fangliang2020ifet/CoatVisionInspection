@@ -9,6 +9,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include "CLogin.h"
 #include "CImageProcess.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
@@ -95,6 +96,8 @@ protected:
 	int test_num = 0;
 
 private:
+	_ConnectionPtr  m_pConnection;
+	_RecordsetPtr   m_pRecordset;
 	LPCWSTR CUSTOMER_FILEPATH = L"inis\\system.ini";
 	
 	CEvent StopRefrush_Event;
@@ -132,6 +135,7 @@ public:
 	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };		
 	int m_screen_state;                                  //屏幕状态
 
+	CLogin        *m_pLoginDlg;
 	CImageProcess  m_ImgProc;
 
 	CTabCtrl        m_tab;

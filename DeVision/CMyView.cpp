@@ -129,10 +129,9 @@ void CMyView::Dump(CDumpContext& dc) const
 // CMyView 消息处理程序
 
 //Customer
-void CMyView::UpdateScreen(CFont &mfont, float display_range, float position)
+void CMyView::UpdateScreen(CFont &mfont, float display_range)
 {
 	m_font = &mfont;
-	m_current_position = position;
 	m_display_range = display_range;
 	scale_y = (float)display_range / (wnd_height * wnd_scroll_scale_size);
 	
@@ -250,7 +249,6 @@ void CMyView::Redraw()
 {
 	scale_y = 0.0f;
 	m_display_range = 0.0f;
-	m_current_position = 0.0f;
 	m_previous_position = 0.0f;
 	m_vDefect.clear();
 }
