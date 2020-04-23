@@ -44,7 +44,6 @@
 #define IDB_BITMAP_LOADDING             176
 #define IDB_BITMAP2                     180
 #define IDB_BITMAP_WAIT                 180
-#define IDD_DIALOG1                     181
 #define IDD_DIALOG_LOGIN                181
 #define IDC_TAB_DIALOG                  1002
 #define IDC_STATIC_PICTURE              1004
@@ -106,6 +105,7 @@
 #define IDC_MFCCOLORBUTTON8             1067
 #define IDC_BUTTON2                     1071
 #define IDC_BUTTON_SHOWALL              1071
+#define IDC_BUTTON_ADD_USER             1071
 #define IDC_BUTTON3                     1072
 #define IDC_BUTTON4                     1073
 #define IDC_BUTTON5                     1074
@@ -295,6 +295,17 @@
 #define IDC_STATIC_CONTROL_AREA         1249
 #define IDC_EDIT_USERNAME               1250
 #define IDC_EDIT_PASSWORD               1251
+#define IDC_EDIT_SETUP_USERNAME         1252
+#define IDC_BUTTON_SETUP_LOGIN          1254
+#define IDC_EDIT_SETUP_NEWNAME          1255
+#define IDC_EDIT_SETUP_NEWPASSWORD      1256
+#define IDC_EDIT_SETUP_NEWREPASSWORD    1257
+#define IDC_EDIT_SETUP_USERPASSWORD     1258
+#define IDC_BUTTON_SETUP_CHANGE         1259
+#define IDC_EDIT_CHANGE_PASSWORD        1260
+#define IDC_EDIT_CHANGE_REPASSWORD      1261
+#define IDC_BUTTON_SETUP_DELETE         1262
+#define IDC_EDIT_SETUP_DELETENAME       1263
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -347,7 +358,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        183
 #define _APS_NEXT_COMMAND_VALUE         32816
-#define _APS_NEXT_CONTROL_VALUE         1252
+#define _APS_NEXT_CONTROL_VALUE         1264
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -28,13 +28,24 @@ public:
 	float m_wnd2_range = 0.0f;
 
 private:
+	BOOL ACCEPTED;
+	CString m_current_logged_name;
+
 	float GetWnd1DisplayRange();
 	float GetWnd2DisplayRange();
 
+	BOOL ConnectAccess();
+	_ConnectionPtr  m_pConnection;
+	_RecordsetPtr   m_pRecordset;
+	//_CommandPtr     m_pCommand;
 
 public:
 	virtual BOOL OnInitDialog();
 	virtual BOOL DestroyWindow();
 	afx_msg void OnClose();
 	virtual void OnOK();
+	afx_msg void OnBnClickedButtonSetupLogin();
+	afx_msg void OnBnClickedButtonAddUser();
+	afx_msg void OnBnClickedButtonSetupChange();
+	afx_msg void OnBnClickedButtonSetupDelete();
 };

@@ -40,4 +40,5 @@ public:
 	CEdit m_edit_name;
 	CEdit m_edit_password;
 	virtual BOOL OnInitDialog();
+	afx_msg void OnDestroy();
 };
