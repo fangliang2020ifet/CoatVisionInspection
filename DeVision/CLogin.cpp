@@ -80,9 +80,11 @@ void CLogin::OnDestroy()
 	// TODO: 在此处添加消息处理程序代码
 
 	//如果数据库连接有效, 则关闭数据库连接
-	if (m_pConnection->State)
-		m_pConnection->Close();
-	m_pConnection = NULL;
+	if (m_pConnection != NULL) {
+		if (m_pConnection->State)
+			m_pConnection->Close();
+		m_pConnection = NULL;
+	}
 
 }
 

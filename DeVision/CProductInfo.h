@@ -21,40 +21,28 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
-	void LoadInifile();
 
 private:
-	//LPWSTR KeyName;
-	//LPWSTR ReturnedString;
+	DECLARE_MESSAGE_MAP()
+
+public:
+	HWND hMainWnd;                           //主窗口句柄
+
+	LPCWSTR APPNAME = L"ProductInfo";
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 
+	void LoadInifile();
+	void SaveAll();
 
-	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedButtonIdChange();
-	afx_msg void OnBnClickedButtonIdInsert();
-	afx_msg void OnBnClickedButtonIdSave();
-	afx_msg void OnBnClickedButtonWidthChange();
-	afx_msg void OnBnClickedButtonWidthInsert();
-	afx_msg void OnBnClickedButtonWidthSave();
-	afx_msg void OnBnClickedButtonBaseChange();
-	afx_msg void OnBnClickedButtonBaseInsert();
-	afx_msg void OnBnClickedButtonBaseSave();
-	afx_msg void OnBnClickedButtonCoatingChange();
-	afx_msg void OnBnClickedButtonCoatingInsert();
-	afx_msg void OnBnClickedButtonCoatingSave();
-	afx_msg void OnBnClickedButtonNumberSave();
-	afx_msg void OnBnClickedButtonUserSave();
-	afx_msg void OnBnClickedButtonAdditionSave();
-	virtual BOOL OnInitDialog();
-	afx_msg void OnCbnSelchangeComboId();
-	afx_msg void OnCbnSelchangeComboWidth();
-	afx_msg void OnCbnSelchangeComboBase();
-	afx_msg void OnCbnSelchangeComboCoating();
-	afx_msg void OnCbnSelchangeComboOperator();
-	afx_msg void OnBnClickedButtonOperatorChange();
-	afx_msg void OnBnClickedButtonOperatorInsert();
-	afx_msg void OnBnClickedButtonOperatorSave();
+	afx_msg BOOL OnInitDialog();
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedCancel();
+
+	CComboBox m_combox_id;
+	CComboBox m_combox_width;
+	CComboBox m_combox_base;
+	CComboBox m_combox_coating;
+	CComboBox m_combox_operator;
 };

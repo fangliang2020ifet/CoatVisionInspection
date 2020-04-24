@@ -35,4 +35,5 @@ public:
 	CComboBox m_combo_global_threshold;
 	CComboBox m_combo_select_threshold;
 	CButton m_btn_load_default;
+	afx_msg void OnClose();
 };

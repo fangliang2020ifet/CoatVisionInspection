@@ -156,6 +156,9 @@
     <ClInclude Include="CLogin.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CRemote.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">
@@ -225,6 +228,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CLogin.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CRemote.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -298,6 +304,12 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\wait.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\icon2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\loggin.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

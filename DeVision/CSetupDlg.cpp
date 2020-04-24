@@ -61,7 +61,6 @@ BOOL CSetupDlg::OnInitDialog()
 
 
 
-
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -70,12 +69,6 @@ BOOL CSetupDlg::OnInitDialog()
 BOOL CSetupDlg::DestroyWindow()
 {
 	// TODO: 在此添加专用代码和/或调用基类
-	if (m_pConnection->State)
-		m_pConnection->Close();
-	m_pConnection = NULL;
-
-
-
 
 	return CDialogEx::DestroyWindow();
 }
@@ -84,8 +77,26 @@ BOOL CSetupDlg::DestroyWindow()
 void CSetupDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	if (MessageBox(_T("是否放弃保存"), _T("提示"), MB_YESNO | MB_ICONWARNING) == IDNO)
-		return;
+	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
+		m_wnd1_range = GetWnd1DisplayRange();
+
+		m_wnd2_range = GetWnd2DisplayRange();
+
+		CString cstr;
+		cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+		CString cstr2;
+		cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
+
+	}
+
+	if (m_pConnection != NULL) {
+		if (m_pConnection->State)
+			m_pConnection->Close();
+		m_pConnection = NULL;
+	}
 
 	CDialogEx::OnClose();
 }
@@ -94,22 +105,7 @@ void CSetupDlg::OnClose()
 void CSetupDlg::OnOK()
 {
 	// TODO: 在此添加专用代码和/或调用基类
-
-	m_wnd1_range = GetWnd1DisplayRange();
-
-	m_wnd2_range = GetWnd2DisplayRange();
-
-	CString cstr;
-	cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-	CString cstr2;
-	cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
-
-
-
-	CDialogEx::OnOK();
+	//CDialogEx::OnOK();
 }
 
 

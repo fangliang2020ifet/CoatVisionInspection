@@ -32,6 +32,7 @@ void CAlgorithmDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAlgorithmDlg, CDialogEx)
 	ON_WM_DESTROY()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -95,56 +96,9 @@ void CAlgorithmDlg::OnDestroy()
 void CAlgorithmDlg::OnOK()
 {
 	// TODO: 在此添加专用代码和/或调用基类
-	int index_global = m_combo_global_threshold.GetCurSel();
-	m_global_threshold = index_global + 3;
-	CString cstr;
-	cstr.Format(_T("设置检测算法概率密度为： %d"), m_global_threshold);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-	int index_select = m_combo_select_threshold.GetCurSel();
-	switch (index_select)
-	{
-	case 0:
-		m_select_threshold = 1;
-		break;
-	case 1:
-		m_select_threshold = 3;
-		break;
-	case 2:
-		m_select_threshold = 5;
-		break;
-	case 3:
-		m_select_threshold = 7;
-		break;
-	case 4:
-		m_select_threshold = 9;
-		break;
-	case 5:
-		m_select_threshold = 11;
-		break;
-	case 6:
-		m_select_threshold = 15;
-		break;
-	case 7:
-		m_select_threshold = 20;
-		break;
-	default:
-		break;
-	}
-	cstr.Format(_T("设置检测算法图像滤波器大小为： %d"), m_select_threshold);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 
-	int state = m_btn_load_default.GetCheck();
-	if(state == 0)
-		m_load_default = FALSE;
-	else if(state == 1)
-		m_load_default = TRUE;
-	cstr.Format(_T("设置检测算法使用默认参考图像： %d"), (int)m_load_default);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-
-	CDialogEx::OnOK();
+	//CDialogEx::OnOK();
 }
 
 
@@ -153,4 +107,63 @@ void CAlgorithmDlg::OnCancel()
 	// TODO: 在此添加专用代码和/或调用基类
 
 	CDialogEx::OnCancel();
+}
+
+
+void CAlgorithmDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
+		int index_global = m_combo_global_threshold.GetCurSel();
+		m_global_threshold = index_global + 3;
+		CString cstr;
+		cstr.Format(_T("设置检测算法概率密度为： %d"), m_global_threshold);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+		int index_select = m_combo_select_threshold.GetCurSel();
+		switch (index_select)
+		{
+		case 0:
+			m_select_threshold = 1;
+			break;
+		case 1:
+			m_select_threshold = 3;
+			break;
+		case 2:
+			m_select_threshold = 5;
+			break;
+		case 3:
+			m_select_threshold = 7;
+			break;
+		case 4:
+			m_select_threshold = 9;
+			break;
+		case 5:
+			m_select_threshold = 11;
+			break;
+		case 6:
+			m_select_threshold = 15;
+			break;
+		case 7:
+			m_select_threshold = 20;
+			break;
+		default:
+			break;
+		}
+		cstr.Format(_T("设置检测算法图像滤波器大小为： %d"), m_select_threshold);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+
+		int state = m_btn_load_default.GetCheck();
+		if (state == 0)
+			m_load_default = FALSE;
+		else if (state == 1)
+			m_load_default = TRUE;
+		cstr.Format(_T("设置检测算法使用默认参考图像： %d"), (int)m_load_default);
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+
+	}
+
+	CDialogEx::OnClose();
 }

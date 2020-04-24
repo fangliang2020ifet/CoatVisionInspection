@@ -218,6 +218,7 @@
     <ClInclude Include="CPlotArea.h" />
     <ClInclude Include="CProductInfo.h" />
     <ClInclude Include="CRange.h" />
+    <ClInclude Include="CRemote.h" />
     <ClInclude Include="CSetupDlg.h" />
     <ClInclude Include="CShape.h" />
     <ClInclude Include="CShapeRange.h" />
@@ -254,6 +255,7 @@
     <ClCompile Include="CMyDocument.cpp" />
     <ClCompile Include="CMyView.cpp" />
     <ClCompile Include="CProductInfo.cpp" />
+    <ClCompile Include="CRemote.cpp" />
     <ClCompile Include="CSetupDlg.cpp" />
     <ClCompile Include="CTableDlg.cpp" />
     <ClCompile Include="DeVision.cpp" />
@@ -277,6 +279,8 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\..\ImageTest\11.bmp" />
+    <Image Include="res\icon2.ico" />
+    <Image Include="res\loggin.ico" />
     <Image Include="res\wait.bmp" />
     <Image Include="res\DeVision.ico" />
     <Image Include="res\exit.ico" />

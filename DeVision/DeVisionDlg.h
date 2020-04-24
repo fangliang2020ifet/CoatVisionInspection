@@ -13,6 +13,7 @@
 #include "CImageProcess.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
+#include "CRemote.h"
 #include "CTableDlg.h"
 #include "CHistoryDlg.h"
 #include "CSetupDlg.h"
@@ -95,11 +96,7 @@ protected:
 	BOOL test_clicked = FALSE;
 	int test_num = 0;
 
-private:
-	_ConnectionPtr  m_pConnection;
-	_RecordsetPtr   m_pRecordset;
-	LPCWSTR CUSTOMER_FILEPATH = L"inis\\system.ini";
-	
+private:	
 	CEvent StopRefrush_Event;
 	CEvent RefrushThreadStopped_Event;
 
@@ -135,7 +132,6 @@ public:
 	enum{ SCREEN_UNLOCK = 0, SCREEN_LOCK };		
 	int m_screen_state;                                  //屏幕状态
 
-	CLogin        *m_pLoginDlg;
 	CImageProcess  m_ImgProc;
 
 	CTabCtrl        m_tab;
@@ -191,7 +187,6 @@ protected:
 	afx_msg void OnCameraSetup();
 	afx_msg void OnLedSetup();
 	afx_msg void OnTrigger();
-	afx_msg void OnError();
 	afx_msg void OnSave();
 	afx_msg void OnExit();
 	afx_msg void OnProduct();
@@ -216,4 +211,6 @@ public:
 protected:
 	afx_msg LRESULT OnLoggingMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnWarningMsg(WPARAM wParam, LPARAM lParam);
+public:
+	afx_msg void OnRemote();
 };

@@ -45,6 +45,8 @@
 #define IDB_BITMAP2                     180
 #define IDB_BITMAP_WAIT                 180
 #define IDD_DIALOG_LOGIN                181
+#define IDI_ICON_LOGGIN                 186
+#define IDD_DIALOG_REMOTE               187
 #define IDC_TAB_DIALOG                  1002
 #define IDC_STATIC_PICTURE              1004
 #define IDC_EDIT1                       1015
@@ -55,9 +57,13 @@
 #define IDC_EDIT5                       1019
 #define IDC_EDIT6                       1020
 #define IDC_BUTTON_SELECT               1021
+#define IDC_EDIT32                      1021
 #define IDC_BUTTON_FIND                 1022
+#define IDC_EDIT33                      1022
 #define IDC_BUTTON_GODOWN               1023
+#define IDC_EDIT34                      1023
 #define IDC_BUTTON_GOUP                 1024
+#define IDC_EDIT35                      1024
 #define IDC_EDIT7                       1025
 #define IDC_MFCBUTTON_START             1027
 #define IDC_MFCBUTTON_STOP              1028
@@ -170,6 +176,7 @@
 #define IDC_BUTTON_OPERATOR_CHANGE      1126
 #define IDC_BUTTON_OPERATOR_INSERT      1127
 #define IDC_COMBO1                      1128
+#define IDC_COMBO4                      1129
 #define IDC_COMBO3                      1130
 #define IDC_CAMERA_IMAGE1               1132
 #define IDC_CAMERA_IMAGE2               1133
@@ -306,6 +313,11 @@
 #define IDC_EDIT_CHANGE_REPASSWORD      1261
 #define IDC_BUTTON_SETUP_DELETE         1262
 #define IDC_EDIT_SETUP_DELETENAME       1263
+#define IDC_EDIT_INFO_ID                1264
+#define IDC_EDIT_INFO_WIDTH             1265
+#define IDC_EDIT_INFO_BASE              1266
+#define IDC_EDIT_INFO_COATING           1267
+#define IDC_EDIT_INFO_OPERATOR          1268
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -351,14 +363,16 @@
 #define ID_32813                        32813
 #define ID_32814                        32814
 #define ID_DEFFECT_TRADER               32815
+#define ID_RE                           32816
+#define ID_REMOTE                       32817
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        183
-#define _APS_NEXT_COMMAND_VALUE         32816
-#define _APS_NEXT_CONTROL_VALUE         1264
+#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_COMMAND_VALUE         32818
+#define _APS_NEXT_CONTROL_VALUE         1269
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

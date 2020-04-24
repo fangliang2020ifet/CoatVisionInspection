@@ -127,7 +127,6 @@ BEGIN_MESSAGE_MAP(CDeVisionDlg, CDialogEx)
 	ON_COMMAND(ID_CAMERA_SETUP, &CDeVisionDlg::OnCameraSetup)
 	ON_COMMAND(ID_LED_SETUP, &CDeVisionDlg::OnLedSetup)
 	ON_COMMAND(ID_TRIGGER, &CDeVisionDlg::OnTrigger)
-	ON_COMMAND(ID_ERROR, &CDeVisionDlg::OnError)
 	ON_COMMAND(ID_Save, &CDeVisionDlg::OnSave)
 	ON_COMMAND(ID_EXIT, &CDeVisionDlg::OnExit)
 	ON_COMMAND(ID_PRODUCT, &CDeVisionDlg::OnProduct)
@@ -147,6 +146,7 @@ BEGIN_MESSAGE_MAP(CDeVisionDlg, CDialogEx)
 	ON_COMMAND(IDCANCEL, &CDeVisionDlg::OnIdcancel)
 	ON_MESSAGE(WM_LOGGING_MSG, &CDeVisionDlg::OnLoggingMsg)
 	ON_MESSAGE(WM_WARNING_MSG, &CDeVisionDlg::OnWarningMsg)
+	ON_COMMAND(ID_REMOTE, &CDeVisionDlg::OnRemote)
 END_MESSAGE_MAP()
 
 
@@ -297,7 +297,6 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// TODO:  在此添加您专用的创建代码
 	CLogin loginDlg;
-	m_pLoginDlg = &loginDlg;
 	loginDlg.DoModal();
 
 	if (!loginDlg.ACCEPTED)
@@ -1539,15 +1538,24 @@ void CDeVisionDlg::OnBnClickedButtonLock()
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else if (m_screen_state == SCREEN_LOCK) {
-		m_button_lock.SetIcon(m_hUnlockIcon);
-		m_screen_state = SCREEN_UNLOCK;
+		ClipCursor(NULL);
+		CLogin loginDlg;
+		loginDlg.DoModal();
 
 		//密码输入正确则解锁
-
+		if (!loginDlg.ACCEPTED) {
+			CWnd *pwnd = this->GetDlgItem(IDC_BUTTON_LOCK);
+			CRect rect;
+			pwnd->GetWindowRect(&rect);
+			ClipCursor(rect);
+			return;
+		}
 		ClipCursor(NULL);
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, false, 0, SPIF_UPDATEINIFILE);
 		::ShowWindow(::FindWindow(L"Shell_TrayWnd", NULL), SW_SHOW);
 
+		m_button_lock.SetIcon(m_hUnlockIcon);
+		m_screen_state = SCREEN_UNLOCK;
 
 		CString cstr = L"系统解除锁定";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1599,7 +1607,6 @@ void CDeVisionDlg::OnExit()
 
 }
 
-
 //控制：相机设置
 void CDeVisionDlg::OnCameraSetup()
 {
@@ -1628,16 +1635,22 @@ void CDeVisionDlg::OnTrigger()
 
 }
 
-//控制：故障分析
-void CDeVisionDlg::OnError()
+//远程连接
+void CDeVisionDlg::OnRemote()
 {
 	// TODO: 在此添加命令处理程序代码
+	CRemote remoteDlg;
+	remoteDlg.DoModal();
+
 }
 
 //瑕疵检测：产品信息
 void CDeVisionDlg::OnProduct()
 {
 	// TODO: 在此添加命令处理程序代码
+	CProductInfo m_productinfo;
+	m_productinfo.DoModal();
+
 }
 
 //瑕疵检测：瑕疵趋势信息
@@ -1737,3 +1750,4 @@ afx_msg LRESULT CDeVisionDlg::OnWarningMsg(WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
+
