@@ -2017,6 +2017,7 @@ UINT CImageProcess::ManageThread2(LPVOID pParam)
 		case WAIT_FAILED:
 			return -1;
 		case WAIT_OBJECT_0: {
+
 			//while (pThis->CheckTotalListSize() > 0)
 			//{
 			//	//Sleep(200);

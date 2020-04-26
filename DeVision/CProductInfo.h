@@ -31,6 +31,15 @@ public:
 	LPCWSTR APPNAME = L"ProductInfo";
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 
+	CString m_ctrID;
+	CString m_ctrWIDTH;
+	CString m_ctrBASE;
+	CString m_ctrCOATING;
+	CString m_ctrOPERATOR;
+	CString m_ctrNUMBER;
+	CString m_ctrUSER;
+	CString m_ctrADDITION;
+
 	void LoadInifile();
 	void SaveAll();
 

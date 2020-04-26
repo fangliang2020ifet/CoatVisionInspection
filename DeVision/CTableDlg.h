@@ -22,20 +22,18 @@ public:
 #endif
 
 public:
-	HWND hMainWnd;                           //主窗口句柄
-	
-	//int system_state;                        //系统状态
+	HWND hMainWnd;                           //主窗口句柄	
 
 	std::string m_DFT_img_path;
 	std::wstring m_save_path = L"D:\\report\\";
 	std::wstring m_wstr_num;               //批号
 	std::wstring m_wstr_id;                //型号
-	std::wstring m_wstr_width;
-	std::wstring m_wstr_user;
-	std::wstring m_wstr_speed = L"20";              //速度
-	int m_product_rank = 0;
-	int m_DFT_rank[5] = { 0 };
-	int m_serious_num = 0;
+	std::wstring m_wstr_width;             //宽度
+	std::wstring m_wstr_user;              //操作员
+	std::wstring m_wstr_speed;             //平均速度
+	int m_product_rank = 0;                //产品评级
+	int m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
+	int m_serious_num = 0;                 //严重缺陷数目
 
 	void RefrushDistributeWnd();
 	void GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4);

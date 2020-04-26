@@ -41,10 +41,7 @@ public:
 	BOOL FREE_RUN = FALSE;           //相机内部触发模式
 	int SCANE_RATE = 10000; 
 
-
-	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 	CFont m_font;
-	BOOL m_bUpdateUserInfo = FALSE;
 	BOOL m_is_system_pause;
 	BOOL m_camera_system_initialled;
 	BOOL m_camera1_thread_alive = FALSE;

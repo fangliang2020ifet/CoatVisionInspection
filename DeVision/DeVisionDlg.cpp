@@ -207,30 +207,23 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//按钮图标初始化
 	InitialBtnIcon();
 
-	//用户数据加载
-	LoadCustomerDate();
+	//加载默认设置
+	LoadInitialInfo();
 
 	//初始化全局瑕疵显示区, 设置显示范围
 	InitialTotalDefect();
-	m_display_range = 100.0f;
 
 	// 报表页面初始化
 	m_tableDlg.m_pvDFT = &m_vDFT;
 
-	//加载默认设置
-	LoadInitialInfo();
-
 	//设置默认工作路径
-	m_work_path = "D:\\history\\";
-	m_fold_name = "";
-
-
+	//m_work_path = "D:\\history\\";
+	
 	//主界面信息刷新定时器
 	SetTimer(1, 1000, 0);
 
-	m_iAllThread_stopped = 0;
 	//m_inspectDlg.FREE_RUN = FALSE;
-	m_ImgProc.TEST_MODEL = TRUE;
+	m_ImgProc.TEST_MODEL = FALSE;
 
 	std::string struser((LPCSTR)CW2A(m_tableDlg.m_wstr_user.c_str()));
 	CString cuser = CA2W(struser.c_str());
@@ -240,6 +233,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
+//退出
 void CDeVisionDlg::ExitProgram()
 {
 	m_vDFT.clear();
@@ -248,6 +242,9 @@ void CDeVisionDlg::ExitProgram()
 
 	//停止界面刷新
 	KillTimer(1);
+
+	//删除已保存的参考图像
+	DeleteHistoryImage();
 
 	return;
 }
@@ -262,19 +259,6 @@ void CDeVisionDlg::OnIdcancel()
 {
 	// TODO: 在此添加命令处理程序代码
 	//nothing
-}
-
-int CDeVisionDlg::CheckThreadStatue()
-{
-	if (m_ImgProc.IsThreadsAlive())
-		return 1;
-
-	BOOL camera_thread = m_inspectDlg.m_camera1_thread_alive || m_inspectDlg.m_camera2_thread_alive
-			      		|| m_inspectDlg.m_camera3_thread_alive || m_inspectDlg.m_camera4_thread_alive;
-	if (camera_thread)
-		return 3;
-
-	return 0;
 }
 
 void CDeVisionDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -342,84 +326,69 @@ void CDeVisionDlg::OnDestroy()
 	
 }
 
-BOOL CDeVisionDlg::LoadInitialInfo()
+//加载默认设置
+void CDeVisionDlg::LoadInitialInfo()
 {
 	LPCWSTR PATH = L"inis\\SystemInfo.ini";
 	LPWSTR ReturnedString = new wchar_t[STRINGLENGTH];
+	CString APPNAME = L"UserInfo";
 
-	GetPrivateProfileStringW(L"UserInfo", L"NUMBER", L"", ReturnedString, STRINGLENGTH, PATH);
+	GetPrivateProfileStringW(APPNAME, L"NUMBER", L"", ReturnedString, STRINGLENGTH, PATH);
 	m_inspectDlg.m_static_number.SetWindowTextW(ReturnedString);
-	m_tableDlg.m_wstr_num = ReturnedString;
 
-	GetPrivateProfileStringW(L"UserInfo", L"WIDTH", L"", ReturnedString, STRINGLENGTH, PATH);
+	GetPrivateProfileStringW(APPNAME, L"WIDTH", L"", ReturnedString, STRINGLENGTH, PATH);
 	m_inspectDlg.m_static_width.SetWindowTextW(ReturnedString);
-	m_tableDlg.m_wstr_width = ReturnedString;
 
-	GetPrivateProfileStringW(L"UserInfo", L"ID", L"", ReturnedString, STRINGLENGTH, PATH);
+	GetPrivateProfileStringW(APPNAME, L"ID", L"", ReturnedString, STRINGLENGTH, PATH);
 	m_inspectDlg.m_static_id.SetWindowTextW(ReturnedString);
-	m_tableDlg.m_wstr_id = ReturnedString;
 
-	GetPrivateProfileStringW(L"UserInfo", L"OPERATOR", L"", ReturnedString, STRINGLENGTH, PATH);
+	GetPrivateProfileStringW(APPNAME, L"OPERATOR", L"", ReturnedString, STRINGLENGTH, PATH);
 	m_inspectDlg.m_static_operator.SetWindowTextW(ReturnedString);
-	m_tableDlg.m_wstr_user = ReturnedString;
+
+	GetPrivateProfileStringW(L"Default", L"PATH", L"", ReturnedString, STRINGLENGTH, PATH);
+	CString cvalue = ReturnedString;
+	m_work_path = (CW2A)cvalue.GetBuffer();
+
+	GetPrivateProfileStringW(L"Default", L"WND1", L"", ReturnedString, STRINGLENGTH, PATH);
+	cvalue = ReturnedString;
+	m_wnd1_range = std::stof(cvalue.GetBuffer());
+
+	GetPrivateProfileStringW(L"Default", L"WND2", L"", ReturnedString, STRINGLENGTH, PATH);
+	cvalue = ReturnedString;
+	m_wnd2_range = std::stof(cvalue.GetBuffer());
 
 	delete[] ReturnedString;
-	return TRUE;
 }
 
-BOOL CDeVisionDlg::SaveUserInfo()
+//保存默认设置
+void CDeVisionDlg::SaveUserInfo()
 {
 	LPCWSTR PATH = L"inis\\SystemInfo.ini";
+	CString APPNAME = L"UserInfo";
 
 	CStringW wtext;
 	m_inspectDlg.m_static_number.GetWindowTextW(wtext);
-	LPCWSTR WriteString = (LPCWSTR)(LPCTSTR)wtext;
-	WritePrivateProfileStringW(L"UserInfo", L"NUMBER", WriteString, PATH);
-	m_tableDlg.m_wstr_num = WriteString;
+	WritePrivateProfileStringW(APPNAME, L"NUMBER", wtext, PATH);
 
 	m_inspectDlg.m_static_width.GetWindowTextW(wtext);
-	WriteString = (LPCWSTR)(LPCTSTR)wtext;
-	WritePrivateProfileStringW(L"UserInfo", L"WIDTH", WriteString, PATH);
-	m_tableDlg.m_wstr_width = WriteString;
+	WritePrivateProfileStringW(APPNAME, L"WIDTH", wtext, PATH);
 
 	m_inspectDlg.m_static_id.GetWindowTextW(wtext);
-	WriteString = (LPCWSTR)(LPCTSTR)wtext;
-	WritePrivateProfileStringW(L"UserInfo", L"ID", WriteString, PATH);
-	m_tableDlg.m_wstr_id = WriteString;
+	WritePrivateProfileStringW(APPNAME, L"ID", wtext, PATH);
 
 	m_inspectDlg.m_static_operator.GetWindowTextW(wtext);
-	WriteString = (LPCWSTR)(LPCTSTR)wtext;
-	WritePrivateProfileStringW(L"UserInfo", L"OPERATOR", WriteString, PATH);
-	m_tableDlg.m_wstr_user = WriteString;
+	WritePrivateProfileStringW(APPNAME, L"OPERATOR", wtext, PATH);
 
-	//用户信息更新完成
-	m_inspectDlg.m_bUpdateUserInfo = FALSE;
+	APPNAME = L"Default";
+	wtext.Format(_T("%d"), (int)m_wnd1_range);
+	WritePrivateProfileStringW(APPNAME, L"WND1", wtext, PATH);
+	
+	wtext.Format(_T("%d"), (int)m_wnd2_range);
+	WritePrivateProfileStringW(APPNAME, L"WND2", wtext, PATH);
+
 
 	CString cstr = L"保存当前设置";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-	return TRUE;
-}
-
-BOOL CDeVisionDlg::GetUserInfo(std::string &num, std::string &width, std::string &id, std::string &user)
-{
-	CStringW cstrnumber;
-	m_inspectDlg.m_static_number.GetWindowTextW(cstrnumber);
-	num = CW2A(cstrnumber);
-
-	CStringW cstrwidth;
-	m_inspectDlg.m_static_width.GetWindowTextW(cstrwidth);
-	width = CW2A(cstrwidth);
-
-	CStringW cstrid;
-	m_inspectDlg.m_static_id.GetWindowTextW(cstrid);
-	id = CW2A(cstrid);
-
-	CStringW cstruser;
-	m_inspectDlg.m_static_operator.GetWindowTextW(cstruser);
-	user = CW2A(cstruser);
-
-	return TRUE;
 }
 
 //当用户拖动最小化窗口时系统调用此函数取得光标
@@ -447,26 +416,22 @@ HBRUSH CDeVisionDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 //定时器回调函数
 void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 {
+	CString cwidth;
+	m_inspectDlg.m_static_width.GetWindowTextW(cwidth);
+	float fwidth = std::stof(cwidth.GetBuffer());
+
 	switch (nIDEvent)
 	{
-	case 1: 
-		//获取当前线程状态
-		if(m_system_state == SYSTEM_STATE_STOP || m_system_state == SYSTEM_STATE_OFFLINE)
-			m_iAllThread_stopped = CheckThreadStatue();
-		//更新按钮和菜单
-		UpdateSysMenuBtn();
-		//更新状态栏
-		UpdateSysStatus();
-		//更新当前位置
-		current_position = m_ImgProc.m_current_position;
-		m_tableDlg.m_current_position = current_position;
+	case 1: {
+		UpdateSysDate();
+
+		m_tableDlg.m_current_position = m_ImgProc.m_current_position;
+		m_tableDlg.m_wstr_width = cwidth;
 		//更新刻度
-		UpdateScaleValue(1650.0f, current_position);
-		//保存用户信息
-		if (m_inspectDlg.m_bUpdateUserInfo)
-			SaveUserInfo();
+		UpdateScaleValue(fwidth, m_ImgProc.m_current_position);
 
 		break;
+	}
 	case 2:
 		//更新历史图像，选中历史页面
 		if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
@@ -491,18 +456,6 @@ void CDeVisionDlg::TestLoadAndWrite()
 	HTuple save = (HTuple)m_work_path.c_str() + (HTuple)test_num + end;
 	HalconCpp::WriteImage(load, "bmp", 0, save);
 
-}
-
-void CDeVisionDlg::LoadCustomerDate()
-{
-	LPWSTR ReturnedString = new wchar_t[STRINGLENGTH];
-	//LPWSTR KeyName;
-
-	//产品信息 InspectDlg
-	//GetPrivateProfileStringW(L"MainForm", L"ID", L"", ReturnedString, STRINGLENGTH, CUSTOMER_FILEPATH);
-	//m_inspectDlg.m_static_id.SetWindowTextW(ReturnedString);
-
-	delete[] ReturnedString;
 }
 
 //TabControl 切换
@@ -697,7 +650,7 @@ BOOL CDeVisionDlg::InitialTotalDefect()
 	InitialScaleFlag();
 
 	CString ctext;
-	ctext.Format(_T("%.2f"), m_display_range);
+	ctext.Format(_T("%.2f"), m_wnd1_range);
 	m_edisplay_range.SetWindowTextW(ctext);
 
 	return TRUE;
@@ -817,7 +770,7 @@ void CDeVisionDlg::DrawPartial(int test)
 	int wnd_height = rect.Height();
 	//窗口 / 图像 缩放因子
 	float scale_x = (float)wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
-	float scale_y = (float)(5.0f / wnd_height);
+	float scale_y = (float)(m_wnd2_range / wnd_height);
 	   
 	CDC MemDC; // 定义一个内存显示设备对象
 	CBitmap MemBitmap; // 定义一个位图对象
@@ -843,7 +796,7 @@ void CDeVisionDlg::DrawPartial(int test)
 			int y_coord = wnd_height - (int)((temp_def.absolute_position - m_previous_position) / scale_y);
 
 			if (y_coord < 0)
-				m_previous_position = temp_def.absolute_position - 5.0f;
+				m_previous_position = temp_def.absolute_position - m_wnd2_range;
 			if (y_coord > wnd_height)
 				break;
 
@@ -943,7 +896,7 @@ void CDeVisionDlg::SetYScalePos(float position)
 	for (int i = 0; i < 13; i++)
 	{
 		//float current_pos = position * (12 - i) / 12 ;
-		float current_pos = position - i * m_display_range / 12.0f;
+		float current_pos = position - i * m_wnd1_range / 12.0f;
 		if (current_pos <= 0)
 			current_pos = position * (12 - i) / 12;
 		num.Format(L"%.2f", current_pos);
@@ -963,7 +916,7 @@ float CDeVisionDlg::GetDisplayRange()
 	CString str_edit;
 	m_edisplay_range.GetWindowTextW(str_edit);
 	range = (float)_ttof(str_edit);
-	if (range != 0 && range <= current_position) {
+	if (range != 0 && range <= m_ImgProc.m_current_position) {
 		return range;
 	}
 	else
@@ -984,7 +937,7 @@ float CDeVisionDlg::GetRunTime()
 }
 
 //更新菜单和按钮
-void CDeVisionDlg::UpdateSysMenuBtn()
+void CDeVisionDlg::UpdateSysDate()
 {
 	CMenu *pSysMenu = GetSystemMenu(FALSE);
 	ASSERT(pSysMenu != NULL);
@@ -999,8 +952,7 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
 		m_button_online.SetWindowTextW(_T("在线"));
-		if(m_iAllThread_stopped == 0)
-			GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
 		if (pMenu){
 			pMenu->EnableMenuItem(ID_SETUP, MF_ENABLED);
 			//pMenu->EnableMenuItem(ID_EXIT, MF_ENABLED);
@@ -1093,6 +1045,9 @@ void CDeVisionDlg::UpdateSysMenuBtn()
 	default:
 		break;
 	}
+
+	//更新状态栏
+	UpdateSysStatus();
 }
 
 //更新状态栏
@@ -1100,66 +1055,48 @@ void CDeVisionDlg::UpdateSysStatus()
 {
 	CString cstr_ID;
 	m_inspectDlg.m_static_id.GetWindowText(cstr_ID);
-	if (cstr_ID != _T(""))
-	{
-		CString name, cstr_unit;
-		name.Format(L"产品： ");
-		name += cstr_ID;
-		cstr_ID = name + cstr_unit;
+	if (cstr_ID != _T("")){
+		cstr_ID = L"产品： " + cstr_ID;
 		m_StatusBar.SetPaneText(1, cstr_ID, 1);
 	}
 
 	CString cstr_operator;
 	m_inspectDlg.m_static_operator.GetWindowText(cstr_operator);
-	if (cstr_operator != _T(""))
-	{
-		CString name, cstr_unit;
-		name.Format(L"操作员： ");
-		name += cstr_operator;
-		cstr_operator = name + cstr_unit;
+	if (cstr_operator != _T("")){
+		cstr_operator = L"操作员： " + cstr_operator;
 		m_StatusBar.SetPaneText(2, cstr_operator, 1);
 	}
 
-	//if (m_system_state == SYSTEM_STATE_ONLINE || m_system_state == SYSTEM_STATE_RUN)
-	if(m_system_state != SYSTEM_STATE_OFFLINE)
-	{
-		if (current_position > 0)
-		{
+	if(m_system_state != SYSTEM_STATE_OFFLINE){
+		if (m_ImgProc.m_current_position > 0){
 			CString cst_current_pos;
-			cst_current_pos.Format(L"当前位置：第 %.2f 米", current_position);
+			cst_current_pos.Format(L"当前位置：第 %.2f 米", m_ImgProc.m_current_position);
 			m_StatusBar.SetPaneText(3, cst_current_pos, 1);
 		}
 
-		float speed = 0.0f;
 		if(!m_ImgProc.TEST_MODEL)
-			speed = m_inspectDlg.CalculateEncoderSpeed();
-		if (speed > 0)
-		{
-			CString cstr_speed, cstr_unit;
-			cstr_speed.Format(L"当前速度：%.2f 米/分钟", speed);
+			m_speed = m_inspectDlg.CalculateEncoderSpeed();
+		if (m_speed > 0){
+			CString cstr_speed;
+			cstr_speed.Format(L"当前速度：%.2f 米/分钟", m_speed);
 			m_StatusBar.SetPaneText(4, cstr_speed, 1);
-
-			m_tableDlg.m_wstr_speed = std::to_wstring(speed);
 		}
 
 		//总处理数量
 		UINT64 acquire_frame_count = m_inspectDlg.GetTotalFrameCount();
-		if (acquire_frame_count >= 0)
-		{
-			CString cstr_frame_count, cstr_unit;
+		if (acquire_frame_count >= 0){
+			CString cstr_frame_count;
 			cstr_frame_count.Format(L"总帧数：%d 帧(%d)", acquire_frame_count, m_ImgProc.m_total_list_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
 		}
 
 		int trash_count = m_inspectDlg.GetTotalTrashCount();
-		if (trash_count > 0)
-		{
-			CString cstr_trash_count, cstr_unit;
+		if (trash_count > 0){
+			CString cstr_trash_count;
 			cstr_trash_count.Format(L"丢帧数： %d 帧", trash_count);
 			m_StatusBar.SetPaneText(6, cstr_trash_count, 1);
 		}
-		if (total_number_def > 0)
-		{
+		if (total_number_def > 0){
 			CString cst_current_pos;
 			cst_current_pos.Format(L"瑕疵数：%d / %d  ", serious_def_num, total_number_def);
 			m_StatusBar.SetPaneText(7, cst_current_pos, 1);
@@ -1170,7 +1107,7 @@ void CDeVisionDlg::UpdateSysStatus()
 	switch (m_system_state)
 	{
 	case SYSTEM_STATE_OFFLINE:
-		cstr_statue.Format(L"离线: %d", m_iAllThread_stopped);
+		cstr_statue.Format(L"离线");
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		break;
 	case SYSTEM_STATE_ONLINE:
@@ -1192,10 +1129,6 @@ void CDeVisionDlg::UpdateSysStatus()
 	default:
 		break;
 	}
-
-	//inspectDlg中更新瑕疵信息
-	m_inspectDlg.UpdateDFTinformation(total_number_def, serious_def_num, total_def_length);
-
 }
 
 //创建工作目录
@@ -1215,29 +1148,76 @@ void CDeVisionDlg::CreateWorkPath(std::string &path)
 	const wchar_t* wname = wdate.c_str();
 	_bstr_t name(wname);
 	std::string strpath = name;
-	m_fold_name = strpath;         //保存文件夹名称
 
 	std::string work_fold = "D:\\history\\";
 	path = work_fold + strpath;
-	//path = m_work_path + strpath;
-
 	//创建文件夹
 	_mkdir(path.c_str());
 
 	//创建参考图像文件夹
 	std::string reference_image = path + "\\ref";
 	_mkdir(reference_image.c_str());
+	std::wstring wref = (CA2W)reference_image.c_str();
+	m_vec_refpath.push_back(wref);
+
 	path += "\\";
 
 	CString cstr = L"工作目录已创建";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
+void CDeVisionDlg::DeleteHistoryImage()
+{
+	std::wstring wstrpath;
+	if (!m_vec_refpath.empty()) {
+		for (int i = 0; i < m_vec_refpath.size(); i++)
+		{
+			wstrpath = m_vec_refpath.front();
+			m_vec_refpath.pop_back();
+			RemoveAll(wstrpath);
+		}
+	}
+}
+
+void CDeVisionDlg::RemoveAll(std::wstring wst)
+{
+	std::wstring wstCurrentFindPath;
+	wstCurrentFindPath.assign(wst);
+	wstCurrentFindPath.append(L"\\*.*");
+
+	std::wstring wstCurrentFile;
+	WIN32_FIND_DATAW wfd;
+	HANDLE h = FindFirstFileW(wstCurrentFindPath.c_str(), &wfd);
+	if (h == INVALID_HANDLE_VALUE){
+		return;
+	}
+
+	do
+	{
+		if (lstrcmpW(wfd.cFileName, L".") == 0 ||
+			lstrcmpW(wfd.cFileName, L"..") == 0){
+			continue;
+		}
+		wstCurrentFile.assign(wst);
+		wstCurrentFile.append(L"\\");
+		wstCurrentFile.append(wfd.cFileName);
+		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
+			RemoveAll(wstCurrentFile);
+		}
+		else{
+			DeleteFileW(wstCurrentFile.c_str());
+		}
+	} while (FindNextFileW(h, &wfd));
+	FindClose(h);
+
+	RemoveDirectoryW(wst.c_str());
+}
+
 //重新启动检测
 void CDeVisionDlg::ReStartPrepare()
 {
 	m_previous_position = 0.0f;
-	current_position = 0.0f;
+	//current_position = 0.0f;
 	total_number_def = 0;
 	serious_def_num = 0;
 	total_def_length = 0.0f;
@@ -1278,7 +1258,10 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		case WAIT_TIMEOUT: {
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
 				pDlg->DrawPartial(5);
-				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_display_range);
+				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_wnd1_range);
+				pDlg->m_inspectDlg.UpdateDFTinformation(pDlg->total_number_def,
+					pDlg->serious_def_num,
+					pDlg->total_def_length);
 
 				CString cwidth;
 				cwidth.Format(_T("当前选择：***米"));
@@ -1301,8 +1284,26 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 				//保存检测记录
 				EnterCriticalSection(&pDlg->m_csVecDFT);
 				pDlg->m_tableDlg.m_vecDFT = pDlg->m_vDFT;
+				//产品评级
 				pDlg->m_tableDlg.m_product_rank = pDlg->DevideDFTRank(pDlg->total_number_def);
+				//严重缺陷个数
 				pDlg->m_tableDlg.m_serious_num = pDlg->serious_def_num;
+				//型号
+				CString ctext;
+				pDlg->m_inspectDlg.m_static_id.GetWindowTextW(ctext);
+				pDlg->m_tableDlg.m_wstr_id = ctext;
+				//宽度
+				pDlg->m_inspectDlg.m_static_width.GetWindowTextW(ctext);
+				pDlg->m_tableDlg.m_wstr_width = ctext;
+				//批号
+				pDlg->m_inspectDlg.m_static_number.GetWindowTextW(ctext);
+				pDlg->m_tableDlg.m_wstr_num = ctext;
+				//操作员
+				pDlg->m_inspectDlg.m_static_operator.GetWindowTextW(ctext);
+				pDlg->m_tableDlg.m_wstr_user = ctext;
+				//平均速度
+				pDlg->m_tableDlg.m_wstr_speed = std::to_wstring(pDlg->m_speed);
+				//瑕疵类型个数统计
 				pDlg->m_tableDlg.GetDetectResult(
 					pDlg->m_rank[0], 
 					pDlg->m_rank[1], 
@@ -1390,8 +1391,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		ReStartPrepare();
 
 		//启动图像采集
-		//if (m_inspectDlg.Grab() == 0)
-		if (1) {
+		if (m_inspectDlg.Grab() == 0){
 			if (m_ImgProc.BeginProcess()) {				
 				//启动主界面刷新线程
 				StopRefrush_Event.ResetEvent();
@@ -1442,8 +1442,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
 
-		//if (m_inspectDlg.Freeze() == 0) 
-		if (1) {
+		if (m_inspectDlg.Freeze() == 0) {
 
 			//等待列表中的图像都处理完成, 之后结束处理线程
 			StopRefrush_Event.SetEvent();
@@ -1490,9 +1489,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
 
 		//采集系统初始化
-		//if (!m_inspectDlg.CameraSystemInitial()) {
-		//	return;
-		//}
+		if (!m_inspectDlg.CameraSystemInitial()) {
+			return;
+		}
 
 		//初始化算法类
 		m_ImgProc.InitialImageProcess();
@@ -1508,7 +1507,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		pView->m_vDefect.clear();
 
 		CString cstr;
-		cstr.Format(_T("当前模式：离线，当前线程：%d"), CheckThreadStatue());
+		cstr.Format(_T("当前模式：离线"));
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 		
 		m_system_state = SYSTEM_STATE_OFFLINE;
@@ -1584,10 +1583,12 @@ void CDeVisionDlg::OnSetup()
 	CSetupDlg setup;
 	setup.DoModal();
 
-	m_display_range = setup.m_wnd1_range;
+	m_wnd1_range = setup.m_wnd1_range;
 	CString ctext;
-	ctext.Format(_T("%.2f"), m_display_range);
+	ctext.Format(_T("%.2f"), m_wnd1_range);
 	m_edisplay_range.SetWindowTextW(ctext);
+
+	m_wnd2_range = setup.m_wnd2_range;
 
 }
 
@@ -1648,8 +1649,13 @@ void CDeVisionDlg::OnRemote()
 void CDeVisionDlg::OnProduct()
 {
 	// TODO: 在此添加命令处理程序代码
-	CProductInfo m_productinfo;
-	m_productinfo.DoModal();
+	CProductInfo productinfo;
+	productinfo.DoModal();
+
+	m_inspectDlg.m_static_number.SetWindowTextW(productinfo.m_ctrNUMBER);
+	m_inspectDlg.m_static_width.SetWindowTextW(productinfo.m_ctrWIDTH);
+	m_inspectDlg.m_static_id.SetWindowTextW(productinfo.m_ctrID);
+	m_inspectDlg.m_static_operator.SetWindowTextW(productinfo.m_ctrOPERATOR);
 
 }
 

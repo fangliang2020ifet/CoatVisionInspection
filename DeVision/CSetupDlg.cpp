@@ -48,13 +48,13 @@ BOOL CSetupDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	m_wnd1_range = 20.0f;
+	m_wnd1_range = 100.0f;
 	CString ctext1, ctext2;
 	ctext1.Format(_T("%.2f"), m_wnd1_range);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
 	pedit->SetWindowTextW(ctext1);
 
-	m_wnd2_range = 3.0f;
+	m_wnd2_range = 5.0f;
 	ctext2.Format(_T("%.2f"), m_wnd2_range);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
 	pedit->SetWindowTextW(ctext2);

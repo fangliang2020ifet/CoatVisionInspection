@@ -50,15 +50,12 @@ protected:
 
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 		// 生成的消息映射函数
-	virtual BOOL OnInitDialog();
-	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
-	afx_msg void OnPaint();
-	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 
-	BOOL LoadInitialInfo();
+public:
+	void LoadInitialInfo();
+	void SaveUserInfo();
 	void ExitProgram();
-	int CheckThreadStatue();
 
 	int m_CurSelTab;                              //标记当前选择的页面
 	void InitialTabDlg();                         //初始化 tab control
@@ -66,7 +63,6 @@ protected:
 	bool isTabInitialized = false;
 	void InitialStateBar();                       //初始化状态栏
 	void InitialBtnIcon();
-	void LoadCustomerDate();
 	BOOL InitialTotalDefect();                    //全部瑕疵显示区
 	void DelQueueFromSource();
 	int DevideDFTRank(int num);                   //定义产品等级
@@ -79,7 +75,9 @@ protected:
 	float GetDisplayRange();
 
 	void CreateWorkPath(std::string &path);
-	void UpdateSysMenuBtn();
+	void DeleteHistoryImage();
+	void RemoveAll(std::wstring wst);
+	void UpdateSysDate();
 	void UpdateSysStatus();
 	float GetRunTime();
 	void ReStartPrepare();
@@ -97,14 +95,6 @@ protected:
 	int test_num = 0;
 
 private:	
-	CEvent StopRefrush_Event;
-	CEvent RefrushThreadStopped_Event;
-
-	int m_iAllThread_stopped;
-	CRITICAL_SECTION m_csVecDFT;                  //定义一个临界区
-	CWinThread *m_RefrushThread;
-	static UINT RefrushWnd(LPVOID pParam);
-
 	HICON m_hIcon;
 	HICON m_hOnlineIcon;
 	HICON m_hOfflineIcon;
@@ -117,12 +107,18 @@ private:
 	HICON m_hUnlockIcon;
 	HICON m_hExitIcon;
 
-public:
-	BOOL SaveUserInfo();
-	BOOL GetUserInfo(std::string &num, std::string &width, std::string &id, std::string &user);
+	CEvent StopRefrush_Event;
+	CEvent RefrushThreadStopped_Event;
+
+	CRITICAL_SECTION m_csVecDFT;                  //定义一个临界区
+	CWinThread *m_RefrushThread;
+	static UINT RefrushWnd(LPVOID pParam);
+
+
 public:
 	std::string m_work_path;                             //工作路径
-	std::string m_fold_name;                             //文件夹名称
+	std::vector<std::wstring> m_vec_refpath;
+
 	//离线， 在线， 运行， 停止， 暂停
 	enum { SYSTEM_STATE_OFFLINE = 0, SYSTEM_STATE_ONLINE, SYSTEM_STATE_RUN, SYSTEM_STATE_STOP, SYSTEM_STATE_PAUSE }; 
 	int m_system_state;                                  //系统状态
@@ -145,14 +141,16 @@ public:
 	CCameraDlg      *m_pCamera;
 
 	int online_camera_num = 1;                        //在线相机数量
-	float current_speed = 5;                          //当前车速
-	float current_position = 0;                       //当前检测位置
+	float m_speed = 0.0f;                             //当前车速
+	//float current_position = 0;                       //当前检测位置
 	float m_previous_position = 0.0;
-	float m_display_range = 100.0f;                   //全局瑕疵显示窗口显示范围：米
+	float m_wnd1_range = 100.0f;                   //全局瑕疵显示窗口显示范围：米
+	float m_wnd2_range = 5.0f;
 	std::vector<DefectType> m_vDFT;	
 	int total_number_def = 0;                             //当前检测到的瑕疵总数
 	int serious_def_num = 0;                              //严重瑕疵个数
 	float total_def_length = 0.0f;							  //瑕疵总米数
+	float m_width;
 
 protected:
 	CEdit m_edisplay_range;
@@ -172,9 +170,20 @@ protected:
 	CButton m_button_exit;
 	CStatic m_partical_picture;
 	CStatic m_PictureControlTotal;
+
+	virtual BOOL OnInitDialog();
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnPaint();
+	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg LRESULT OnLoggingMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnWarningMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnTcnSelchangeTabDialog(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnIdok();
+	afx_msg void OnIdcancel();
 	afx_msg void OnBnClickedButtonSelect();
 	afx_msg void OnBnClickedButtonFind();
 	afx_msg void OnBnClickedButtonGodown();
@@ -200,17 +209,6 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonLock();
 	afx_msg void OnBnClickedButtonExit();
-
-
-public:
-	
-	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnIdok();
-	afx_msg void OnIdcancel();
-protected:
-	afx_msg LRESULT OnLoggingMsg(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnWarningMsg(WPARAM wParam, LPARAM lParam);
-public:
 	afx_msg void OnRemote();
+	
 };

@@ -369,52 +369,13 @@ void CInspectDlg::RecordLogList(int test, CString cstr)
 void CInspectDlg::OnBnClickedButton1()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CProductInfo m_productinfo;
-	m_productinfo.DoModal();
+	CProductInfo productinfo;
+	productinfo.DoModal();
 
-	LPWSTR ReturnedString = new wchar_t[STRINGLENGTH];
-	LPWSTR KeyName;
-
-	//批号
-	GetPrivateProfileStringW(L"ProductInfo", L"NUMBER", L"", ReturnedString, STRINGLENGTH, FILEPATH);
-	m_static_number.SetWindowTextW(ReturnedString);
-
-	//宽度
-	int selectWIDTH = GetPrivateProfileInt(L"ProductInfo", L"WIDTH_SELECT", 0, FILEPATH);
-	std::wstring strkeyname_width = L"WIDTH";
-	std::wstring tempt_width = std::to_wstring(selectWIDTH + 1);
-	strkeyname_width = strkeyname_width + tempt_width;
-	KeyName = const_cast<wchar_t *>(strkeyname_width.c_str());
-	GetPrivateProfileStringW(L"ProductInfo", KeyName, L"", ReturnedString, STRINGLENGTH, FILEPATH);
-	m_static_width.SetWindowTextW(ReturnedString);
-
-	//型号
-	int selectID = GetPrivateProfileInt(L"ProductInfo", L"ID_SELECT", 0, FILEPATH);
-	std::wstring strkeyname_id = L"ID";
-	std::wstring tempt_id = std::to_wstring(selectID + 1);
-	strkeyname_id = strkeyname_id + tempt_id;
-	KeyName = const_cast<wchar_t *>(strkeyname_id.c_str());
-	GetPrivateProfileStringW(L"ProductInfo", KeyName, L"", ReturnedString, STRINGLENGTH, FILEPATH);
-	m_static_id.SetWindowTextW(ReturnedString);
-
-	//操作员
-	int selectOPERATOR = GetPrivateProfileInt(L"ProductInfo", L"OPERATOR_SELECT", 0, FILEPATH);
-	std::wstring strkeyname_operator = L"OPERATOR";
-	std::wstring tempt_operator = std::to_wstring(selectOPERATOR + 1);
-	strkeyname_operator = strkeyname_operator + tempt_operator;
-	KeyName = const_cast<wchar_t *>(strkeyname_operator.c_str());
-	GetPrivateProfileStringW(L"ProductInfo", KeyName, L"", ReturnedString, STRINGLENGTH, FILEPATH);
-	m_static_operator.SetWindowTextW(ReturnedString);
-
-	delete[] ReturnedString;
-
-	Invalidate();
-	UpdateData(FALSE);
-	m_bUpdateUserInfo = TRUE;
-
-	CString cstr = L"修改产品信息";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
+	m_static_number.SetWindowTextW(productinfo.m_ctrNUMBER);
+	m_static_width.SetWindowTextW(productinfo.m_ctrWIDTH);
+	m_static_id.SetWindowTextW(productinfo.m_ctrID);
+	m_static_operator.SetWindowTextW(productinfo.m_ctrOPERATOR);
 }
 
 BOOL CInspectDlg::InitServer()

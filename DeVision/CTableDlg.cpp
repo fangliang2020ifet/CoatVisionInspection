@@ -124,7 +124,10 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	int wnd_width = rect.Width();
 	int wnd_height = rect.Height();
 	scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
-	scale_y = wnd_height / m_current_position;
+	if (m_current_position != 0)
+		scale_y = wnd_height / m_current_position;
+	else
+		scale_y = 1;
 
 	//dc->SelectObject(&m_font);
 	//FillRect(*dc, &rect, CBrush(RGB(255, 255, 255)));     //填充白色
@@ -148,7 +151,8 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	//绘图部分
 	MemDC.SelectObject(&m_font);
 	MemDC.FillRect(&rect, &brush);     //填充白色
-	DrawTable(&MemDC, rect, 1650.0f, 10.0f);
+
+	DrawTable(&MemDC, rect, std::stof(m_wstr_width), 10.0f);
 	DrawAllFlag(&MemDC, wnd_width, wnd_height);
 	DrawSelectDFT(&MemDC, m_selected_x, m_selected_y);
 	
@@ -242,9 +246,6 @@ void CTableDlg::InitialDetailList()
 //绘制虚线表格
 void CTableDlg::DrawTable(CDC *mDC, CRect rect, float x, float y)
 {
-	//CPen black_pen;
-	//black_pen.CreatePen(PS_DOT, 1, RGB(88, 88, 88));
-
 	mDC->SelectObject(&m_pen[6]);
 	mDC->SetBkColor(RGB(255, 255, 255));
 
@@ -272,7 +273,7 @@ void CTableDlg::DrawTable(CDC *mDC, CRect rect, float x, float y)
 
 		//添加标注
 		CString xkey;
-		xkey.Format(_T("%.1f"), j * (1650.0f / 11.0f));
+		xkey.Format(_T("%.1f"), j * (x / 11.0f));
 		mDC->TextOutW(j*wide_size + 3, rect.Height() - 18, xkey);
 	}
 }
@@ -353,19 +354,19 @@ void CTableDlg::AddToDetailList(int NO, int kind, float position, float radius, 
 	CString cstrKind;
 	switch (kind)
 	{
-	case 1:
+	case 0:
 		cstrKind.Format(_T("异物"));
 		break;
-	case 2:
+	case 1:
 		cstrKind.Format(_T("凹凸"));
 		break;
-	case 3:
+	case 2:
 		cstrKind.Format(_T("擦伤"));
 		break;
-	case 4:
+	case 3:
 		cstrKind.Format(_T("晶点"));
 		break;
-	case 5:
+	case 4:
 		cstrKind.Format(_T("漏涂"));
 		break;
 	default:
@@ -1625,19 +1626,16 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	for (int k = 0; k < 7; k++)
 	{
 		if (k < 5) {
-			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]);   //类型统计
+			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]); 
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
 		}
 		if (k == 5) {
-			//CString cserious;
-			//cserious.Format(_T(""));
-			COleVariant vserious((long)pThis->m_serious_num);   //严重缺陷
+			COleVariant vserious((long)pThis->m_serious_num);  
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
 		}
 		if (k == 6) {
 			CString cout = pThis->GenerateRankText(pThis->m_product_rank);
-			//cout.Format(_T("一级"));
-			COleVariant vout(cout);   //检测结果
+			COleVariant vout(cout); 
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
 		}
 	}
@@ -1694,7 +1692,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 				break; }
 			case 8: {
 				CString ctime;
-				ctime.Format(_T("%.2f"), dft.pixel_value);
+				ctime.Format(_T("%.2f"), dft.rank);
 				COleVariant vResult(ctime);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -1715,7 +1713,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	LPDISPATCH lpDispXY = sheet.get_Range(COleVariant(_T("C7")), COleVariant(cend));
 
 	//写入瑕疵分布图 sheet2
-	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)2)));	//获取sheet1
+	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)2)));
 	//取得用户区
 	range.AttachDispatch(sheet.get_UsedRange());
 	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
@@ -1727,19 +1725,16 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	for (int k = 0; k < 7; k++)
 	{
 		if (k < 5) {
-			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]);   //类型统计
+			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]);
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
 		}
 		if (k == 5) {
-			//CString cserious;
-			//cserious.Format(_T(""));
-			COleVariant vserious((long)pThis->m_serious_num);   //严重缺陷
+			COleVariant vserious((long)pThis->m_serious_num);
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
 		}
 		if (k == 6) {
 			CString cout = pThis->GenerateRankText(pThis->m_product_rank);
-			//cout.Format(_T("一级"));
-			COleVariant vout(cout);   //检测结果
+			COleVariant vout(cout);
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
 		}
 	}
