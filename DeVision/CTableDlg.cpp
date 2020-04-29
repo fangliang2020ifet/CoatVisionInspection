@@ -1078,6 +1078,7 @@ void CTableDlg::SaveScatterPlotUseDefault()
 		covOptional,// ValueTitles.
 		covOptional  // ExtraTitle.
 	);
+	chart.put_ChartStyle(COleVariant((short)1));
 	//设置网格线
 	CAxis axis;
 	CGridlines gridlines;
@@ -1089,6 +1090,7 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	lpDisp = gridlines.get_Border();
 	border.AttachDispatch(lpDisp);
 	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
+	//border.put_TintAndShade(COleVariant((short)-0.55));  //设置透明度会出现未知错误
 
 	lpDisp = chart.Axes(COleVariant((short)2), 1);  //Axis displays values ， Y轴
 	axis.AttachDispatch(lpDisp);
@@ -1098,7 +1100,6 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	lpDisp = gridlines.get_Border();
 	border.AttachDispatch(lpDisp);
 	border.put_LineStyle(COleVariant((short)-4115));  //Dashed line
-
 
 	Book.Save(); //保存
 	Book.put_Saved(TRUE);
@@ -1787,6 +1788,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 		covOptional,// ValueTitles.
 		covOptional  // ExtraTitle.
 	);
+	chart.put_ChartStyle(COleVariant((short)1));
 	//设置网格线
 	CAxis axis;
 	CGridlines gridlines;

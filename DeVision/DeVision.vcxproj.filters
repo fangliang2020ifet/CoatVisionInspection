@@ -159,6 +159,12 @@
     <ClInclude Include="CRemote.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CPoint0.h">
+      <Filter>Table</Filter>
+    </ClInclude>
+    <ClInclude Include="CPoints.h">
+      <Filter>Table</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">

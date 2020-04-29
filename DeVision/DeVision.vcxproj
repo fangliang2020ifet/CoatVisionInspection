@@ -216,6 +216,8 @@
     <ClInclude Include="CMyDocument.h" />
     <ClInclude Include="CMyView.h" />
     <ClInclude Include="CPlotArea.h" />
+    <ClInclude Include="CPoint0.h" />
+    <ClInclude Include="CPoints.h" />
     <ClInclude Include="CProductInfo.h" />
     <ClInclude Include="CRange.h" />
     <ClInclude Include="CRemote.h" />

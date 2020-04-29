@@ -59,6 +59,8 @@
 #include "CFont0.h"
 #include "CGridlines.h"
 #include "CPlotArea.h"
+#include "CPoints.h"
+#include "CPoint0.h"
 #include "CRange.h"
 #include "CShape.h"
 #include "CShapes.h"
