@@ -318,6 +318,8 @@
 #define IDC_EDIT_INFO_BASE              1266
 #define IDC_EDIT_INFO_COATING           1267
 #define IDC_EDIT_INFO_OPERATOR          1268
+#define IDC_EDIT_THREADNUM              1269
+#define IDC_COMBO_THREADNUM             1270
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -372,7 +374,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1269
+#define _APS_NEXT_CONTROL_VALUE         1271
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

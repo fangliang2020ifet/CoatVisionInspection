@@ -79,7 +79,6 @@ BOOL CImageProcess::InitialImageProcess()
 	return TRUE;
 }
 
-
 BOOL CImageProcess::BeginProcess()
 {
 	std::string str_path;
@@ -91,96 +90,116 @@ BOOL CImageProcess::BeginProcess()
 		return FALSE;
 	}
 
-	if (!(m_CalculateThread1_1 = AfxBeginThread(ImageCalculate1_1, this))) {
-		Win::log("创建图像处理线程1_1失败");
-		return FALSE;
-	}
-	
-	if (!(m_CalculateThread1_2 = AfxBeginThread(ImageCalculate1_2, this))) {
-		Win::log("创建图像处理线程1_2失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread1_3 = AfxBeginThread(ImageCalculate1_3, this))) {
-		Win::log("创建图像处理线程1_3失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread1_4 = AfxBeginThread(ImageCalculate1_4, this))) {
-		Win::log("创建图像处理线程1_4失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread1_5 = AfxBeginThread(ImageCalculate1_5, this))) {
-		Win::log("创建图像处理线程1_5失败");
-		return FALSE;
-	}
-
-	if (!(m_CalculateThread2_1 = AfxBeginThread(ImageCalculate2_1, this))) {
-		Win::log("创建图像处理线程1_1失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread2_2 = AfxBeginThread(ImageCalculate2_2, this))) {
-		Win::log("创建图像处理线程1_2失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread2_3 = AfxBeginThread(ImageCalculate2_3, this))) {
-		Win::log("创建图像处理线程2_3失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread2_4 = AfxBeginThread(ImageCalculate2_4, this))) {
-		Win::log("创建图像处理线程2_4失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread2_5 = AfxBeginThread(ImageCalculate2_5, this))) {
-		Win::log("创建图像处理线程2_5失败");
-		return FALSE;
+	if (m_threadnum >= 1) {
+		if (!(m_CalculateThread1_1 = AfxBeginThread(ImageCalculate1_1, this))) {
+			Win::log("创建图像处理线程1_1失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread2_1 = AfxBeginThread(ImageCalculate2_1, this))) {
+			Win::log("创建图像处理线程2_1失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread3_1 = AfxBeginThread(ImageCalculate3_1, this))) {
+			Win::log("创建图像处理线程3_1失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread4_1 = AfxBeginThread(ImageCalculate4_1, this))) {
+			Win::log("创建图像处理线程4_1失败");
+			return FALSE;
+		}
+		CString cstr = L"创建第 1 个处理线程";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 
-	if (!(m_CalculateThread3_1 = AfxBeginThread(ImageCalculate3_1, this))) {
-		Win::log("创建图像处理线程3_1失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread3_2 = AfxBeginThread(ImageCalculate3_2, this))) {
-		Win::log("创建图像处理线程3_2失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread3_3 = AfxBeginThread(ImageCalculate3_3, this))) {
-		Win::log("创建图像处理线程3_3失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread3_4 = AfxBeginThread(ImageCalculate3_4, this))) {
-		Win::log("创建图像处理线程3_4失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread3_5 = AfxBeginThread(ImageCalculate3_5, this))) {
-		Win::log("创建图像处理线程3_5失败");
-		return FALSE;
+	if (m_threadnum >= 2) {
+		if (!(m_CalculateThread1_2 = AfxBeginThread(ImageCalculate1_2, this))) {
+			Win::log("创建图像处理线程1_2失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread2_2 = AfxBeginThread(ImageCalculate2_2, this))) {
+			Win::log("创建图像处理线程2_2失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread3_2 = AfxBeginThread(ImageCalculate3_2, this))) {
+			Win::log("创建图像处理线程3_2失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread4_2 = AfxBeginThread(ImageCalculate4_2, this))) {
+			Win::log("创建图像处理线程4_2失败");
+			return FALSE;
+		}
+		CString cstr = L"创建第 2 个处理线程";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 
-	if (!(m_CalculateThread4_1 = AfxBeginThread(ImageCalculate4_1, this))) {
-		Win::log("创建图像处理线程4_1失败");
-		return FALSE;
+	if (m_threadnum >= 3) {
+		if (!(m_CalculateThread1_3 = AfxBeginThread(ImageCalculate1_3, this))) {
+			Win::log("创建图像处理线程1_3失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread2_3 = AfxBeginThread(ImageCalculate2_3, this))) {
+			Win::log("创建图像处理线程2_3失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread3_3 = AfxBeginThread(ImageCalculate3_3, this))) {
+			Win::log("创建图像处理线程3_3失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread4_3 = AfxBeginThread(ImageCalculate4_3, this))) {
+			Win::log("创建图像处理线程4_3失败");
+			return FALSE;
+		}
+		CString cstr = L"创建第 3 个处理线程";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
-	if (!(m_CalculateThread4_2 = AfxBeginThread(ImageCalculate4_2, this))) {
-		Win::log("创建图像处理线程4_2失败");
-		return FALSE;
+
+	if (m_threadnum >= 4) {
+		if (!(m_CalculateThread1_4 = AfxBeginThread(ImageCalculate1_4, this))) {
+			Win::log("创建图像处理线程1_4失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread2_4 = AfxBeginThread(ImageCalculate2_4, this))) {
+			Win::log("创建图像处理线程2_4失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread3_4 = AfxBeginThread(ImageCalculate3_4, this))) {
+			Win::log("创建图像处理线程3_4失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread4_4 = AfxBeginThread(ImageCalculate4_4, this))) {
+			Win::log("创建图像处理线程4_4失败");
+			return FALSE;
+		}
+		CString cstr = L"创建第 4 个处理线程";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
-	if (!(m_CalculateThread4_3 = AfxBeginThread(ImageCalculate4_3, this))) {
-		Win::log("创建图像处理线程4_3失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread4_4 = AfxBeginThread(ImageCalculate4_4, this))) {
-		Win::log("创建图像处理线程4_4失败");
-		return FALSE;
-	}
-	if (!(m_CalculateThread4_5 = AfxBeginThread(ImageCalculate4_5, this))) {
-		Win::log("创建图像处理线程4_5失败");
-		return FALSE;
-	}
+
+	if (m_threadnum >= 5) {
+		if (!(m_CalculateThread1_5 = AfxBeginThread(ImageCalculate1_5, this))) {
+			Win::log("创建图像处理线程1_5失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread2_5 = AfxBeginThread(ImageCalculate2_5, this))) {
+			Win::log("创建图像处理线程2_5失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread3_5 = AfxBeginThread(ImageCalculate3_5, this))) {
+			Win::log("创建图像处理线程3_5失败");
+			return FALSE;
+		}
+		if (!(m_CalculateThread4_5 = AfxBeginThread(ImageCalculate4_5, this))) {
+			Win::log("创建图像处理线程4_5失败");
+			return FALSE;
+		}
+		CString cstr = L"创建第 5 个处理线程";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	}	
 	
 	StopManage_Event.ResetEvent();
 	AllCalculateThreadStopped_Event.ResetEvent();
 
-	CString cstr = L"创建处理线程";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	//CString cstr = L"创建处理线程";
+	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 	return TRUE;
 }
@@ -477,29 +496,36 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 //把图像加载到内存队列
 void CImageProcess::LoadImageToQueue()
 {
-	m_ImgList1_1.push_back(m_hi_test1);
-	m_ImgList1_2.push_back(m_hi_test1);
-	m_ImgList1_3.push_back(m_hi_test1);
-	m_ImgList1_4.push_back(m_hi_test1);
-	m_ImgList1_5.push_back(m_hi_test1);
-
-	m_ImgList2_1.push_back(m_hi_test2);
-	m_ImgList2_2.push_back(m_hi_test2);
-	m_ImgList2_3.push_back(m_hi_test2);
-	m_ImgList2_4.push_back(m_hi_test2);
-	m_ImgList2_5.push_back(m_hi_test2);
-
-	m_ImgList3_1.push_back(m_hi_test3);
-	m_ImgList3_2.push_back(m_hi_test3);
-	m_ImgList3_3.push_back(m_hi_test3);
-	m_ImgList3_4.push_back(m_hi_test3);
-	m_ImgList3_5.push_back(m_hi_test3);
-
-	m_ImgList4_1.push_back(m_hi_test4);
-	m_ImgList4_2.push_back(m_hi_test4);
-	m_ImgList4_3.push_back(m_hi_test4);
-	m_ImgList4_4.push_back(m_hi_test4);
-	m_ImgList4_5.push_back(m_hi_test4);
+	if (m_threadnum >= 1) {
+		m_ImgList1_1.push_back(m_hi_test1);
+		m_ImgList2_1.push_back(m_hi_test2);
+		m_ImgList3_1.push_back(m_hi_test3);
+		m_ImgList4_1.push_back(m_hi_test4);
+	}
+	if (m_threadnum >= 2) {
+		m_ImgList1_2.push_back(m_hi_test1);
+		m_ImgList2_2.push_back(m_hi_test2);
+		m_ImgList3_2.push_back(m_hi_test3);
+		m_ImgList4_2.push_back(m_hi_test4);
+	}
+	if (m_threadnum >= 3) {
+		m_ImgList1_3.push_back(m_hi_test1);
+		m_ImgList2_3.push_back(m_hi_test2);
+		m_ImgList3_3.push_back(m_hi_test3);
+		m_ImgList4_3.push_back(m_hi_test4);
+	}
+	if (m_threadnum >= 4) {
+		m_ImgList1_4.push_back(m_hi_test1);
+		m_ImgList2_4.push_back(m_hi_test2);
+		m_ImgList3_4.push_back(m_hi_test3);
+		m_ImgList4_4.push_back(m_hi_test4);
+	}
+	if (m_threadnum >= 5) {
+		m_ImgList1_5.push_back(m_hi_test1);
+		m_ImgList2_5.push_back(m_hi_test2);
+		m_ImgList3_5.push_back(m_hi_test3);
+		m_ImgList4_5.push_back(m_hi_test4);
+	}
 }
 
 BOOL CImageProcess::LoadOneImageToQueue(std::string folder_path, int next_number)

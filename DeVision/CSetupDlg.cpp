@@ -24,6 +24,7 @@ CSetupDlg::~CSetupDlg()
 void CSetupDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_COMBO_THREADNUM, m_combo_threadnum);
 }
 
 
@@ -59,7 +60,13 @@ BOOL CSetupDlg::OnInitDialog()
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
 	pedit->SetWindowTextW(ctext2);
 
-
+	CString cthread;
+	for (int i = 1; i < 6; i++)
+	{
+		cthread.Format(_T("每台相机由 %d 个线程处理"), 6 - i);
+		m_combo_threadnum.InsertString(0, cthread);
+	}
+	m_combo_threadnum.SetCurSel(0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -78,18 +85,26 @@ void CSetupDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
-		m_wnd1_range = GetWnd1DisplayRange();
+		if (m_wnd1_range != GetWnd1DisplayRange()) {
+			m_wnd1_range = GetWnd1DisplayRange();
+			CString cstr;
+			cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+		}
 
-		m_wnd2_range = GetWnd2DisplayRange();
+		if (m_wnd2_range != GetWnd2DisplayRange()) {
+			m_wnd2_range = GetWnd2DisplayRange();
+			CString cstr2;
+			cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
+		}
 
-		CString cstr;
-		cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
-		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-		CString cstr2;
-		cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
-		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
-
+		if (m_threadnum != GetThreadNumber()) {
+			m_threadnum = GetThreadNumber();
+			CString cstr3;
+			cstr3.Format(_T("修改图像处理线程数为：%d"), m_threadnum);
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr3, NULL);
+		}
 	}
 
 	if (m_pConnection != NULL) {
@@ -131,6 +146,21 @@ float CSetupDlg::GetWnd2DisplayRange()
 	return range;
 }
 
+int CSetupDlg::GetThreadNumber()
+{
+	//CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_THREADNUM);
+	//int range;
+	//CString str_edit;
+	//pedit->GetWindowTextW(str_edit);
+	//std::string str = (CW2A)str_edit;	
+	//range = std::stoi(str);
+
+	int range;
+	range = m_combo_threadnum.GetCurSel() + 1;
+
+	return range;
+
+}
 
 BOOL CSetupDlg::ConnectAccess()
 {

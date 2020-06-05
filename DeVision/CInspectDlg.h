@@ -2,8 +2,8 @@
 
 #include <string>
 #include <vector>
-#include "CProductInfo.h"
 #include "CImageProcess.h"
+#include "CProductInfo.h"
 #include "SapClassBasic.h"
 #include "SapClassGui.h"
 

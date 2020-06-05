@@ -54,7 +54,6 @@ CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	total_trash_count = 0;
 }
 
-
 CInspectDlg::~CInspectDlg()
 {
 
@@ -1262,34 +1261,35 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 		if (!pDlg->m_is_system_pause) {
 			pDlg->camera1_frame_count += 1;
 
-			int change_index = pDlg->camera1_frame_count % 5;
+			//总帧数 / 每个相机的线程数
+			int change_index = pDlg->camera1_frame_count % pDlg->m_pImgProc->m_threadnum;
 			switch (change_index)
 			{
-			case 1:
+			case 0:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList1_1.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
 					pDlg->m_pImgProc->m_ImgList1_1.push_back(ho_image);
 				break;
-			case 2:
+			case 1:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList1_2.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
 					pDlg->m_pImgProc->m_ImgList1_2.push_back(ho_image);
 				break;
-			case 3:
+			case 2:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList1_3.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
 					pDlg->m_pImgProc->m_ImgList1_3.push_back(ho_image);
 				break;
-			case 4:
+			case 3:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList1_4.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
 					pDlg->m_pImgProc->m_ImgList1_4.push_back(ho_image);
 				break;
-			case 0:
+			case 4:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList1_5.push_back(pDlg->m_pImgProc->m_hi_test1);
 				else
@@ -1335,34 +1335,34 @@ void CInspectDlg::AcqCallback2(SapXferCallbackInfo *pInfo)
 		if (!pDlg->m_is_system_pause) {
 			pDlg->camera2_frame_count += 1;
 
-			int change_index = pDlg->camera2_frame_count % 5;
+			int change_index = pDlg->camera2_frame_count % pDlg->m_pImgProc->m_threadnum;
 			switch (change_index)
 			{
-			case 1:
+			case 0:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList2_1.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
 					pDlg->m_pImgProc->m_ImgList2_1.push_back(ho_image);
 				break;
-			case 2:
+			case 1:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList2_2.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
 					pDlg->m_pImgProc->m_ImgList2_2.push_back(ho_image);
 				break;
-			case 3:
+			case 2:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList2_3.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
 					pDlg->m_pImgProc->m_ImgList2_3.push_back(ho_image);
 				break;
-			case 4:
+			case 3:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList2_4.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
 					pDlg->m_pImgProc->m_ImgList2_4.push_back(ho_image);
 				break;
-			case 0:
+			case 4:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList2_5.push_back(pDlg->m_pImgProc->m_hi_test2);
 				else
@@ -1405,34 +1405,34 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 		if (!pDlg->m_is_system_pause) {
 			pDlg->camera3_frame_count += 1;
 
-			int change_index = pDlg->camera3_frame_count % 5;
+			int change_index = pDlg->camera3_frame_count % pDlg->m_pImgProc->m_threadnum;
 			switch (change_index)
 			{
-			case 1:
+			case 0:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList3_1.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
 					pDlg->m_pImgProc->m_ImgList3_1.push_back(ho_image);
 				break;
-			case 2:
+			case 1:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList3_2.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
 					pDlg->m_pImgProc->m_ImgList3_2.push_back(ho_image);
 				break;
-			case 3:
+			case 2:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList3_3.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
 					pDlg->m_pImgProc->m_ImgList3_3.push_back(ho_image);
 				break;
-			case 4:
+			case 3:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList3_4.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
 					pDlg->m_pImgProc->m_ImgList3_4.push_back(ho_image);
 				break;
-			case 0:
+			case 4:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList3_5.push_back(pDlg->m_pImgProc->m_hi_test3);
 				else
@@ -1449,7 +1449,6 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 		else if (static_count == 1) {
 			pDlg->m_static_count3 = 0;
 		}
-
 	}
 
 }
@@ -1477,34 +1476,34 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		if (!pDlg->m_is_system_pause) {
 			pDlg->camera4_frame_count += 1;
 
-			int change_index = pDlg->camera4_frame_count % 5;
+			int change_index = pDlg->camera4_frame_count % pDlg->m_pImgProc->m_threadnum;
 			switch (change_index)
 			{
-			case 1:
+			case 0:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList4_1.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
 					pDlg->m_pImgProc->m_ImgList4_1.push_back(ho_image);
 				break;
-			case 2:
+			case 1:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList4_2.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
 					pDlg->m_pImgProc->m_ImgList4_2.push_back(ho_image);
 				break;
-			case 3:
+			case 2:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList4_3.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
 					pDlg->m_pImgProc->m_ImgList4_3.push_back(ho_image);
 				break;
-			case 4:
+			case 3:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList4_4.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else
 					pDlg->m_pImgProc->m_ImgList4_4.push_back(ho_image);
 				break;
-			case 0:
+			case 4:
 				if (pDlg->m_pImgProc->TEST_MODEL)
 					pDlg->m_pImgProc->m_ImgList4_5.push_back(pDlg->m_pImgProc->m_hi_test4);
 				else

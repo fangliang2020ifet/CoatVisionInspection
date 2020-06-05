@@ -223,7 +223,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetTimer(1, 1000, 0);
 
 	//m_inspectDlg.FREE_RUN = FALSE;
-	m_ImgProc.TEST_MODEL = FALSE;
+	m_ImgProc.TEST_MODEL = TRUE;
 
 	std::string struser((LPCSTR)CW2A(m_tableDlg.m_wstr_user.c_str()));
 	CString cuser = CA2W(struser.c_str());
@@ -1391,28 +1391,26 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		ReStartPrepare();
 
 		//启动图像采集
-		if (m_inspectDlg.Grab() == 0){
-			if (m_ImgProc.BeginProcess()) {				
-				//启动主界面刷新线程
-				StopRefrush_Event.ResetEvent();
-				RefrushThreadStopped_Event.ResetEvent();
-				m_RefrushThread = AfxBeginThread(RefrushWnd, this);
+		if (!m_ImgProc.TEST_MODEL) {
+			if (m_inspectDlg.Grab() != 0) return;
+		}
 
-				//启动历史页面刷新
-				m_historyDlg.m_pages = 0;
-				SetTimer(2, 3000, 0);
-			}
-			else {
-				//处理线程启动失败则结束采集
-				m_inspectDlg.Freeze();
-				CString cstr = L"图像处理线程启动失败";
-				::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
-				return;
-			}
+		//启动图像处理线程
+		if (m_ImgProc.BeginProcess()) {
+			//启动主界面刷新线程
+			StopRefrush_Event.ResetEvent();
+			RefrushThreadStopped_Event.ResetEvent();
+			m_RefrushThread = AfxBeginThread(RefrushWnd, this);
+
+			//启动历史页面刷新
+			m_historyDlg.m_pages = 0;
+			SetTimer(2, 3000, 0);
 		}
 		else {
-			//Win::log("获取图像失败");
-			//RecordWarning(L"获取图像失败");
+			//处理线程启动失败则结束采集
+			m_inspectDlg.Freeze();
+			CString cstr = L"图像处理线程启动失败";
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return;
 		}
 
@@ -1431,7 +1429,6 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 
 	if(m_system_state != SYSTEM_STATE_RUN)
 		m_system_state = SYSTEM_STATE_RUN;
-
 }
 
 //停止  按钮
@@ -1441,22 +1438,19 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CWaitCursor wait;
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
-
-		if (m_inspectDlg.Freeze() == 0) {
-
-			//等待列表中的图像都处理完成, 之后结束处理线程
-			StopRefrush_Event.SetEvent();
-
-			//结束计算线程
-			m_ImgProc.StopProcess();
-
-			m_tableDlg.TableSaved_Event.ResetEvent();
-
-			m_inspectDlg.m_is_system_pause = FALSE;
+		if (!m_ImgProc.TEST_MODEL) {
+			if (m_inspectDlg.Freeze() != 0) return;
 		}
-		else {
-			return;
-		}
+
+		//等待列表中的图像都处理完成, 之后结束处理线程
+		StopRefrush_Event.SetEvent();
+
+		//结束计算线程
+		m_ImgProc.StopProcess();
+
+		m_tableDlg.TableSaved_Event.ResetEvent();
+
+		m_inspectDlg.m_is_system_pause = FALSE;
 	}
 
 	CString cstr = L"停止检测";
@@ -1489,8 +1483,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
 
 		//采集系统初始化
-		if (!m_inspectDlg.CameraSystemInitial()) {
-			return;
+		if (!m_ImgProc.TEST_MODEL) {
+			if (!m_inspectDlg.CameraSystemInitial()) return;
 		}
 
 		//初始化算法类
@@ -1590,6 +1584,7 @@ void CDeVisionDlg::OnSetup()
 
 	m_wnd2_range = setup.m_wnd2_range;
 
+	m_ImgProc.m_threadnum = setup.m_threadnum;
 }
 
 //系统：保存

@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <string>
 
 // CSetupDlg 对话框
 
@@ -26,6 +27,7 @@ public:
 
 	float m_wnd1_range = 0.0f;
 	float m_wnd2_range = 0.0f;
+	int m_threadnum = 1;
 
 private:
 	BOOL ACCEPTED;
@@ -33,6 +35,7 @@ private:
 
 	float GetWnd1DisplayRange();
 	float GetWnd2DisplayRange();
+	int GetThreadNumber();
 
 	BOOL ConnectAccess();
 	_ConnectionPtr  m_pConnection;
@@ -48,4 +51,5 @@ public:
 	afx_msg void OnBnClickedButtonAddUser();
 	afx_msg void OnBnClickedButtonSetupChange();
 	afx_msg void OnBnClickedButtonSetupDelete();
+	CComboBox m_combo_threadnum;
 };

@@ -116,8 +116,10 @@ public:
 	BOOL m_bLoad_Default_Ref_Dev = TRUE;
 	//算法参数
 	int m_k_normal_distribution = 15;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
-	int m_k_min_select_area = 5;		   //面积删选
-	int m_median_filter_size = 1;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
+	int m_k_min_select_area = 5;		    //面积删选
+	int m_median_filter_size = 1;           //滤波器大小,直接关系检出率,并且size越大计算速度越慢
+
+	int m_threadnum = 1;                    //单相机处理的线程数量
 
 	BOOL InitialImageProcess();
 	BOOL BeginProcess();
