@@ -2207,6 +2207,7 @@ void CTableDlg::OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
+	if (m_iSystemState == 2) return;
 
 	CString image_name;
 	int index = m_ListCtrlDetail.GetSelectionMark();

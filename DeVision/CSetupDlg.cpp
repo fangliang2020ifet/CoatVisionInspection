@@ -25,6 +25,7 @@ void CSetupDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_THREADNUM, m_combo_threadnum);
+	DDX_Control(pDX, IDC_CHECK_SAVE_REF, m_save_reference_image);
 }
 
 
@@ -34,6 +35,9 @@ BEGIN_MESSAGE_MAP(CSetupDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_USER, &CSetupDlg::OnBnClickedButtonAddUser)
 	ON_BN_CLICKED(IDC_BUTTON_SETUP_CHANGE, &CSetupDlg::OnBnClickedButtonSetupChange)
 	ON_BN_CLICKED(IDC_BUTTON_SETUP_DELETE, &CSetupDlg::OnBnClickedButtonSetupDelete)
+	ON_BN_CLICKED(IDC_BUTTON_SELECT_DEFFECT_PATH, &CSetupDlg::OnBnClickedButtonSelectDeffectPath)
+	ON_BN_CLICKED(IDC_BUTTON_TABLE_PATH, &CSetupDlg::OnBnClickedButtonTablePath)
+	ON_BN_CLICKED(IDC_BUTTON_SYSTEM_RESET, &CSetupDlg::OnBnClickedButtonSystemReset)
 END_MESSAGE_MAP()
 
 
@@ -49,13 +53,11 @@ BOOL CSetupDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	m_wnd1_range = 100.0f;
 	CString ctext1, ctext2;
 	ctext1.Format(_T("%.2f"), m_wnd1_range);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
 	pedit->SetWindowTextW(ctext1);
 
-	m_wnd2_range = 5.0f;
 	ctext2.Format(_T("%.2f"), m_wnd2_range);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
 	pedit->SetWindowTextW(ctext2);
@@ -63,10 +65,16 @@ BOOL CSetupDlg::OnInitDialog()
 	CString cthread;
 	for (int i = 1; i < 6; i++)
 	{
-		cthread.Format(_T("每台相机由 %d 个线程处理"), 6 - i);
+		cthread.Format(_T("并行处理线程数  %d"), 6 - i);
 		m_combo_threadnum.InsertString(0, cthread);
 	}
-	m_combo_threadnum.SetCurSel(0);
+	m_combo_threadnum.SetCurSel(m_threadnum - 1);
+	m_save_reference_image.SetCheck(m_bSaveRefImg);
+		
+	CString path = (CA2W)m_strDeffect_Path.c_str();
+	SetDlgItemText(IDC_EDIT_DEFFECT_PATH, path);
+	path = (CA2W)m_strTable_Path.c_str();
+	SetDlgItemText(IDC_EDIT_TABLE_PATH, path);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -85,6 +93,7 @@ void CSetupDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
+		m_bSave_Parameter = TRUE;
 		if (m_wnd1_range != GetWnd1DisplayRange()) {
 			m_wnd1_range = GetWnd1DisplayRange();
 			CString cstr;
@@ -105,7 +114,24 @@ void CSetupDlg::OnClose()
 			cstr3.Format(_T("修改图像处理线程数为：%d"), m_threadnum);
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr3, NULL);
 		}
+
+		BOOL save = m_save_reference_image.GetCheck();
+		if (m_bSaveRefImg != save) {
+			m_bSaveRefImg = save;
+			CString cstr4;
+			if (m_bSaveRefImg) {
+				cstr4.Format(_T("保存参考图像设置为： YES"));
+				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr4, NULL);
+			}
+			else {
+				cstr4.Format(_T("保存参考图像设置为： NO"));
+				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr4, NULL);
+			}
+		}
+
+
 	}
+	else m_bSave_Parameter = FALSE;
 
 	if (m_pConnection != NULL) {
 		if (m_pConnection->State)
@@ -448,4 +474,117 @@ void CSetupDlg::OnBnClickedButtonSetupDelete()
 			return;
 		}
 	}
+}
+
+
+void CSetupDlg::OnBnClickedButtonSelectDeffectPath()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	TCHAR			szFolderPath[MAX_PATH] = { 0 };
+	CString m_cstrDeffect_Path = TEXT("");
+
+	BROWSEINFO		sInfo;
+	::ZeroMemory(&sInfo, sizeof(BROWSEINFO));
+	sInfo.pidlRoot = 0;
+	sInfo.lpszTitle = _T("请选择一个文件夹：");
+	sInfo.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_EDITBOX;
+	sInfo.lpfn = NULL;
+
+	// 显示文件夹选择对话框
+	LPITEMIDLIST lpidlBrowse = ::SHBrowseForFolder(&sInfo);
+	if (lpidlBrowse != NULL)
+	{
+		// 取得文件夹名
+		if (::SHGetPathFromIDList(lpidlBrowse, szFolderPath))
+		{
+			m_cstrDeffect_Path = szFolderPath;
+		}
+	}
+	if (lpidlBrowse != NULL)
+	{
+		::CoTaskMemFree(lpidlBrowse);
+	}
+
+	m_strDeffect_Path = (CW2A)m_cstrDeffect_Path.GetBuffer();
+	//std::string::size_type pos = 0;
+	//while ((pos = m_strDeffect_Path.find('\\', pos)) != std::string::npos) {
+	//	m_strDeffect_Path.insert(pos, "\\");
+	//	pos = pos + 2;
+	//}
+	CString final_path = (CA2W)m_strDeffect_Path.c_str();
+
+	SetDlgItemText(IDC_EDIT_DEFFECT_PATH, final_path);
+}
+
+
+void CSetupDlg::OnBnClickedButtonTablePath()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	TCHAR			szFolderPath[MAX_PATH] = { 0 };
+	CString m_cstrTable_Path = TEXT("");
+
+	BROWSEINFO		sInfo;
+	::ZeroMemory(&sInfo, sizeof(BROWSEINFO));
+	sInfo.pidlRoot = 0;
+	sInfo.lpszTitle = _T("请选择一个文件夹：");
+	sInfo.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_EDITBOX;
+	sInfo.lpfn = NULL;
+
+	// 显示文件夹选择对话框
+	LPITEMIDLIST lpidlBrowse = ::SHBrowseForFolder(&sInfo);
+	if (lpidlBrowse != NULL)
+	{
+		// 取得文件夹名
+		if (::SHGetPathFromIDList(lpidlBrowse, szFolderPath))
+		{
+			m_cstrTable_Path = szFolderPath;
+		}
+	}
+	if (lpidlBrowse != NULL)
+	{
+		::CoTaskMemFree(lpidlBrowse);
+	}
+
+	m_strTable_Path = (CW2A)m_cstrTable_Path.GetBuffer();
+	//std::string::size_type pos = 0;
+	//while ((pos = m_strTable_Path.find('\\', pos)) != std::string::npos) {
+	//	m_strTable_Path.insert(pos, "\\");
+	//	pos = pos + 2;
+	//}
+	CString final_path = (CA2W)m_strTable_Path.c_str();
+
+	SetDlgItemText(IDC_EDIT_TABLE_PATH, final_path);
+}
+
+//恢复默认设置
+void CSetupDlg::OnBnClickedButtonSystemReset()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_wnd1_range = 100.0f;
+	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
+	CString ctext;
+	ctext.Format(_T("%.2f"), m_wnd1_range);
+	pedit->SetWindowTextW(ctext);
+
+	m_wnd2_range = 5.0f;
+	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
+	ctext.Format(_T("%.2f"), m_wnd2_range);
+	pedit->SetWindowTextW(ctext);
+
+	m_threadnum = 1;
+	m_combo_threadnum.SetCurSel(0);
+
+	m_bSaveRefImg = FALSE;
+	m_save_reference_image.SetCheck(0);
+
+	m_strDeffect_Path = "D:\\history";
+	pedit = (CEdit*)GetDlgItem(IDC_EDIT_DEFFECT_PATH);
+	CString deffect_path(m_strDeffect_Path.c_str());
+	pedit->SetWindowTextW(deffect_path);
+
+	m_strTable_Path = "D:\\report";
+	pedit = (CEdit*)GetDlgItem(IDC_EDIT_TABLE_PATH);
+	CString table_path(m_strTable_Path.c_str());
+	pedit->SetWindowTextW(table_path);
+
 }

@@ -64,11 +64,16 @@ void CProductInfo::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
+		m_bSave_Parameter = TRUE;
+
 		SaveAll();
 
 		CString cstr = L"修改产品信息";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
+	else m_bSave_Parameter = FALSE;
+
+
 	//else {
 	//	CString cvalue;
 	//	GetDlgItem(IDC_COMBO_ID)->GetWindowTextW(cvalue);

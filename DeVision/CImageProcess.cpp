@@ -70,12 +70,6 @@ BOOL CImageProcess::InitialImageProcess()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	m_referenceImage_OK = FALSE;
-	m_camera1_reference_image_acquired = FALSE;
-	m_camera2_reference_image_acquired = FALSE;
-	m_camera3_reference_image_acquired = FALSE;
-	m_camera4_reference_image_acquired = FALSE;
-
 	return TRUE;
 }
 
@@ -85,7 +79,7 @@ BOOL CImageProcess::BeginProcess()
 	if (!GetSavePath(str_path)) return FALSE;
 	
 	//创建线程
-	if (!(m_ManageThread = AfxBeginThread(ManageThread2, this))) {
+	if (!(m_ManageThread = AfxBeginThread(ManageThread, this))) {
 		Win::log("创建图像参考图像处理线程失败");
 		return FALSE;
 	}
@@ -265,13 +259,6 @@ void CImageProcess::RestartProcess()
 
 	m_current_position = 0.0f;
 
-	m_referenceImage_OK = FALSE;
-	m_camera1_reference_image_acquired = FALSE;
-	m_camera2_reference_image_acquired = FALSE;
-	m_camera3_reference_image_acquired = FALSE;
-	m_camera4_reference_image_acquired = FALSE;
-
-	return;
 }
 
 BOOL CImageProcess::IsThreadsAlive()
@@ -357,7 +344,6 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		m_hi_deviation1 = ho_ImageDeviation;
 
 	}
-	m_camera1_reference_image_acquired = TRUE;
 
 	//读取参考图像2
 	if (1) {
@@ -400,8 +386,6 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		m_hi_average2 = ho_ImageAverage;
 		m_hi_deviation2 = ho_ImageDeviation;
 	}
-	m_camera2_reference_image_acquired = TRUE;
-
 
 	//读取参考图像3
 	if (1) {
@@ -444,7 +428,6 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		m_hi_average3 = ho_ImageAverage;
 		m_hi_deviation3 = ho_ImageDeviation;
 	}
-	m_camera3_reference_image_acquired = TRUE;
 
 	//读取参考图像4
 	if (1) {
@@ -487,8 +470,6 @@ BOOL CImageProcess::LoadRefImage(std::string folder_path)
 		m_hi_average4 = ho_ImageAverage;
 		m_hi_deviation4 = ho_ImageDeviation;
 	}
-	m_camera4_reference_image_acquired = TRUE;
-
 
 	return TRUE;
 }
@@ -589,16 +570,40 @@ HObject CImageProcess::CopyHobject(HObject ho_image)
 	return copy;
 }
 
+//获取处理线程的队列大小
 int CImageProcess::CheckTotalListSize()
 {
-	auto size = m_ImgList1_1.size() + m_ImgList1_2.size() + m_ImgList1_3.size() + m_ImgList1_4.size() + m_ImgList1_5.size()
-		+ m_ImgList2_1.size() + m_ImgList2_2.size() + m_ImgList2_3.size() + m_ImgList2_4.size() + m_ImgList2_5.size()
-		+ m_ImgList3_1.size() + m_ImgList3_2.size() + m_ImgList3_3.size() + m_ImgList3_4.size() + m_ImgList3_5.size()
-		+ m_ImgList4_1.size() + m_ImgList4_2.size() + m_ImgList4_3.size() + m_ImgList4_4.size() + m_ImgList4_5.size();
+	size_t list_size = 0;
+	if (m_threadnum == 1) {
+		list_size = m_ImgList1_1.size() + m_ImgList2_1.size() + m_ImgList3_1.size() + m_ImgList4_1.size();
+	}
+	else if (m_threadnum == 2) {
+		list_size = m_ImgList1_1.size() + m_ImgList2_1.size() + m_ImgList3_1.size() + m_ImgList4_1.size()
+			      + m_ImgList1_2.size() + m_ImgList2_2.size() + m_ImgList3_2.size() + m_ImgList4_2.size();
+	}
+	else if (m_threadnum == 3) {
+		list_size = m_ImgList1_1.size() + m_ImgList2_1.size() + m_ImgList3_1.size() + m_ImgList4_1.size()
+			+ m_ImgList1_2.size() + m_ImgList2_2.size() + m_ImgList3_2.size() + m_ImgList4_2.size()
+			+ m_ImgList1_3.size() + m_ImgList2_3.size() + m_ImgList3_3.size() + m_ImgList4_3.size();
+	}
+	else if (m_threadnum == 4) {
+		list_size = m_ImgList1_1.size() + m_ImgList2_1.size() + m_ImgList3_1.size() + m_ImgList4_1.size()
+			+ m_ImgList1_2.size() + m_ImgList2_2.size() + m_ImgList3_2.size() + m_ImgList4_2.size()
+			+ m_ImgList1_3.size() + m_ImgList2_3.size() + m_ImgList3_3.size() + m_ImgList4_3.size()
+			+ m_ImgList1_4.size() + m_ImgList2_4.size() + m_ImgList3_4.size() + m_ImgList4_4.size();
+	}
+	else if (m_threadnum == 5) {
+		list_size = m_ImgList1_1.size() + m_ImgList2_1.size() + m_ImgList3_1.size() + m_ImgList4_1.size()
+			+ m_ImgList1_2.size() + m_ImgList2_2.size() + m_ImgList3_2.size() + m_ImgList4_2.size()
+			+ m_ImgList1_3.size() + m_ImgList2_3.size() + m_ImgList3_3.size() + m_ImgList4_3.size()
+			+ m_ImgList1_4.size() + m_ImgList2_4.size() + m_ImgList3_4.size() + m_ImgList4_4.size()
+			+ m_ImgList1_5.size() + m_ImgList2_5.size() + m_ImgList3_5.size() + m_ImgList4_5.size();
+	}
 
-	return (int)size;
+	return (int)list_size;
 }
 
+//从本地加载参考图像
 BOOL CImageProcess::LoadDefaultRefAndDevImage(std::string path)
 {
 	if (path.empty())
@@ -662,53 +667,49 @@ BOOL CImageProcess::LoadDefaultRefAndDevImage(std::string path)
 
 BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_deviation)
 {	
-	HImage result;
-	if (m_ImgList1_1.size() > 2 &&
-		!m_ImgList1_2.empty() &&
-		!m_ImgList1_3.empty() &&
-		!m_ImgList1_4.empty() &&
-		!m_ImgList1_5.empty()) {
-
-		HImage img1, img2, img3, img4, img5;
-
-		//舍弃第一张图像
-		m_ImgList1_1.pop_front();
-		img1 = m_ImgList1_1.front();
-		m_ImgList1_1.pop_front();
-
-		img2 = m_ImgList1_2.front();
-		m_ImgList1_2.pop_front();
-
-		img3 = m_ImgList1_3.front();
-		m_ImgList1_3.pop_front();
-
-		img4 = m_ImgList1_4.front();
-		m_ImgList1_4.pop_front();
-
-		img5 = m_ImgList1_5.front();
-		m_ImgList1_5.pop_front();
-
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	HImage result, img;
+	if (m_threadnum == 1) {
+		if (m_ImgList1_1.size() >= 4) {
+			m_ImgList1_1.pop_front();
+			for (int i = 0; i < 3; i++)
+			{
+				img = m_ImgList1_1.front();
+				HalconCpp::AddImage(result, img, &result, 0.5, 0);
+				m_ImgList1_1.pop_front();
+			}
+		}
+		else return FALSE;
 	}
-	else
-		return FALSE;
-	
-	/*
-	HImage result, img1, img2;
-	if (!m_ImgList1_2.empty() && !m_ImgList1_3.empty()) {
-		//舍弃第一张图像
-		m_ImgList1_1.pop_front();
-		img1 = m_ImgList1_2.front();
-		m_ImgList1_2.pop_front();
-		img2 = m_ImgList1_3.front();
-		m_ImgList1_3.pop_front();
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	else if (m_threadnum == 2) {
+		if (m_ImgList1_1.size() >= 3 && !m_ImgList1_2.empty()) {
+			m_ImgList1_1.pop_front();
+			img = m_ImgList1_1.front();
+			m_ImgList1_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList1_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList1_1.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
 	}
-	else return FALSE;
-	*/
+	else if (m_threadnum > 2) {
+		if (m_ImgList1_1.size() >= 2 && !m_ImgList1_2.empty() && !m_ImgList1_3.empty()) {
+			m_ImgList1_1.pop_front();
+			img = m_ImgList1_1.front();
+			m_ImgList1_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList1_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList1_3.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
+	}
 
 	m_hi_ref1 = result;
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -735,61 +736,54 @@ BOOL CImageProcess::GenerateReferenceImage1(HImage &hi_average, HImage &hi_devia
 	hi_average = ho_ImageAverage;
 	hi_deviation = ho_ImageDeviation;
 
-	m_camera1_reference_image_acquired = TRUE;
-
 	return TRUE;
 }
 
 BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_deviation)
 {	
-	HImage result;
-	if (m_ImgList2_1.size() > 2 &&
-		!m_ImgList2_2.empty() &&
-		!m_ImgList2_3.empty() &&
-		!m_ImgList2_4.empty() &&
-		!m_ImgList2_5.empty()) {
-
-		HImage img1, img2, img3, img4, img5;
-
-		//舍弃第一张图像
-		m_ImgList2_1.pop_front();
-		img1 = m_ImgList2_1.front();
-		m_ImgList2_1.pop_front();
-
-		img2 = m_ImgList2_2.front();
-		m_ImgList2_2.pop_front();
-
-		img3 = m_ImgList2_3.front();
-		m_ImgList2_3.pop_front();
-
-		img4 = m_ImgList2_4.front();
-		m_ImgList2_4.pop_front();
-
-		img5 = m_ImgList2_5.front();
-		m_ImgList2_5.pop_front();
-
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-
+	HImage result, img;
+	if (m_threadnum == 1) {
+		if (m_ImgList2_1.size() >= 4) {
+			m_ImgList2_1.pop_front();
+			for (int i = 0; i < 3; i++)
+			{
+				img = m_ImgList2_1.front();
+				HalconCpp::AddImage(result, img, &result, 0.5, 0);
+				m_ImgList2_1.pop_front();
+			}
+		}
+		else return FALSE;
 	}
-	else
-		return FALSE;
-	
-	/*
-	HImage result, img1, img2;
-	if (!m_ImgList2_2.empty() && !m_ImgList2_3.empty()) {
-		//舍弃第一张图像
-		m_ImgList2_1.pop_front();
-		img1 = m_ImgList2_2.front();
-		m_ImgList2_2.pop_front();
-		img2 = m_ImgList2_3.front();
-		m_ImgList2_3.pop_front();
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	else if (m_threadnum == 2) {
+		if (m_ImgList2_1.size() >= 3 && !m_ImgList2_2.empty()) {
+			m_ImgList2_1.pop_front();
+			img = m_ImgList2_1.front();
+			m_ImgList2_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList2_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList2_1.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
 	}
-	else return FALSE;
-	*/
+	else if (m_threadnum > 2) {
+		if (m_ImgList2_1.size() >= 2 && !m_ImgList2_2.empty() && !m_ImgList2_3.empty()) {
+			m_ImgList2_1.pop_front();
+			img = m_ImgList2_1.front();
+			m_ImgList2_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList2_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList2_3.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
+	}
 
 	m_hi_ref2 = result;
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -817,62 +811,54 @@ BOOL CImageProcess::GenerateReferenceImage2(HImage &hi_average, HImage &hi_devia
 	hi_average = ho_ImageAverage;
 	hi_deviation = ho_ImageDeviation;
 
-	m_camera2_reference_image_acquired = TRUE;
-
 	return TRUE;
 }
 
 BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_deviation)
 {
-	HImage result;
-	if (m_ImgList3_1.size() > 2 &&
-		!m_ImgList3_2.empty() &&
-		!m_ImgList3_3.empty() &&
-		!m_ImgList3_4.empty() &&
-		!m_ImgList3_5.empty()) {
-
-		HImage img1, img2, img3, img4, img5;
-
-		//舍弃第一张图像
-		m_ImgList3_1.pop_front();
-		img1 = m_ImgList3_1.front();
-		m_ImgList3_1.pop_front();
-
-		img2 = m_ImgList3_2.front();
-		m_ImgList3_2.pop_front();
-
-		img3 = m_ImgList3_3.front();
-		m_ImgList3_3.pop_front();
-
-		img4 = m_ImgList3_4.front();
-		m_ImgList3_4.pop_front();
-
-		img5 = m_ImgList3_5.front();
-		m_ImgList3_5.pop_front();
-
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
-
+	HImage result, img;
+	if (m_threadnum == 1) {
+		if (m_ImgList3_1.size() >= 4) {
+			m_ImgList3_1.pop_front();
+			for (int i = 0; i < 3; i++)
+			{
+				img = m_ImgList3_1.front();
+				HalconCpp::AddImage(result, img, &result, 0.5, 0);
+				m_ImgList3_1.pop_front();
+			}
+		}
+		else return FALSE;
 	}
-	else
-		return FALSE;
+	else if (m_threadnum == 2) {
+		if (m_ImgList3_1.size() >= 3 && !m_ImgList3_2.empty()) {
+			m_ImgList3_1.pop_front();
+			img = m_ImgList3_1.front();
+			m_ImgList3_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
 
-	
-	/*
-	HImage result, img1, img2;
-	if (!m_ImgList3_2.empty() && !m_ImgList3_3.empty()) {
-		//舍弃第一张图像
-		m_ImgList3_1.pop_front();
-		img1 = m_ImgList3_2.front();
-		m_ImgList3_2.pop_front();
-		img2 = m_ImgList3_3.front();
-		m_ImgList3_3.pop_front();
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+			img = m_ImgList3_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList3_1.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
 	}
-	else return FALSE;
-	*/
+	else if (m_threadnum > 2) {
+		if (m_ImgList3_1.size() >= 2 && !m_ImgList3_2.empty() && !m_ImgList3_3.empty()) {
+			m_ImgList3_1.pop_front();
+			img = m_ImgList3_1.front();
+			m_ImgList3_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList3_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList3_3.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
+	}
 
 	m_hi_ref3 = result;
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -899,60 +885,55 @@ BOOL CImageProcess::GenerateReferenceImage3(HImage &hi_average, HImage &hi_devia
 	}
 	hi_average = ho_ImageAverage;
 	hi_deviation = ho_ImageDeviation;
-	m_camera3_reference_image_acquired = TRUE;
 
 	return TRUE;
 }
 
 BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_deviation)
 {
-	HImage result;
-	if (m_ImgList4_1.size() > 2 &&
-		!m_ImgList4_2.empty() &&
-		!m_ImgList4_3.empty() &&
-		!m_ImgList4_4.empty() &&
-		!m_ImgList4_5.empty()) {
-
-		HImage img1, img2, img3, img4, img5;
-
-		//舍弃第一张图像
-		m_ImgList4_1.pop_front();
-		img1 = m_ImgList4_1.front();
-		m_ImgList4_1.pop_front();
-
-		img2 = m_ImgList4_2.front();
-		m_ImgList4_2.pop_front();
-
-		img3 = m_ImgList4_3.front();
-		m_ImgList4_3.pop_front();
-
-		img4 = m_ImgList4_4.front();
-		m_ImgList4_4.pop_front();
-
-		img5 = m_ImgList4_5.front();
-		m_ImgList4_5.pop_front();
-
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img3, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img4, &result, 0.5, 0);
-		HalconCpp::AddImage(result, img5, &result, 0.5, 0);
+	HImage result, img;
+	if (m_threadnum == 1) {
+		if (m_ImgList4_1.size() >= 4) {
+			m_ImgList4_1.pop_front();
+			for (int i = 0; i < 3; i++)
+			{
+				img = m_ImgList4_1.front();
+				HalconCpp::AddImage(result, img, &result, 0.5, 0);
+				m_ImgList4_1.pop_front();
+			}
+		}
+		else return FALSE;
 	}
-	else
-		return FALSE;
-	
-	/*
-	HImage result, img1, img2;
-	if (!m_ImgList4_2.empty() && !m_ImgList4_3.empty()) {
-		//舍弃第一张图像
-		m_ImgList4_1.pop_front();
-		img1 = m_ImgList4_2.front();
-		m_ImgList4_2.pop_front();
-		img2 = m_ImgList4_3.front();
-		m_ImgList4_3.pop_front();
-		HalconCpp::AddImage(img1, img2, &result, 0.5, 0);
+	else if (m_threadnum == 2) {
+		if (m_ImgList4_1.size() >= 3 && !m_ImgList4_2.empty()) {
+			m_ImgList4_1.pop_front();
+			img = m_ImgList4_1.front();
+			m_ImgList4_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList4_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList4_1.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
 	}
-	else return FALSE;
-	*/
+	else if (m_threadnum > 2) {
+		if (m_ImgList4_1.size() >= 2 && !m_ImgList4_2.empty() && !m_ImgList4_3.empty()) {
+			m_ImgList4_1.pop_front();
+			img = m_ImgList4_1.front();
+			m_ImgList4_1.pop_front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList4_2.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+
+			img = m_ImgList4_3.front();
+			HalconCpp::AddImage(result, img, &result, 0.5, 0);
+		}
+		else return FALSE;
+	}
 
 	m_hi_ref4 = result;
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -980,17 +961,22 @@ BOOL CImageProcess::GenerateReferenceImage4(HImage &hi_average, HImage &hi_devia
 	hi_average = ho_ImageAverage;
 	hi_deviation = ho_ImageDeviation;
 
-	m_camera4_reference_image_acquired = TRUE;
-
 	return TRUE;
 }
 
-BOOL CImageProcess::CheckReferenceImageState()
+//判断参考图像：均值图和方差图，是否已经生成
+BOOL CImageProcess::CheckReferenceImageAvilable()
 {
-	if (m_camera1_reference_image_acquired && m_camera2_reference_image_acquired &&
-		m_camera3_reference_image_acquired && m_camera4_reference_image_acquired)
-		return TRUE;
-	else return FALSE;
+	if (!m_hi_average1.IsInitialized())	return FALSE;
+	if (!m_hi_average2.IsInitialized())	return FALSE;
+	if (!m_hi_average3.IsInitialized())	return FALSE;
+	if (!m_hi_average4.IsInitialized())	return FALSE;
+	if (!m_hi_deviation1.IsInitialized())	return FALSE;
+	if (!m_hi_deviation2.IsInitialized())	return FALSE;
+	if (!m_hi_deviation3.IsInitialized())	return FALSE;
+	if (!m_hi_deviation4.IsInitialized())	return FALSE;
+
+	return TRUE;
 }
 
 //生成去掉黑边的图像
@@ -1611,11 +1597,12 @@ int CImageProcess::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi
 
 //检测算法：一种基于多目机器视觉的光学薄膜瑕疵检测系统
 int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
-											HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT)
+								HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT)
 {
 	HObject  ho_Image, ho_ImageAverage, ho_ImageDeviation, ho_ImageMedianDFT;
 	HObject  ho_ImageSub1, ho_ImageSub2, ho_ImageAddSub, ho_ImageResult;
-	HObject  ho_Region, ho_RegionDilation, ho_ConnectedRegions, ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
+	HObject  ho_Region, ho_RegionDilation, ho_RegionErosion;
+	HObject  ho_ConnectedRegions, ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
 	HObject  ho_ImageReduced, ho_ImagePart;
 	HTuple   hv_Width, hv_Height, hv_Number;
 	HTuple   hv_i, hv_Area, hv_Row, hv_Column, hv_RowCircle, hv_ColumnCircle, hv_Radius, hv_Contlength;
@@ -1637,8 +1624,10 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	HalconCpp::Threshold(ho_ImageResult, &ho_Region, 1, 255);
 	//膨胀,用于减少region的数量
 	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 64);
-	HalconCpp::Connection(ho_RegionDilation, &ho_ConnectedRegions);
-	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and", m_k_min_select_area, 15999999);
+	HalconCpp::ErosionCircle(ho_RegionDilation, &ho_RegionErosion, 64);
+	HalconCpp::Connection(ho_RegionErosion, &ho_ConnectedRegions);
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",
+		m_k_min_select_area, m_k_max_select_area);
 	HalconCpp::CountObj(ho_SelectedRegions, &hv_Number);
 	if (0 != hv_Number)
 	{
@@ -1800,51 +1789,43 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 	CImageProcess *pThis = (CImageProcess *)pParam;
 	DWORD dwStop = 0;
 
-	pThis->is_manage_thread_alive = TRUE;
-	pThis->m_referenceImage_OK = FALSE;
+	//判断是否内存中是否已有参考图像
+	pThis->m_referenceImage_OK = pThis->CheckReferenceImageAvilable();
 	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
 
-	pThis->m_camera1_invalid_area = 0;
-	pThis->m_camera1_invalid_area = 0;
-	while (pThis->is_manage_thread_alive)
+	for(;;)
 	{
-
-		//加载默认均值图像和标准差图像
-		if (pThis->m_bLoad_Default_Ref_Dev && !pThis->m_default_ref_dev_path.empty()) {
-			if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
-				pThis->m_referenceImage_OK = TRUE;
-				//pThis->is_manage_thread_alive = FALSE;
-				//break;
-			}
-		}
-
 		if (!pThis->m_referenceImage_OK) {
+			//生成参考图像的三种方式：
+			//1、从本地加载均值图像和标准差图像；
+			//2、从本地加载测试图然后程序生成；
+			//3、从相机获取图像然后生成；
 			if (!pThis->TEST_MODEL) {
 				if (!got_ref1) {
 					got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
 					if (got_ref1) {
-						CString cstr = L"获取1#参考图像";
+						CString cstr = L"获取1#相机参考图像";
 						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 					}
 				}
 				if (!got_ref2) {
 					got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
 					if (got_ref2) {
-						CString cstr = L"获取#参考图像";
+						CString cstr = L"获取2#相机参考图像";
 						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 					}
 				}
 				if (!got_ref3) {
 					got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
 					if (got_ref3) {
-						CString cstr = L"获取3#参考图像";
+						CString cstr = L"获取3#相机参考图像";
 						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 					}
 				}
 				if (!got_ref4) {
 					got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
 					if (got_ref4) {
-						CString cstr = L"获取4#参考图像";
+						CString cstr = L"获取4#相机参考图像";
 						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 					}
 				}
@@ -1864,7 +1845,10 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			}
 
+			//四台相机都获取到后保存图像并结束获取
 			if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
+				pThis->m_referenceImage_OK = TRUE;
+
 				if (pThis->SAVE_REFERENCE_IMAGE) {
 					pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
 					pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
@@ -1874,181 +1858,32 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 					pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
 					pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
 					pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
-					pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
-				}
-
-				if (pThis->REDUCE_BLACK_EDGE) {
-					pThis->m_camera1_invalid_area = pThis->ProduceReferenceImage1(pThis->m_hi_ref1, pThis->m_hi_ref2);
-					if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-						HObject ho_ImagePart, ho_Region, ho_ImageReduced;
-						HTuple hv_width_ref1, hv_height_ref1;
-
-						HalconCpp::GetImageSize(pThis->m_hi_ref1, &hv_width_ref1, &hv_height_ref1);
-						HalconCpp::GenRectangle1(&ho_Region, 0, pThis->m_camera1_invalid_area, hv_height_ref1, hv_width_ref1);
-						HalconCpp::ReduceDomain(pThis->m_hi_ref1, ho_Region, &ho_ImageReduced);
-						HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-						pThis->m_hi_ref1 = ho_ImagePart;
-					}
-
-					pThis->m_camera4_invalid_area = pThis->ProduceReferenceImage4(pThis->m_hi_ref4, pThis->m_hi_ref3);
-					if (pThis->m_camera1_invalid_area != 0 && pThis->m_camera1_invalid_area != -1) {
-						HObject ho_ImagePart, ho_Region, ho_ImageReduced;
-						HTuple hv_width_ref4, hv_height_ref4;
-
-						HalconCpp::GetImageSize(pThis->m_hi_ref4, &hv_width_ref4, &hv_height_ref4);
-						HalconCpp::GenRectangle1(&ho_Region, 0, 0, hv_height_ref4, hv_width_ref4 - (HTuple)pThis->m_camera4_invalid_area);
-						HalconCpp::ReduceDomain(pThis->m_hi_ref4, ho_Region, &ho_ImageReduced);
-						HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-						pThis->m_hi_ref4 = ho_ImagePart;
-					}
-
-					CString cstr = L"已对图像进行黑边切除";
-					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-				}
-
-				pThis->m_referenceImage_OK = TRUE;
-				pThis->is_manage_thread_alive = FALSE;
-			}
-		}
-
-
-		if (pThis->TEST_MODEL) {
-			pThis->LoadImageToQueue();
-			//Sleep(20000);
-
-			CString cstr = L"加载图像到处理队列";
-			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
-		CString cstr = L"循环";
-		::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		Sleep(1000);
-
-		//线程阻塞
-		if (WAIT_OBJECT_0 == WaitForSingleObject(pThis->StopManage_Event, INFINITE)) {
-
-			//AfxMessageBox(L"Stop Manage Thread");
-			//while (pThis->CheckTotalListSize() > 0)
-			//{
-			//	Sleep(200);
-			//}
-
-			pThis->StopCalculateThreads();
-
-			CString cstr = L"结束处理线程";
-			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-			break;
-		}
-	}
-	pThis->is_manage_thread_alive = FALSE;
-
-	return 0;
-}
-
-UINT CImageProcess::ManageThread2(LPVOID pParam)
-{
-	CImageProcess *pThis = (CImageProcess *)pParam;
-	DWORD dwStop = 0;
-
-	pThis->m_referenceImage_OK = FALSE;
-	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
-
-	for(;;)
-	{
-		if (!pThis->m_referenceImage_OK) {
-			//加载默认均值图像和标准差图像
-			if (pThis->m_bLoad_Default_Ref_Dev && !pThis->m_default_ref_dev_path.empty()) {
-				if (pThis->LoadDefaultRefAndDevImage(pThis->m_default_ref_dev_path)) {
-					pThis->m_referenceImage_OK = TRUE;
-				}
-			}
-			else {
-				if (!pThis->TEST_MODEL) {
-					if (!got_ref1) {
-						got_ref1 = pThis->GenerateReferenceImage1(pThis->m_hi_average1, pThis->m_hi_deviation1);
-						if (got_ref1) {
-							CString cstr = L"获取1#参考图像";
-							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-						}
-					}
-					if (!got_ref2) {
-						got_ref2 = pThis->GenerateReferenceImage2(pThis->m_hi_average2, pThis->m_hi_deviation2);
-						if (got_ref2) {
-							CString cstr = L"获取#参考图像";
-							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-						}
-					}
-					if (!got_ref3) {
-						got_ref3 = pThis->GenerateReferenceImage3(pThis->m_hi_average3, pThis->m_hi_deviation3);
-						if (got_ref3) {
-							CString cstr = L"获取3#参考图像";
-							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-						}
-					}
-					if (!got_ref4) {
-						got_ref4 = pThis->GenerateReferenceImage4(pThis->m_hi_average4, pThis->m_hi_deviation4);
-						if (got_ref4) {
-							CString cstr = L"获取4#参考图像";
-							::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-						}
-					}
-
-				}
-				else {
-					if (pThis->LoadRefImage("E:/DeVisionProject/OneCamera_0417/")) {
-						got_ref1 = TRUE;
-						got_ref2 = TRUE;
-						got_ref3 = TRUE;
-						got_ref4 = TRUE;
-						CString cstr = L"已加载测试参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-
-					pThis->LoadSingleImage("E:/DeVisionProject/OneCamera_0417/test1");
-					CString cstr = L"已加载测试图";
-					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-				}
-
-				//四台相机都获取到后保存图像并结束获取
-				if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
-					if (pThis->SAVE_REFERENCE_IMAGE) {
-						pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_average2, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image2.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_average3, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image3.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_average4, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image4.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_deviation1, (HTuple)pThis->m_strPath.c_str() + "ref\\dev1.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_deviation2, (HTuple)pThis->m_strPath.c_str() + "ref\\dev2.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
-						pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
-						pThis->m_default_ref_dev_path = pThis->m_strPath + "ref\\";
-					}
-					pThis->m_referenceImage_OK = TRUE;
 				}
 			}
 		}
 
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 5000);
+		//更新队列的总大小
+		pThis->m_total_list_size = pThis->CheckTotalListSize();
+
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 500);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
 			if (pThis->TEST_MODEL) {
 				pThis->LoadImageToQueue();
-				CString cstr = L"加载图像到处理队列";
-				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+				//CString cstr = L"加载测试图像到处理队列";
+				//::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			}
-			pThis->m_total_list_size = pThis->CheckTotalListSize();
 			break;
 		}
 		case WAIT_FAILED:
 			return -1;
 		case WAIT_OBJECT_0: {
-
 			//while (pThis->CheckTotalListSize() > 0)
 			//{
 			//	//Sleep(200);
 			//}
-
+			pThis->m_total_list_size = 0;
 			pThis->StopCalculateThreads();
 			pThis->AllCalculateThreadStopped_Event.SetEvent();
 			CString cstr = L"结束处理线程";

@@ -23,9 +23,10 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄	
-
+	int m_iSystemState;                      //系统状态
 	std::string m_DFT_img_path;
-	std::wstring m_save_path = L"D:\\report\\";
+	//std::wstring m_save_path = L"D:\\report\\";
+	std::wstring m_save_path;
 	std::wstring m_wstr_num;               //批号
 	std::wstring m_wstr_id;                //型号
 	std::wstring m_wstr_width;             //宽度
@@ -58,7 +59,6 @@ public:
 	float m_current_position;
 	float scale_x;
 	float scale_y;
-	//BOOL m_save_successfully = TRUE;
 
 	CEvent TableSaved_Event;
 

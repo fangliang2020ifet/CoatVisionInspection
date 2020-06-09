@@ -28,6 +28,8 @@ private:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
+	BOOL m_bSave_Parameter = FALSE;          //是否保存
+
 	LPCWSTR APPNAME = L"ProductInfo";
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 

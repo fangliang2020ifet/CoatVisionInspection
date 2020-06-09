@@ -92,6 +92,7 @@
 #define IDC_EDIT16                      1049
 #define IDC_EDIT_LONGTH2                1049
 #define IDC_BUTTON1                     1050
+#define IDC_BUTTON_SELECT_DEFFECT_PATH  1050
 #define IDC_CHECK1                      1051
 #define IDC_CHECK2                      1052
 #define IDC_CHECK3                      1053
@@ -123,6 +124,7 @@
 #define IDC_LIST_RECORD                 1076
 #define IDC_BUTTON7                     1077
 #define IDC_BTN_REFRUSH                 1077
+#define IDC_BUTTON_TABLE_PATH           1077
 #define IDC_RADIO1                      1078
 #define IDC_RADIO2                      1079
 #define IDC_RADIO3                      1080
@@ -294,6 +296,7 @@
 #define IDC_EDIT30                      1241
 #define IDC_TREE1                       1242
 #define IDC_EDIT31                      1243
+#define IDC_EDIT_SELECT_AREA_MIN        1243
 #define IDC_STATIC_TABLE_DFT_IMAGE      1244
 #define IDC_COMBO_GLOBAL_THRESHOLD      1245
 #define IDC_COMBO_SELECT_THRESHOLD      1246
@@ -318,8 +321,13 @@
 #define IDC_EDIT_INFO_BASE              1266
 #define IDC_EDIT_INFO_COATING           1267
 #define IDC_EDIT_INFO_OPERATOR          1268
-#define IDC_EDIT_THREADNUM              1269
 #define IDC_COMBO_THREADNUM             1270
+#define IDC_CHECK_SAVE_REF              1271
+#define IDC_EDIT_SELECT_AREA_MAX        1272
+#define IDC_EDIT_DEFFECT_PATH           1273
+#define IDC_EDIT_TABLE_PATH             1274
+#define IDC_BUTTON8                     1275
+#define IDC_BUTTON_SYSTEM_RESET         1275
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -374,7 +382,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1271
+#define _APS_NEXT_CONTROL_VALUE         1276
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

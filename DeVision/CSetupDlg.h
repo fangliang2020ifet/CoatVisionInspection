@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <string>
+#include <algorithm>
 
 // CSetupDlg 对话框
 
@@ -25,9 +26,14 @@ protected:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
+	BOOL m_bSave_Parameter = FALSE;          //是否保存
 	float m_wnd1_range = 0.0f;
 	float m_wnd2_range = 0.0f;
 	int m_threadnum = 1;
+	BOOL m_bSaveRefImg = FALSE;
+
+	std::string m_strDeffect_Path = "";
+	std::string m_strTable_Path = "";
 
 private:
 	BOOL ACCEPTED;
@@ -52,4 +58,8 @@ public:
 	afx_msg void OnBnClickedButtonSetupChange();
 	afx_msg void OnBnClickedButtonSetupDelete();
 	CComboBox m_combo_threadnum;
+	CButton m_save_reference_image;
+	afx_msg void OnBnClickedButtonSelectDeffectPath();
+	afx_msg void OnBnClickedButtonTablePath();
+	afx_msg void OnBnClickedButtonSystemReset();
 };

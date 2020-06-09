@@ -114,9 +114,17 @@ private:
 	CWinThread *m_RefrushThread;
 	static UINT RefrushWnd(LPVOID pParam);
 
+	CString m_cProduct_Model;                     //产品型号
+	CString m_cProduct_Width;                     //宽度
+	CString m_cOperator;                          //操作员
+	CString m_cProduct_Number;                    //生产批号
+
+	void ReadFromRegedit();
+	void WriteToRegedit();
 
 public:
-	std::string m_work_path;                             //工作路径
+	std::string m_strDeffect_Path;                             //工作路径
+	std::string m_strTable_Path;
 	std::vector<std::wstring> m_vec_refpath;
 
 	//离线， 在线， 运行， 停止， 暂停
@@ -130,14 +138,15 @@ public:
 
 	CImageProcess  m_ImgProc;
 
+	CDialog         *pDialog[4];                       //用来保存对话框对象指针
 	CTabCtrl        m_tab;
+
 	CInspectDlg     m_inspectDlg;
 	CAnalysisDlg    m_analysisDlg;
 	CTableDlg       m_tableDlg;
-
 	CHistoryDlg     m_historyDlg;
-	CDialog         *pDialog[4];  //用来保存对话框对象指针
-	CStatusBar     m_StatusBar;     //状态栏
+
+	CStatusBar     m_StatusBar;                        //状态栏
 	CCameraDlg      *m_pCamera;
 
 	int online_camera_num = 1;                        //在线相机数量

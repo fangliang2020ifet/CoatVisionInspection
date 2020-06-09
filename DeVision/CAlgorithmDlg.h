@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <string>
 
 // CAlgorithmDlg 对话框
 
@@ -17,16 +18,24 @@ public:
 #endif
 
 public:
-	int m_global_threshold = 0;
-	int m_select_threshold = 0;
-	BOOL m_load_default = TRUE;
+	HWND hMainWnd;                           //主窗口句柄
+	BOOL m_bSave_Parameter = FALSE;          //是否保存
+	int m_normal_distribution = 0;
+	int m_filter_size = 0;
+	int m_select_area_min = 0;
+	int m_select_area_max = 0;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	DECLARE_MESSAGE_MAP()
+
+private:
+	int GetSelectAreaValueMin();
+	int GetSelectAreaValueMax();
+
 public:
-	HWND hMainWnd;                           //主窗口句柄
+
 
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
@@ -34,6 +43,6 @@ public:
 	virtual void OnCancel();
 	CComboBox m_combo_global_threshold;
 	CComboBox m_combo_select_threshold;
-	CButton m_btn_load_default;
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedButtonReset();
 };

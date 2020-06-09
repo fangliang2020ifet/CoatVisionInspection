@@ -370,11 +370,12 @@ void CInspectDlg::OnBnClickedButton1()
 	// TODO: 在此添加控件通知处理程序代码
 	CProductInfo productinfo;
 	productinfo.DoModal();
-
-	m_static_number.SetWindowTextW(productinfo.m_ctrNUMBER);
-	m_static_width.SetWindowTextW(productinfo.m_ctrWIDTH);
-	m_static_id.SetWindowTextW(productinfo.m_ctrID);
-	m_static_operator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+	if (productinfo.m_bSave_Parameter) {
+		m_static_number.SetWindowTextW(productinfo.m_ctrNUMBER);
+		m_static_width.SetWindowTextW(productinfo.m_ctrWIDTH);
+		m_static_id.SetWindowTextW(productinfo.m_ctrID);
+		m_static_operator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+	}
 }
 
 BOOL CInspectDlg::InitServer()

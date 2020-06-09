@@ -92,9 +92,6 @@ typedef std::list<HImage> ImgList;
 
 typedef std::list<DefectType> DFTList;
 
-
-
-
 class CImageProcess
 {
 public:
@@ -107,18 +104,16 @@ public:
 	CEvent StopManage_Event;
 	CEvent AllCalculateThreadStopped_Event;
 
-
 	BOOL TEST_MODEL = FALSE;               //使用本地图像运行程序
-	BOOL REDUCE_BLACK_EDGE = FALSE;
-	BOOL SAVE_REFERENCE_IMAGE = TRUE;
+	BOOL REDUCE_BLACK_EDGE = FALSE;        //剔除黑边
+	BOOL SAVE_REFERENCE_IMAGE = FALSE;     //是否保存生成的参考图像
 
 	BOOL m_referenceImage_OK = FALSE;
-	BOOL m_bLoad_Default_Ref_Dev = TRUE;
 	//算法参数
-	int m_k_normal_distribution = 15;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
-	int m_k_min_select_area = 5;		    //面积删选
+	int m_k_normal_distribution = 5;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
 	int m_median_filter_size = 1;           //滤波器大小,直接关系检出率,并且size越大计算速度越慢
-
+	int m_k_min_select_area = 5;		    //面积删选
+	int m_k_max_select_area = 15999999;
 	int m_threadnum = 1;                    //单相机处理的线程数量
 
 	BOOL InitialImageProcess();
@@ -142,6 +137,7 @@ public:
 
 	float m_current_position = 0.0f;
 	int m_total_list_size = 0;              //  list 的总大小,待处理的图像数量
+
 	ImgList m_ImgList1_1;
 	ImgList m_ImgList1_2;
 	ImgList m_ImgList1_3;
@@ -186,17 +182,24 @@ public:
 	HImage m_hi_deviation3;
 	HImage m_hi_deviation4;
 
+protected:
+
+	enum{ CAMERA_1 = 1, CAMERA_2, CAMERA_3, CAMERA_4};
+	//异物， 凹凸， 擦伤， 晶点， 漏涂
+	enum { DFT_MATTER = 0, DFT_BUMP, DFT_GRAZE, DFT_CRYSTAL, DFT_COATING};
+
+	BOOL IsFileExist(const std::string &filename);
+	BOOL IsPathExist(const std::string &pathname);
+
 private:
-	std::string m_default_ref_dev_path = "";
-	BOOL m_camera1_reference_image_acquired;
-	BOOL m_camera2_reference_image_acquired;
-	BOOL m_camera3_reference_image_acquired;
-	BOOL m_camera4_reference_image_acquired;
 	int m_camera1_invalid_area;
 	int m_camera4_invalid_area;
 
+	void StopCalculateThreads();
+
 	BOOL LoadDefaultRefAndDevImage(std::string path);
-	BOOL CheckReferenceImageState();
+	BOOL CheckReferenceImageAvilable();
+
 	int ProduceReferenceImage1(HImage hi_ref1, HImage hi_ref2);
 	int ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3);
 	BOOL GetSavePath(std::string &path);
@@ -217,16 +220,7 @@ private:
 	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
 		HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT);
 
-protected:
 
-	enum{ CAMERA_1 = 1, CAMERA_2, CAMERA_3, CAMERA_4};
-	//异物， 凹凸， 擦伤， 晶点， 漏涂
-	enum { DFT_MATTER = 0, DFT_BUMP, DFT_GRAZE, DFT_CRYSTAL, DFT_COATING};
-
-	BOOL IsFileExist(const std::string &filename);
-	BOOL IsPathExist(const std::string &pathname);
-private:
-	void StopCalculateThreads();
 
 	HANDLE                m_hStopEvent;
 
@@ -278,8 +272,6 @@ private:
 	BOOL is_thread4_4_alive;
 	BOOL is_thread4_5_alive;
 	static UINT ManageThread(LPVOID pParam);
-	static UINT ManageThread2(LPVOID pParam);
-
 	static UINT ImageCalculate1_1(LPVOID pParam);
 	static UINT ImageCalculate1_2(LPVOID pParam);
 	static UINT ImageCalculate1_3(LPVOID pParam);
