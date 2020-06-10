@@ -78,11 +78,11 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	m_combo_select_threshold.SetCurSel(m_filter_size - 1);
 
 	CString cstr;
-	cstr.Format(_T("%d"), m_select_area_min);
+	cstr.Format(_T("%.2f"), m_min_radius);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
 	pedit->SetWindowTextW(cstr);
 
-	cstr.Format(_T("%d"), m_select_area_max);
+	cstr.Format(_T("%.2f"), m_max_radius);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
 	pedit->SetWindowTextW(cstr);
 
@@ -139,19 +139,19 @@ void CAlgorithmDlg::OnClose()
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 		}
 
-		int value_selectarea_min = GetSelectAreaValueMin();
-		if (m_select_area_min != value_selectarea_min) {
-			m_select_area_min = value_selectarea_min;
+		float value_selectarea_min = GetSelectAreaValueMin();
+		if (m_min_radius != value_selectarea_min) {
+			m_min_radius = value_selectarea_min;
 			CString cstr;
-			cstr.Format(_T("设置最小检测面积为： %d"), m_select_area_min);
+			cstr.Format(_T("设置最小检测半径： %.2f 毫米"), m_min_radius);
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 		}
 
-		int value_selectarea_max = GetSelectAreaValueMax();
-		if (m_select_area_max != value_selectarea_max) {
-			m_select_area_max = value_selectarea_max;
+		float value_selectarea_max = GetSelectAreaValueMax();
+		if (m_max_radius != value_selectarea_max) {
+			m_max_radius = value_selectarea_max;
 			CString cstr;
-			cstr.Format(_T("设置最大检测面积为： %d"), m_select_area_max);
+			cstr.Format(_T("设置最大检测半径： %.2f 毫米"), m_max_radius);
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 		}
 
@@ -163,25 +163,25 @@ void CAlgorithmDlg::OnClose()
 	CDialogEx::OnClose();
 }
 
-int CAlgorithmDlg::GetSelectAreaValueMin()
+float CAlgorithmDlg::GetSelectAreaValueMin()
 {
-	int range;
+	float range;
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
 	CString str_edit;
 	pedit->GetWindowTextW(str_edit);
 	std::string str = (CW2A)str_edit;
-	range = std::stoi(str);
+	range = std::stof(str);
 	return range;
 }
 
-int CAlgorithmDlg::GetSelectAreaValueMax()
+float CAlgorithmDlg::GetSelectAreaValueMax()
 {
-	int range;
+	float range;
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
 	CString str_edit;
 	pedit->GetWindowTextW(str_edit);
 	std::string str = (CW2A)str_edit;
-	range = std::stoi(str);
+	range = std::stof(str);
 	return range;
 }
 
@@ -197,14 +197,14 @@ void CAlgorithmDlg::OnBnClickedButtonReset()
 	m_filter_size = 1;
 	m_combo_select_threshold.SetCurSel(0);
 
-	m_select_area_min = 5;
+	m_min_radius = 0.05f;
 	CString cstr;
-	cstr.Format(_T("%d"), m_select_area_min);
+	cstr.Format(_T("%.2f"), m_min_radius);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
 	pedit->SetWindowTextW(cstr);
 
-	m_select_area_max = 65536;
-	cstr.Format(_T("%d"), m_select_area_max);
+	m_max_radius = 50.00f;
+	cstr.Format(_T("%.2f"), m_max_radius);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
 	pedit->SetWindowTextW(cstr);
 

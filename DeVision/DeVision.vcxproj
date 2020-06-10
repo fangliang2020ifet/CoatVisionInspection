@@ -232,6 +232,7 @@
     <ClInclude Include="CWorksheets.h" />
     <ClInclude Include="DeVision.h" />
     <ClInclude Include="DeVisionDlg.h" />
+    <ClInclude Include="ImportHalconCpp.h" />
     <ClInclude Include="iUart.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="logResource.h" />

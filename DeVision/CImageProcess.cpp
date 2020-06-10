@@ -1622,21 +1622,24 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 	HalconCpp::AddImage(ho_ImageSub1, ho_ImageSub2, &ho_ImageAddSub, 0.5, 0);
 	HalconCpp::SubImage(ho_ImageAddSub, ho_ImageDeviation, &ho_ImageResult, 1, 0);
 	HalconCpp::Threshold(ho_ImageResult, &ho_Region, 1, 255);
-	//膨胀,用于减少region的数量
+	//膨胀,腐蚀,用于减少region的数量
 	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 64);
 	HalconCpp::ErosionCircle(ho_RegionDilation, &ho_RegionErosion, 64);
 	HalconCpp::Connection(ho_RegionErosion, &ho_ConnectedRegions);
+	int min_select = (int)std::pow(2 * m_fMin_Radius / HORIZON_PRECISION, 2);
+	int max_select = (int)std::pow(2 * m_fMax_Radius / HORIZON_PRECISION, 2);
 	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",
-		m_k_min_select_area, m_k_max_select_area);
+		min_select,
+		max_select);
 	HalconCpp::CountObj(ho_SelectedRegions, &hv_Number);
 	if (0 != hv_Number)
 	{
-		//当单张图像中选择的区域超过 100 个，则认为此图计算失败
+		//当单张图像中选择的区域超过 64 个，则认为此图计算失败
 		if (hv_Number > 64) {
 			CString cstr;
-			cstr.Format(_T("图像处理失败：超出检测阈值（64），相机 %d, 当前位置 %.3f, 请检查膜面是否正常"),
+			cstr.Format(_T("相机%d#超出检测阈值,位置%.3f米,请检查膜面是否正常"),
 				cameraNO, m_current_position);
-			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+			::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return -1;
 		}
 

@@ -92,6 +92,15 @@ BOOL CTableDlg::OnInitDialog()
 
 	InitialDetailList();
 
+	CButton *pcheck = (CButton*)GetDlgItem(IDC_CHECK1);
+	pcheck->SetCheck(1);
+	pcheck = (CButton*)GetDlgItem(IDC_CHECK2);
+	pcheck->SetCheck(1);
+	pcheck = (CButton*)GetDlgItem(IDC_CHECK3);
+	pcheck->SetCheck(1);
+	pcheck = (CButton*)GetDlgItem(IDC_CHECK4);
+	pcheck->SetCheck(1);
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }

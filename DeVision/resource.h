@@ -326,8 +326,14 @@
 #define IDC_EDIT_SELECT_AREA_MAX        1272
 #define IDC_EDIT_DEFFECT_PATH           1273
 #define IDC_EDIT_TABLE_PATH             1274
-#define IDC_BUTTON8                     1275
 #define IDC_BUTTON_SYSTEM_RESET         1275
+#define IDC_EDIT_PRODUCT_NUMBER         1276
+#define IDC_EDIT_PRODUCT_WIDTH          1277
+#define IDC_EDIT_PRODUCT_MODEL          1278
+#define IDC_EDIT_OPERATOR               1279
+#define IDC_DATETIMEPICKER2             1280
+#define IDC_STATIC_SYSTEM_STATE         1281
+#define IDC_STATIC_SYSTEM_STATUE        1281
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -382,7 +388,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1276
+#define _APS_NEXT_CONTROL_VALUE         1282
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

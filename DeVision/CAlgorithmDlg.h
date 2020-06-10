@@ -22,8 +22,8 @@ public:
 	BOOL m_bSave_Parameter = FALSE;          //是否保存
 	int m_normal_distribution = 0;
 	int m_filter_size = 0;
-	int m_select_area_min = 0;
-	int m_select_area_max = 0;
+	float m_min_radius = 0.0f;
+	float m_max_radius = 0.0f;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -31,8 +31,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
-	int GetSelectAreaValueMin();
-	int GetSelectAreaValueMax();
+	float GetSelectAreaValueMin();
+	float GetSelectAreaValueMax();
 
 public:
 

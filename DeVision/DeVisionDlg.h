@@ -53,8 +53,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	void LoadInitialInfo();
-	void SaveUserInfo();
 	void ExitProgram();
 
 	int m_CurSelTab;                              //标记当前选择的页面
@@ -72,13 +70,13 @@ public:
 	void UpdateScaleValue(float x, float y);       //更新刻度
 	void SetYScalePos(float position);
 	void SetXScalePos(float width);
-	float GetDisplayRange();
 
 	void CreateWorkPath(std::string &path);
 	void DeleteHistoryImage();
 	void RemoveAll(std::wstring wst);
 	void UpdateSysDate();
 	void UpdateSysStatus();
+	void UpdateSysColor();
 	float GetRunTime();
 	void ReStartPrepare();
 
@@ -86,9 +84,10 @@ public:
 
 	CMyView* pView;                                   //全局瑕疵滚动显示区域
 
-	CFont flag_font;                                   //大字体
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;
+	BOOL m_bFlicker = FALSE;                           //控件闪烁
+	CStatusBar     m_StatusBar;                        //状态栏
 
 	void TestLoadAndWrite();
 	BOOL test_clicked = FALSE;
@@ -146,7 +145,6 @@ public:
 	CTableDlg       m_tableDlg;
 	CHistoryDlg     m_historyDlg;
 
-	CStatusBar     m_StatusBar;                        //状态栏
 	CCameraDlg      *m_pCamera;
 
 	int online_camera_num = 1;                        //在线相机数量
@@ -220,4 +218,6 @@ protected:
 	afx_msg void OnBnClickedButtonExit();
 	afx_msg void OnRemote();
 	
+public:
+	CStatic m_sSystem_Statue;
 };

@@ -13,11 +13,11 @@ IMPLEMENT_DYNCREATE(CMyView, CScrollView)
 
 CMyView::CMyView()
 {
-	m_acolor[0] = RGB(255, 35, 15);
-	m_acolor[1] = RGB(25, 255, 35);
-	m_acolor[2] = RGB(35, 55, 225);
-	m_acolor[3] = RGB(255, 255, 0);
-	m_acolor[4] = RGB(225, 35, 225);
+	//m_acolor[0] = RGB(255, 35, 15);
+	//m_acolor[1] = RGB(25, 255, 35);
+	//m_acolor[2] = RGB(35, 55, 225);
+	//m_acolor[3] = RGB(255, 255, 0);
+	//m_acolor[4] = RGB(225, 35, 225);
 
 	m_vDefect.clear();
 

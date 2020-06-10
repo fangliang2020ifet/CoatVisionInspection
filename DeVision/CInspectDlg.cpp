@@ -68,13 +68,13 @@ void CInspectDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CAMERA_IMAGE2, m_ImageWnd2);
 	DDX_Control(pDX, IDC_CAMERA_IMAGE3, m_ImageWnd3);
 	DDX_Control(pDX, IDC_CAMERA_IMAGE4, m_ImageWnd4);
-	DDX_Control(pDX, IDC_STATIC_OPERATOR, m_static_operator);
-	DDX_Control(pDX, IDC_STATIC_ID, m_static_id);
 	DDX_Control(pDX, IDC_LIST_RECORD, m_listLog);
 	DDX_Control(pDX, IDC_LIST_WARNNING, m_listWarning);
-	DDX_Control(pDX, IDC_STATIC_NUMBER, m_static_number);
-	DDX_Control(pDX, IDC_STATIC_WIDTH, m_static_width);
 	DDX_Control(pDX, IDC_BUTTON_CHANGEINFO, m_btn_changeinfo);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_NUMBER, m_eNumber);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_WIDTH, m_eWidth);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_MODEL, m_eModel);
+	DDX_Control(pDX, IDC_EDIT_OPERATOR, m_eOperator);
 }
 
 
@@ -83,6 +83,14 @@ BEGIN_MESSAGE_MAP(CInspectDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_CTLCOLOR()
 	ON_WM_SIZE()
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON1, &CInspectDlg::OnBnClickedMfccolorbutton1)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON2, &CInspectDlg::OnBnClickedMfccolorbutton2)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON3, &CInspectDlg::OnBnClickedMfccolorbutton3)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON4, &CInspectDlg::OnBnClickedMfccolorbutton4)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON5, &CInspectDlg::OnBnClickedMfccolorbutton5)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON6, &CInspectDlg::OnBnClickedMfccolorbutton6)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON7, &CInspectDlg::OnBnClickedMfccolorbutton7)
+	ON_BN_CLICKED(IDC_MFCCOLORBUTTON8, &CInspectDlg::OnBnClickedMfccolorbutton8)
 END_MESSAGE_MAP()
 
 
@@ -96,7 +104,10 @@ BOOL CInspectDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	m_font.CreatePointFont(300, _T("Times New Roman"));
+	m_font.CreatePointFont(200, _T("Times New Roman"));
+	GetDlgItem(IDC_STATIC_TOTAL_DFT_NUM)->SetWindowPos(0, 580, 25, 100, 30, SWP_SHOWWINDOW);
+	GetDlgItem(IDC_STATIC_GREAT_DFT_NUM)->SetWindowPos(0, 580, 70, 100, 30, SWP_SHOWWINDOW);
+	GetDlgItem(IDC_STATIC_DFT_LONGTH)->SetWindowPos(0, 580, 110, 100, 30, SWP_SHOWWINDOW);
 
 	camera1_show_buffer = TRUE;
 	camera2_show_buffer = TRUE;
@@ -122,20 +133,28 @@ BOOL CInspectDlg::OnInitDialog()
 
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON1);
 	pcolorbtn->SetColor(RGB(255, 35, 15));
+	m_color1 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON2);
 	pcolorbtn->SetColor(RGB(25, 255, 35));
+	m_color2 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON3);
 	pcolorbtn->SetColor(RGB(35, 55, 225));
+	m_color3 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON4);
 	pcolorbtn->SetColor(RGB(255, 255, 0));
+	m_color4 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON5);
 	pcolorbtn->SetColor(RGB(55, 35, 55));
+	m_color5 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON6);
 	pcolorbtn->SetColor(RGB(255, 255, 255));
+	m_color6 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON7);
 	pcolorbtn->SetColor(RGB(155, 35, 155));
+	m_color7 = pcolorbtn->GetColor();
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
 	pcolorbtn->SetColor(RGB(155, 155, 85));
+	m_color8 = pcolorbtn->GetColor();
 
 	m_listLog.SetHorizontalExtent(1000);
 	CString clog = L"***********************操作记录***********************";
@@ -196,27 +215,25 @@ HBRUSH CInspectDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	// TODO:  在此更改 DC 的任何特性
-
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_TOTAL_DFT_NUM)//特定的某一个标签，IDC_STATIC_FONT为标签控件ID
-	{
-		pDC->SetBkMode(TRANSPARENT);//设置背景透明
-		pDC->SetTextColor(RGB(225, 55, 0)); //文字颜色  
-		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
-	}
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_GREAT_DFT_NUM)//特定的某一个标签，IDC_STATIC_FONT为标签控件ID
-	{
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_TOTAL_DFT_NUM){
 		pDC->SetBkMode(TRANSPARENT);//设置背景透明
 		pDC->SetTextColor(RGB(255, 0, 0)); //文字颜色  
 		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
 	}
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_DFT_LONGTH)//特定的某一个标签，IDC_STATIC_FONT为标签控件ID
-	{
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_GREAT_DFT_NUM){
+		pDC->SetBkMode(TRANSPARENT);//设置背景透明
+		pDC->SetTextColor(RGB(185, 55, 0)); //文字颜色  
+		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
+	}
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_DFT_LONGTH){
 		pDC->SetBkMode(TRANSPARENT);//设置背景透明
 		pDC->SetTextColor(RGB(155, 0, 128)); //文字颜色  
 		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
 	}
-
-
+	if (pWnd->GetDlgCtrlID() == IDC_LIST_WARNNING) {
+		pDC->SetBkMode(TRANSPARENT);
+		pDC->SetTextColor(RGB(255, 0, 0));
+	}
 
 	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
 	return hbr;
@@ -371,13 +388,72 @@ void CInspectDlg::OnBnClickedButton1()
 	CProductInfo productinfo;
 	productinfo.DoModal();
 	if (productinfo.m_bSave_Parameter) {
-		m_static_number.SetWindowTextW(productinfo.m_ctrNUMBER);
-		m_static_width.SetWindowTextW(productinfo.m_ctrWIDTH);
-		m_static_id.SetWindowTextW(productinfo.m_ctrID);
-		m_static_operator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+		m_eNumber.SetWindowTextW(productinfo.m_ctrNUMBER);
+		m_eWidth.SetWindowTextW(productinfo.m_ctrWIDTH);
+		m_eModel.SetWindowTextW(productinfo.m_ctrID);
+		m_eOperator.SetWindowTextW(productinfo.m_ctrOPERATOR);
 	}
 }
 
+//修改颜色
+void CInspectDlg::OnBnClickedMfccolorbutton1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON1);
+	m_color1 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON2);
+	m_color2 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton3()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON3);
+	m_color3 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton4()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON4);
+	m_color4 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton5()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON5);
+	m_color5 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton6()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON6);
+	m_color6 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton7()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON7);
+	m_color7 = pcolorbtn->GetColor();
+}
+
+void CInspectDlg::OnBnClickedMfccolorbutton8()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
+	m_color8 = pcolorbtn->GetColor();
+}
+
+/************************************相机处理部分**************************************/
+//初始化图像采集卡
 BOOL CInspectDlg::InitServer()
 {
 	m_vServerName.clear();
@@ -1524,4 +1600,7 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		}
 	}
 }
+
+
+
 

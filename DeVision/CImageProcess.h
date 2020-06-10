@@ -1,65 +1,13 @@
 #pragma once
-#include "afxwin.h"
 
+#include "afxwin.h"
 #include <string>
 #include <vector>
 #include <list>
 #include <algorithm>
 #include <direct.h>
 #include <fstream>
-
-#include "HalconCpp.h"
-#include "HDevThread.h"
-
-using namespace HalconCpp;
-
-namespace HDevExportCpp
-{
-	// Parallel execution wrapper for write_image(...) 
-	static void* _hcppthread_write_image(void *hcthread);
-}
-
-// Generated stubs for parallel procedure calls. Wrapped in name
-// space to avoid name conflicts with actual procedure names
-namespace HDevExportCpp
-{
-	// Parallel execution wrapper for write_image(...) 
-	static void* _hcppthread_write_image(void *hcthread)
-	{
-		// +++ define thread context for this procedure
-		HDevThread*  hcppthread = (HDevThread*)hcthread;
-		try
-		{
-			// Input parameters
-			const HObject       &cbho_Image = hcppthread->GetInputIconicParamObject(0);
-			const HTuple        &cbhv_Format = hcppthread->GetInputCtrlParamTuple(1);
-			const HTuple        &cbhv_FillColor = hcppthread->GetInputCtrlParamTuple(2);
-			const HTuple        &cbhv_FileName = hcppthread->GetInputCtrlParamTuple(3);
-
-			// Call write_image
-			WriteImage(cbho_Image, cbhv_Format, cbhv_FillColor, cbhv_FileName);
-
-			// Reduce reference counter of thread object
-			hcppthread->Exit();
-			delete hcppthread;
-
-		}
-		catch (HException& exc)
-		{
-			// No exceptions may be raised from stub in parallel case,
-			// so we need to store this information prior to cleanup
-			bool is_direct_call = hcppthread->IsDirectCall();
-			// Attempt to clean up in error case, too
-			hcppthread->Exit();
-			delete hcppthread;
-			// Propagate exception if called directly
-			if (is_direct_call)
-				throw exc;
-		}
-		return NULL;
-	}
-
-}
+#include "ImportHalconCpp.h"
 
 struct DefectType
 {
@@ -89,7 +37,6 @@ struct SelectRegion
 };
 
 typedef std::list<HImage> ImgList;
-
 typedef std::list<DefectType> DFTList;
 
 class CImageProcess
@@ -111,9 +58,9 @@ public:
 	BOOL m_referenceImage_OK = FALSE;
 	//算法参数
 	int m_k_normal_distribution = 5;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
-	int m_median_filter_size = 1;           //滤波器大小,直接关系检出率,并且size越大计算速度越慢
-	int m_k_min_select_area = 5;		    //面积删选
-	int m_k_max_select_area = 15999999;
+	int m_median_filter_size = 1;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
+	float m_fMin_Radius = 0.0f;	           //半径删选
+	float m_fMax_Radius = 0.0f;
 	int m_threadnum = 1;                    //单相机处理的线程数量
 
 	BOOL InitialImageProcess();
@@ -130,10 +77,6 @@ public:
 	void ReSortDefectQueue();
 
 	std::string m_strPath;                  //保存路径
-	//int m_NO_produced1 = 0;
-	//int m_NO_produced2 = 0;
-	//int m_NO_produced3 = 0;
-	//int m_NO_produced4 = 0;
 
 	float m_current_position = 0.0f;
 	int m_total_list_size = 0;              //  list 的总大小,待处理的图像数量
@@ -183,7 +126,6 @@ public:
 	HImage m_hi_deviation4;
 
 protected:
-
 	enum{ CAMERA_1 = 1, CAMERA_2, CAMERA_3, CAMERA_4};
 	//异物， 凹凸， 擦伤， 晶点， 漏涂
 	enum { DFT_MATTER = 0, DFT_BUMP, DFT_GRAZE, DFT_CRYSTAL, DFT_COATING};
@@ -219,7 +161,6 @@ private:
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
 		HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT);
-
 
 
 	HANDLE                m_hStopEvent;
@@ -292,6 +233,4 @@ private:
 	static UINT ImageCalculate4_3(LPVOID pParam);
 	static UINT ImageCalculate4_4(LPVOID pParam);
 	static UINT ImageCalculate4_5(LPVOID pParam);
-
-
 };
