@@ -195,7 +195,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetWindowPos(0, 600, 20, 400, 60, SWP_SHOWWINDOW);
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetWindowText(L"浙   清   柔   电");
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetFont(&loggle_font);
-	m_sSystem_Statue.SetWindowPos(0, 350, 20, 200, 60, SWP_SHOWWINDOW);
+	m_sSystem_Statue.SetWindowPos(0, 350, 20, 150, 60, SWP_SHOWWINDOW);
 	m_sSystem_Statue.SetFont(&loggle_font);
 
 	// Table 页面初始化
@@ -277,7 +277,8 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 
 	// TODO:  在此添加您专用的创建代码
-	CLogin loginDlg;
+	//登录窗口
+	CLogin loginDlg;	
 	loginDlg.DoModal();
 
 	if (!loginDlg.ACCEPTED)
@@ -534,7 +535,7 @@ void CDeVisionDlg::TabDlgResize()
 void CDeVisionDlg::InitialStateBar()
 {
 	//添加状态栏
-	static UINT indicators[] = {
+	static UINT BASED_CODE indicators[] = {
 	IDS_STATESTRING1,
 	IDS_STATESTRING2,
 	IDS_STATESTRING3,
@@ -567,7 +568,7 @@ void CDeVisionDlg::InitialStateBar()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 
 	//设置背景颜色
-	m_StatusBar.GetStatusBarCtrl().SetBkColor(RGB(180, 180, 180));
+	m_StatusBar.GetStatusBarCtrl().SetBkColor(RGB(0, 0, 0));
 }
 
 //按钮图标
@@ -1743,8 +1744,8 @@ void CDeVisionDlg::OnHelp()
 	TCHAR path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, path);
 	CString cpath = path;
-	cpath = cpath + L"\\help\\help.CHM";
-	ShellExecute(NULL, L"open", cpath, NULL, NULL, SW_SHOWNORMAL);
+	cpath = cpath + L"\\help\\UserGuide.CHM";
+	ShellExecute(NULL, L"open", cpath, NULL, NULL, SW_SHOWMAXIMIZED);
 }
 
 //帮助：日志

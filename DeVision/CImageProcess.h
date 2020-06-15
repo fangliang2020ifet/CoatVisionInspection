@@ -162,6 +162,7 @@ private:
 	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,
 		HImage hi_img, UINT64 produced_num, std::vector<DefectType> &vDFT);
 
+	void HalconInitAOP();
 
 	HANDLE                m_hStopEvent;
 

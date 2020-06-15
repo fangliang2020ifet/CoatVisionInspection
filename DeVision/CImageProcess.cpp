@@ -63,6 +63,24 @@ CImageProcess::~CImageProcess()
 	   
 }
 
+void CImageProcess::HalconInitAOP()
+{
+	HTuple hv_AOP, hv_method;
+	//   nil     threshold     linear     mlp  
+	hv_method = "mlp";
+
+	//测试：手动AOP优化
+	HalconCpp::SetSystem("parallelize_operators", "true");
+	HalconCpp::GetSystem("parallelize_operators", &hv_AOP);
+	HalconCpp::OptimizeAop("median_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
+		((HTuple("nil").Append(hv_method)).Append("false")));
+	HalconCpp::OptimizeAop("sub_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
+		((HTuple("nil").Append(hv_method)).Append("false")));
+	HalconCpp::OptimizeAop("add_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
+		((HTuple("nil").Append(hv_method)).Append("false")));
+	HalconCpp::OptimizeAop("threshold", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
+		((HTuple("nil").Append(hv_method)).Append("false")));
+}
 
 BOOL CImageProcess::InitialImageProcess()
 {
@@ -1851,6 +1869,8 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 			//四台相机都获取到后保存图像并结束获取
 			if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
 				pThis->m_referenceImage_OK = TRUE;
+				// Halcon 速度优化
+				pThis->HalconInitAOP();
 
 				if (pThis->SAVE_REFERENCE_IMAGE) {
 					pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");

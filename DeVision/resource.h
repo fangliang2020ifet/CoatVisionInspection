@@ -47,6 +47,8 @@
 #define IDD_DIALOG_LOGIN                181
 #define IDI_ICON_LOGGIN                 186
 #define IDD_DIALOG_REMOTE               187
+#define IDI_ICON_LOGIN                  189
+#define IDI_ICON_LOGINN                 189
 #define IDC_TAB_DIALOG                  1002
 #define IDC_STATIC_PICTURE              1004
 #define IDC_EDIT1                       1015
@@ -332,7 +334,6 @@
 #define IDC_EDIT_PRODUCT_MODEL          1278
 #define IDC_EDIT_OPERATOR               1279
 #define IDC_DATETIMEPICKER2             1280
-#define IDC_STATIC_SYSTEM_STATE         1281
 #define IDC_STATIC_SYSTEM_STATUE        1281
 #define ID_32771                        32771
 #define ID_32772                        32772
@@ -386,7 +387,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_RESOURCE_VALUE        190
 #define _APS_NEXT_COMMAND_VALUE         32818
 #define _APS_NEXT_CONTROL_VALUE         1282
 #define _APS_NEXT_SYMED_VALUE           101
