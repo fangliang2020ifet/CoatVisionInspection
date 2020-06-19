@@ -74,11 +74,11 @@ public:
 	void CreateWorkPath(std::string &path);
 	void DeleteHistoryImage();
 	void RemoveAll(std::wstring wst);
-	void UpdateSysDate();
 	void UpdateSysStatus();
 	void UpdateSysColor();
 	float GetRunTime();
 	void ReStartPrepare();
+	void AutoStop();
 
 	long start_time;
 
@@ -113,6 +113,7 @@ private:
 	CWinThread *m_RefrushThread;
 	static UINT RefrushWnd(LPVOID pParam);
 
+	CString m_logo_name;
 	CString m_cProduct_Model;                     //产品型号
 	CString m_cProduct_Width;                     //宽度
 	CString m_cOperator;                          //操作员
@@ -151,8 +152,8 @@ public:
 	float m_speed = 0.0f;                             //当前车速
 	//float current_position = 0;                       //当前检测位置
 	float m_previous_position = 0.0;
-	float m_wnd1_range = 100.0f;                   //全局瑕疵显示窗口显示范围：米
-	float m_wnd2_range = 5.0f;
+	float m_wnd1_range = 0.0f;                   //全局瑕疵显示窗口显示范围：米
+	float m_wnd2_range = 0.0f;
 	std::vector<DefectType> m_vDFT;	
 	int total_number_def = 0;                             //当前检测到的瑕疵总数
 	int serious_def_num = 0;                              //严重瑕疵个数
@@ -220,4 +221,7 @@ protected:
 	
 public:
 	CStatic m_sSystem_Statue;
+protected:
+	afx_msg LRESULT OnUpdateControls(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateHistory(WPARAM wParam, LPARAM lParam);
 };

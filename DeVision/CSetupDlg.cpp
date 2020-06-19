@@ -53,7 +53,7 @@ BOOL CSetupDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	CString ctext1, ctext2;
+	CString ctext1, ctext2, ctext3;
 	ctext1.Format(_T("%.2f"), m_wnd1_range);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
 	pedit->SetWindowTextW(ctext1);
@@ -61,6 +61,10 @@ BOOL CSetupDlg::OnInitDialog()
 	ctext2.Format(_T("%.2f"), m_wnd2_range);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
 	pedit->SetWindowTextW(ctext2);
+
+	ctext3.Format(_T("%.2f"), m_k_speed);
+	pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
+	pedit->SetWindowTextW(ctext3);
 
 	CString cthread;
 	for (int i = 1; i < 6; i++)
@@ -105,6 +109,13 @@ void CSetupDlg::OnClose()
 			m_wnd2_range = GetWnd2DisplayRange();
 			CString cstr2;
 			cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
+		}
+
+		if (m_k_speed != GetKSpeed()) {
+			m_k_speed = GetKSpeed();
+			CString cstr2;
+			cstr2.Format(_T("修改速度修正系数为：%.2f"), m_k_speed);
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
 		}
 
@@ -170,6 +181,18 @@ float CSetupDlg::GetWnd2DisplayRange()
 	range = (float)_ttof(str_edit);
 
 	return range;
+}
+
+float CSetupDlg::GetKSpeed()
+{
+	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
+	float range;
+	CString str_edit;
+	pedit->GetWindowTextW(str_edit);
+	range = (float)_ttof(str_edit);
+
+	return range;
+
 }
 
 int CSetupDlg::GetThreadNumber()
@@ -569,6 +592,11 @@ void CSetupDlg::OnBnClickedButtonSystemReset()
 	m_wnd2_range = 5.0f;
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
 	ctext.Format(_T("%.2f"), m_wnd2_range);
+	pedit->SetWindowTextW(ctext);
+
+	m_k_speed = 491.52f;
+	pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
+	ctext.Format(_T("%.2f"), m_k_speed);
 	pedit->SetWindowTextW(ctext);
 
 	m_threadnum = 1;

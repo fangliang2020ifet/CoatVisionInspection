@@ -25,6 +25,7 @@ protected:
 
 public:
 	BOOL ACCEPTED;
+	CString m_logo_name;
 
 private:
 	_ConnectionPtr  m_pConnection;

@@ -82,6 +82,45 @@ void CImageProcess::HalconInitAOP()
 		((HTuple("nil").Append(hv_method)).Append("false")));
 }
 
+void CImageProcess::HalconOpenGPU(HTuple &hv_DeviceHandle)
+{
+	//测试3:GPU加速，支持GPU加速的算子Halcon19.11有82个
+	//GPU加速是先从CPU中将数据拷贝到GPU上处理，处理完成后再将数据从GPU拷贝到CPU上。从CPU到GPU再从GPU到CPU是要花费时间的。
+	//GPU加速一定会比正常的AOP运算速度快吗?不一定!结果取决于显卡的好坏.
+	HTuple  hv_DeviceIdentifiers, hv_i, hv_Nmae;
+
+	//dev_update_off();
+
+
+	HalconCpp::QueryAvailableComputeDevices(&hv_DeviceIdentifiers);
+	hv_DeviceHandle = 0;
+	{
+		HTuple end_val34 = (hv_DeviceIdentifiers.TupleLength()) - 1;
+		HTuple step_val34 = 1;
+		for (hv_i = 0; hv_i.Continue(end_val34, step_val34); hv_i += step_val34)
+		{
+			HalconCpp::GetComputeDeviceInfo(HTuple(hv_DeviceIdentifiers[hv_i]), "name", &hv_Nmae);
+			//     GeForce GTX 1050 Ti      Intel(R) HD Graphics 630 
+			if (0 != (hv_Nmae == HTuple("GeForce GTX 1050 Ti")))
+			{
+				HalconCpp::OpenComputeDevice(HTuple(hv_DeviceIdentifiers[hv_i]), &hv_DeviceHandle);
+				break;
+			}
+		}
+	}
+
+	if (0 != (hv_DeviceHandle != 0))
+	{
+		HalconCpp::SetComputeDeviceParam(hv_DeviceHandle, "asynchronous_execution", "false");
+		HalconCpp::InitComputeDevice(hv_DeviceHandle, "median_image");
+		//init_compute_device (DeviceHandle, 'sub_image')
+		//init_compute_device (DeviceHandle, 'add_image')
+		HalconCpp::ActivateComputeDevice(hv_DeviceHandle);
+	}
+
+	//HalconCpp::DeactivateComputeDevice(hv_DeviceHandle);
+}
+
 BOOL CImageProcess::InitialImageProcess()
 {
 	hMainWnd = AfxGetMainWnd()->m_hWnd;
@@ -94,8 +133,8 @@ BOOL CImageProcess::InitialImageProcess()
 BOOL CImageProcess::BeginProcess()
 {
 	std::string str_path;
-	if (!GetSavePath(str_path)) return FALSE;
-	
+	if (!GetSavePath(str_path)) return FALSE;	
+
 	//创建线程
 	if (!(m_ManageThread = AfxBeginThread(ManageThread, this))) {
 		Win::log("创建图像参考图像处理线程失败");
@@ -1310,6 +1349,7 @@ DefectType CImageProcess::LocateDefectPosition(int camera_number, HObject ho_sel
 	return dtype;
 }
 
+
 //瑕疵等级判定
 int CImageProcess::RankDivide(DefectType dtype)
 {
@@ -1810,6 +1850,10 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 	CImageProcess *pThis = (CImageProcess *)pParam;
 	DWORD dwStop = 0;
 
+	// Halcon 速度优化
+	pThis->HalconInitAOP();
+	//pThis->HalconOpenGPU(pThis->hv_GPU_Handle);
+
 	//判断是否内存中是否已有参考图像
 	pThis->m_referenceImage_OK = pThis->CheckReferenceImageAvilable();
 	BOOL got_ref1 = FALSE, got_ref2 = FALSE, got_ref3 = FALSE, got_ref4 = FALSE;
@@ -1869,8 +1913,6 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 			//四台相机都获取到后保存图像并结束获取
 			if (got_ref1 && got_ref2 && got_ref3 && got_ref4) {
 				pThis->m_referenceImage_OK = TRUE;
-				// Halcon 速度优化
-				pThis->HalconInitAOP();
 
 				if (pThis->SAVE_REFERENCE_IMAGE) {
 					pThis->SaveDefectImage(pThis->m_hi_average1, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image1.bmp");
@@ -1882,17 +1924,18 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 					pThis->SaveDefectImage(pThis->m_hi_deviation3, (HTuple)pThis->m_strPath.c_str() + "ref\\dev3.bmp");
 					pThis->SaveDefectImage(pThis->m_hi_deviation4, (HTuple)pThis->m_strPath.c_str() + "ref\\dev4.bmp");
 				}
+				::SendMessage(pThis->hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 			}
 		}
 
 		//更新队列的总大小
 		pThis->m_total_list_size = pThis->CheckTotalListSize();
 
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 500);
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 400);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
-			if (pThis->TEST_MODEL) {
+			if (pThis->TEST_MODEL && !pThis->SYSTEM_PAUSE) {
 				pThis->LoadImageToQueue();
 				//CString cstr = L"加载测试图像到处理队列";
 				//::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1909,6 +1952,10 @@ UINT CImageProcess::ManageThread(LPVOID pParam)
 			pThis->m_total_list_size = 0;
 			pThis->StopCalculateThreads();
 			pThis->AllCalculateThreadStopped_Event.SetEvent();
+
+			if(pThis->hv_GPU_Handle.Length() > 0)
+				HalconCpp::DeactivateComputeDevice(pThis->hv_GPU_Handle);			
+
 			CString cstr = L"结束处理线程";
 			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			return 0;

@@ -7,14 +7,13 @@
 #include "DeVisionDlg.h"
 #include "afxdialogex.h"
 
-
-
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+//全局变量
 #define WIDTHBYTES(bits) (((bits) + 31) / 32 * 4);
+
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 class CAboutDlg : public CDialogEx
@@ -145,9 +144,11 @@ BEGIN_MESSAGE_MAP(CDeVisionDlg, CDialogEx)
 	ON_WM_CREATE()
 	ON_COMMAND(IDOK, &CDeVisionDlg::OnIdok)
 	ON_COMMAND(IDCANCEL, &CDeVisionDlg::OnIdcancel)
+	ON_COMMAND(ID_REMOTE, &CDeVisionDlg::OnRemote)
 	ON_MESSAGE(WM_LOGGING_MSG, &CDeVisionDlg::OnLoggingMsg)
 	ON_MESSAGE(WM_WARNING_MSG, &CDeVisionDlg::OnWarningMsg)
-	ON_COMMAND(ID_REMOTE, &CDeVisionDlg::OnRemote)
+	ON_MESSAGE(WM_UPDATE_CONTROLS, &CDeVisionDlg::OnUpdateControls)
+	ON_MESSAGE(WM_UPDATE_HISTORY, &CDeVisionDlg::OnUpdateHistory)
 END_MESSAGE_MAP()
 
 
@@ -223,9 +224,9 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//m_inspectDlg.FREE_RUN = FALSE;
 	m_ImgProc.TEST_MODEL = TRUE;
 
-	std::string struser((LPCSTR)CW2A(m_tableDlg.m_wstr_user.c_str()));
-	CString cuser = CA2W(struser.c_str());
-	CString cstr = L"程序已启动，当前操作员：" + cuser;
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+
+	CString cstr = L"程序已启动，当前登录用户:  " + m_logo_name;
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -283,8 +284,10 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (!loginDlg.ACCEPTED)
 		return -1;
-	else
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 		return 0;
+	}
 }
 
 void CDeVisionDlg::OnPaint()
@@ -329,6 +332,7 @@ void CDeVisionDlg::ReadFromRegedit()
 {
 	m_wnd1_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd1 range", 0);
 	m_wnd2_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd2 range", 0);
+	m_inspectDlg.m_k_speed = ((float)AfxGetApp()->GetProfileIntW(L"System Setup", L"speed revise", 0))/100.0f;
 	m_ImgProc.m_threadnum = AfxGetApp()->GetProfileIntW(L"System Setup", L"parallel thread", 0);
 	m_ImgProc.SAVE_REFERENCE_IMAGE = (bool)AfxGetApp()->GetProfileIntW(L"System Setup",L"save reference image", 0);
 	m_strDeffect_Path = (CW2A)AfxGetApp()->GetProfileStringW(L"System Setup",L"deffect path", _T("")).GetBuffer();
@@ -355,6 +359,7 @@ void CDeVisionDlg::WriteToRegedit()
 	//系统设置
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd1 range", (int)m_wnd1_range);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd2 range", (int)m_wnd2_range);
+	AfxGetApp()->WriteProfileInt(L"System Setup", L"speed revise", (int)(m_inspectDlg.m_k_speed * 100));
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"parallel thread", m_ImgProc.m_threadnum);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"save reference image", m_ImgProc.SAVE_REFERENCE_IMAGE);
 	AfxGetApp()->WriteProfileStringW(L"System Setup", L"deffect path", (CA2W)m_strDeffect_Path.c_str());
@@ -422,7 +427,7 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	switch (nIDEvent)
 	{
 	case 1: {
-		UpdateSysDate();
+		UpdateSysStatus();
 		m_tableDlg.m_current_position = m_ImgProc.m_current_position;
 		m_tableDlg.m_wstr_width = m_cProduct_Width;
 		//更新刻度
@@ -435,8 +440,8 @@ void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 	case 2:
 		//更新历史图像，选中历史页面
-		if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
-			m_historyDlg.LoadHistoryImage();
+		//if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
+		//	m_historyDlg.LoadHistoryImage();
 		break;
 	default:
 		break;
@@ -701,7 +706,12 @@ void CDeVisionDlg::DelQueueFromSource()
 		}
 		total_number_def += (int)queue_length;
 		total_def_length += queue_length * 0.01f;
-		//TRACE("QUEUE LENGTH %d\n", queue_length);
+		m_inspectDlg.UpdateDFTinformation(total_number_def, serious_def_num, total_def_length);
+
+
+		if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
+			PostMessage(WM_UPDATE_HISTORY, 0, 0);
+
 	}
 	LeaveCriticalSection(&m_csVecDFT);
 
@@ -924,122 +934,6 @@ float CDeVisionDlg::GetRunTime()
 	return duration;
 }
 
-//更新菜单和按钮
-void CDeVisionDlg::UpdateSysDate()
-{
-	CMenu *pSysMenu = GetSystemMenu(FALSE);
-	ASSERT(pSysMenu != NULL);
-
-	CMenu *pMenu = GetMenu();
-
-	switch (m_system_state)
-	{
-	case SYSTEM_STATE_OFFLINE:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-		m_button_online.SetWindowTextW(_T("在线"));
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
-		if (pMenu){
-			pMenu->EnableMenuItem(ID_SETUP, MF_ENABLED);
-			//pMenu->EnableMenuItem(ID_EXIT, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_LED_SETUP, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_TRIGGER, MF_DISABLED);
-		}
-
-		break;
-	case SYSTEM_STATE_ONLINE:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-		m_button_online.SetWindowTextW(_T("离线"));
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-		if (pMenu){
-			pMenu->EnableMenuItem(ID_SETUP, MF_DISABLED);
-			//pMenu->EnableMenuItem(ID_EXIT, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_LED_SETUP, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_TRIGGER, MF_ENABLED);
-		}
-
-		break;
-	case SYSTEM_STATE_RUN:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
-		if (m_ImgProc.m_referenceImage_OK) {
-			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
-			GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(true);
-		}
-		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-
-		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
-		m_tableDlg.m_open_inprogram.EnableWindow(false);
-		m_historyDlg.m_btn_pre_page.EnableWindow(false);
-		m_historyDlg.m_btn_next_page.EnableWindow(false);
-		if (pMenu) {
-			pMenu->EnableMenuItem(ID_PRODUCT, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
-		}
-
-		break;
-	case SYSTEM_STATE_PAUSE:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-		if(m_ImgProc.m_total_list_size == 0)
-			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
-		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-
-		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
-		m_historyDlg.m_btn_pre_page.EnableWindow(true);
-		m_historyDlg.m_btn_next_page.EnableWindow(true);
-
-
-		break;
-	case SYSTEM_STATE_STOP:
-		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
-		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
-		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-
-		m_inspectDlg.m_btn_changeinfo.EnableWindow(true);
-		m_tableDlg.m_open_inprogram.EnableWindow(true);
-		m_historyDlg.m_btn_pre_page.EnableWindow(true);
-		m_historyDlg.m_btn_next_page.EnableWindow(true);
-		if (pMenu) {
-			pMenu->EnableMenuItem(ID_PRODUCT, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
-		}
-
-		break;
-	default:
-		break;
-	}
-
-	switch (m_screen_state)
-	{
-	case SCREEN_UNLOCK:
-
-		break;
-	case SCREEN_LOCK:
-
-		break;
-	default:
-		break;
-	}
-
-	//更新状态栏
-	UpdateSysStatus();
-	//更新颜色选项
-	UpdateSysColor();
-}
-
 //更新状态栏
 void CDeVisionDlg::UpdateSysStatus()
 {
@@ -1078,6 +972,18 @@ void CDeVisionDlg::UpdateSysStatus()
 			CString cstr_frame_count;
 			cstr_frame_count.Format(L"总帧数：%d 帧(%d)", acquire_frame_count, m_ImgProc.m_total_list_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
+			if (m_ImgProc.m_total_list_size > 250 && m_ImgProc.m_total_list_size < 300) {
+				if (!m_inspectDlg.SLOW_DOWN && m_inspectDlg.DropAcquireSpeed(1)) {
+					m_inspectDlg.SLOW_DOWN = TRUE;
+					CString warning = L"车速过快，已降低纵向检测精度";
+					::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
+				}
+			}
+			else if (m_ImgProc.m_total_list_size >= 300) {
+				AutoStop();
+				CString warning = L"车速过快，已停止检测";
+				::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
+			}			
 		}
 
 		int trash_count = m_inspectDlg.GetTotalTrashCount();
@@ -1128,6 +1034,7 @@ void CDeVisionDlg::UpdateSysStatus()
 	}
 }
 
+//更新颜色选项
 void CDeVisionDlg::UpdateSysColor()
 {
 	pView->m_acolor[0] = m_inspectDlg.m_color1;
@@ -1135,7 +1042,6 @@ void CDeVisionDlg::UpdateSysColor()
 	pView->m_acolor[2] = m_inspectDlg.m_color3;
 	pView->m_acolor[3] = m_inspectDlg.m_color4;
 	pView->m_acolor[4] = m_inspectDlg.m_color5;
-
 }
 
 //创建工作目录
@@ -1248,6 +1154,31 @@ void CDeVisionDlg::ReStartPrepare()
 	return;
 }
 
+//自动停机
+void CDeVisionDlg::AutoStop()
+{
+	CWaitCursor wait;
+
+	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
+		if (!m_ImgProc.TEST_MODEL) {
+			if (m_inspectDlg.Freeze() != 0) return;
+		}
+
+		//等待列表中的图像都处理完成, 之后结束处理线程
+		StopRefrush_Event.SetEvent();
+
+		//结束计算线程
+		m_ImgProc.StopProcess();
+
+		m_tableDlg.TableSaved_Event.ResetEvent();
+
+		m_inspectDlg.m_is_system_pause = FALSE;
+	}
+
+	CString cstr = L"保护性停机";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+}
+
 //界面刷新线程函数
 UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 {
@@ -1262,16 +1193,16 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		pDlg->DelQueueFromSource();
 
 		//设置为 2s 刷新
-		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 1000);
+		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2000);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
 				pDlg->DrawPartial(5);
 				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_wnd1_range);
-				pDlg->m_inspectDlg.UpdateDFTinformation(pDlg->total_number_def,
-					pDlg->serious_def_num,
-					pDlg->total_def_length);
+				//pDlg->m_inspectDlg.UpdateDFTinformation(pDlg->total_number_def,
+				//	pDlg->serious_def_num,
+				//	pDlg->total_def_length);
 				//更新系统状态信息
 				pDlg->m_tableDlg.m_iSystemState = pDlg->m_system_state;
 				CString cwidth;
@@ -1285,13 +1216,11 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		case WAIT_OBJECT_0: {
 			//显示等待界面
 			CLoad  wndLoad;
-			wndLoad.Create(IDB_BITMAP_WAIT);
+			wndLoad.Create(IDB_BITMAP_WAIT0);
 			wndLoad.UpdateWindow();
 			HWND hwnd = wndLoad.GetSafeHwnd();
 
 			if (WAIT_OBJECT_0 == WaitForSingleObject(pDlg->m_ImgProc.AllCalculateThreadStopped_Event, INFINITE)) {
-				//结束历史图像刷新定时器
-				pDlg->KillTimer(2);
 				//保存检测记录
 				EnterCriticalSection(&pDlg->m_csVecDFT);
 				//报表保存路径
@@ -1336,6 +1265,8 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 
 			CString cstr = L"结束界面刷新";
 			::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			::SendMessage(pDlg->hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
+
 			return 0;
 		}
 		default:
@@ -1385,6 +1316,7 @@ void CDeVisionDlg::OnBnClickedButtonGoup()
 	CString cstr = L"向前翻页";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 }
 
 //下一页  按钮
@@ -1398,6 +1330,7 @@ void CDeVisionDlg::OnBnClickedButtonGodown()
 	CString warning = L"向后翻页";
 	::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
 
+	PostMessage(WM_UPDATE_HISTORY, 0, 0);
 }
 
 //开始  按钮
@@ -1424,7 +1357,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 
 			//启动历史页面刷新
 			m_historyDlg.m_pages = 0;
-			SetTimer(2, 1000, 0);
+			//SetTimer(2, 1000, 0);
 		}
 		else {
 			//处理线程启动失败则结束采集
@@ -1438,8 +1371,6 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
 	else {
-		m_inspectDlg.m_is_system_pause = FALSE;
-
 		CString cstr = L"结束暂停，启动检测...";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}	
@@ -1449,6 +1380,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 
 	if(m_system_state != SYSTEM_STATE_RUN)
 		m_system_state = SYSTEM_STATE_RUN;
+
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 }
 
 //停止  按钮
@@ -1469,29 +1402,33 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 		m_ImgProc.StopProcess();
 
 		m_tableDlg.TableSaved_Event.ResetEvent();
-
-		m_inspectDlg.m_is_system_pause = FALSE;
 	}
 
 	CString cstr = L"停止检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 	//m_system_state = SYSTEM_STATE_STOP;
+
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+
 }
 
 //暂停  按钮
 void CDeVisionDlg::OnBnClickedMfcbuttonPause()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	
+{	
 	//暂停检测，相机获取的图像不放入图像列表
-	m_inspectDlg.m_is_system_pause = TRUE;
+	//m_inspectDlg.m_is_system_pause = TRUE;
+	//m_ImgProc.SYSTEM_PAUSE = TRUE;
+
+	if (m_system_state != SYSTEM_STATE_PAUSE)
+		m_system_state = SYSTEM_STATE_PAUSE;
+
 
 	CString cstr = L"暂停检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
-	if(m_system_state != SYSTEM_STATE_PAUSE)
-		m_system_state = SYSTEM_STATE_PAUSE;
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+
 }
 
 //在线  按钮
@@ -1527,7 +1464,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		m_system_state = SYSTEM_STATE_OFFLINE;
 		m_button_online.SetIcon(m_hOfflineIcon);
 	}
-	return;
+	
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+
 }
 
 //锁定按钮
@@ -1573,6 +1512,9 @@ void CDeVisionDlg::OnBnClickedButtonLock()
 		CString cstr = L"系统解除锁定";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
+
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+
 }
 
 //退出按钮
@@ -1597,6 +1539,7 @@ void CDeVisionDlg::OnSetup()
 	CSetupDlg setup;
 	setup.m_wnd1_range = m_wnd1_range;
 	setup.m_wnd2_range = m_wnd2_range;
+	setup.m_k_speed = m_inspectDlg.m_k_speed;
 	setup.m_threadnum = m_ImgProc.m_threadnum;
 	setup.m_bSaveRefImg = m_ImgProc.SAVE_REFERENCE_IMAGE;
 	setup.m_strDeffect_Path = m_strDeffect_Path;
@@ -1608,6 +1551,8 @@ void CDeVisionDlg::OnSetup()
 		ctext.Format(_T("%.2f"), m_wnd1_range);
 		m_edisplay_range.SetWindowTextW(ctext);
 		m_wnd2_range = setup.m_wnd2_range;
+
+		m_inspectDlg.m_k_speed = setup.m_k_speed;
 
 		m_ImgProc.m_threadnum = setup.m_threadnum;
 		m_ImgProc.SAVE_REFERENCE_IMAGE = setup.m_bSaveRefImg;
@@ -1793,3 +1738,137 @@ afx_msg LRESULT CDeVisionDlg::OnWarningMsg(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+//控件更新
+afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
+{
+	CMenu *pSysMenu = GetSystemMenu(FALSE);
+	ASSERT(pSysMenu != NULL);
+
+	CMenu *pMenu = GetMenu();
+
+	switch (m_system_state)
+	{
+	case SYSTEM_STATE_OFFLINE:
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
+		m_button_online.SetWindowTextW(_T("在线"));
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_SETUP, MF_ENABLED);
+			//pMenu->EnableMenuItem(ID_EXIT, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_LED_SETUP, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_TRIGGER, MF_DISABLED);
+		}
+
+		break;
+	case SYSTEM_STATE_ONLINE:
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
+		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
+		m_button_online.SetWindowTextW(_T("离线"));
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_SETUP, MF_DISABLED);
+			//pMenu->EnableMenuItem(ID_EXIT, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_LED_SETUP, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_TRIGGER, MF_ENABLED);
+		}
+
+		break;
+	case SYSTEM_STATE_RUN:
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(false);
+		if (m_ImgProc.m_referenceImage_OK) {
+			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
+			GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(true);
+		}
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
+
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
+		m_tableDlg.m_open_inprogram.EnableWindow(false);
+		m_historyDlg.m_btn_pre_page.EnableWindow(false);
+		m_historyDlg.m_btn_next_page.EnableWindow(false);
+
+		m_inspectDlg.m_is_system_pause = FALSE;
+		m_ImgProc.SYSTEM_PAUSE = FALSE;
+
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_PRODUCT, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
+		}
+
+		break;
+	case SYSTEM_STATE_PAUSE:
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
+		if (m_ImgProc.m_total_list_size == 0)
+			GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
+		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
+
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
+		m_historyDlg.m_btn_pre_page.EnableWindow(true);
+		m_historyDlg.m_btn_next_page.EnableWindow(true);
+
+		m_inspectDlg.m_is_system_pause = TRUE;
+		m_ImgProc.SYSTEM_PAUSE = TRUE;
+
+		break;
+	case SYSTEM_STATE_STOP:
+		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
+		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
+		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
+		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
+
+		m_inspectDlg.m_btn_changeinfo.EnableWindow(true);
+		m_tableDlg.m_open_inprogram.EnableWindow(true);
+		m_historyDlg.m_btn_pre_page.EnableWindow(true);
+		m_historyDlg.m_btn_next_page.EnableWindow(true);
+
+		m_inspectDlg.m_is_system_pause = FALSE;
+		m_ImgProc.SYSTEM_PAUSE = FALSE;
+
+		if (pMenu) {
+			pMenu->EnableMenuItem(ID_PRODUCT, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
+		}
+
+		break;
+	default:
+		break;
+	}
+
+	switch (m_screen_state)
+	{
+	case SCREEN_UNLOCK:
+
+		break;
+	case SCREEN_LOCK:
+
+		break;
+	default:
+		break;
+	}
+
+	//更新颜色选项
+	UpdateSysColor();
+
+	return 0;
+}
+
+//历史图像更新
+afx_msg LRESULT CDeVisionDlg::OnUpdateHistory(WPARAM wParam, LPARAM lParam)
+{
+	m_historyDlg.LoadHistoryImage();
+
+
+	return 0;
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<l>query_available_compute_devices(DeviceIdentifiers)</l>
+<l>DeviceHandle:=0</l>
+<l>for i:=0 to |DeviceIdentifiers|-1 by 1</l>
+<l>    get_compute_device_info(DeviceIdentifiers[i], 'name', Nmae)</l>
+<l>    if (Nmae == 'Intel(R) HD Graphics 630')//根据GPU名称打开GPU   GeForce GTX 1050 Ti      Intel(R) HD Graphics 630</l>
+<l>        open_compute_device(DeviceIdentifiers[i], DeviceHandle)</l>
+<l>        break</l>
+<l>    endif</l>
+<l>endfor</l>
+<c> </c>
+<l>if(DeviceHandle#0)</l>
+<l>    set_compute_device_param (DeviceHandle, 'asynchronous_execution', 'false')</l>
+<l>    init_compute_device(DeviceHandle, 'median_image')</l>
+<l>    *init_compute_device(DeviceHandle, 'sub_image')</l>
+<l>    *init_compute_device(DeviceHandle, 'add_image')</l>
+<l>    activate_compute_device(DeviceHandle)</l>
+<l>endif</l>
+<c></c>
+<l>deactivate_compute_device (DeviceHandle)</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

@@ -38,9 +38,10 @@ public:
 	};
 
 public:
-	BOOL FREE_RUN = FALSE;           //相机内部触发模式
+	BOOL FREE_RUN = FALSE;                       //相机内部触发模式
+	BOOL SLOW_DOWN = FALSE;
 	int SCANE_RATE = 10000; 
-
+	float m_k_speed = 0.0f;                      //  编码器速度较正系数
 	CFont m_font;
 	BOOL m_is_system_pause;
 	BOOL m_camera_system_initialled;
@@ -72,6 +73,8 @@ public:
 	BOOL InitialBoard2();
 	BOOL InitialBoard3();
 	BOOL InitialBoard4();
+	BOOL WriteCoefficientsToBuffer(SapBuffer& buffer);
+	BOOL SetHardwareFilter();
 	BOOL SetCameraParemeter1();
 	BOOL SetCameraParemeter2();
 	BOOL SetCameraParemeter3();
@@ -82,7 +85,7 @@ public:
 	int Grab();
 	void Snap();
 	int Freeze();
-
+	BOOL DropAcquireSpeed(int k);                           //降低采集速度
 	UINT64 GetTotalFrameCount();
 	int GetTotalTrashCount();
 

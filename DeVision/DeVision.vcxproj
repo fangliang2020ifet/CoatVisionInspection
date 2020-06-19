@@ -282,10 +282,10 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\..\ImageTest\11.bmp" />
+    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\icon2.ico" />
     <Image Include="res\loggin.ico" />
     <Image Include="res\login.ico" />
-    <Image Include="res\wait.bmp" />
     <Image Include="res\DeVision.ico" />
     <Image Include="res\exit.ico" />
     <Image Include="res\go_down.ico" />

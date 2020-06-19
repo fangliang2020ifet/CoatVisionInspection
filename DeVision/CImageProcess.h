@@ -51,6 +51,7 @@ public:
 	CEvent StopManage_Event;
 	CEvent AllCalculateThreadStopped_Event;
 
+	BOOL SYSTEM_PAUSE = FALSE;
 	BOOL TEST_MODEL = FALSE;               //使用本地图像运行程序
 	BOOL REDUCE_BLACK_EDGE = FALSE;        //剔除黑边
 	BOOL SAVE_REFERENCE_IMAGE = FALSE;     //是否保存生成的参考图像
@@ -134,6 +135,7 @@ protected:
 	BOOL IsPathExist(const std::string &pathname);
 
 private:
+	HTuple hv_GPU_Handle;
 	int m_camera1_invalid_area;
 	int m_camera4_invalid_area;
 
@@ -156,7 +158,7 @@ private:
 	int  ImageClassification(HObject ho_img);
 	int  RankDivide(DefectType dtype);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
-
+	void HalconOpenGPU(HTuple &hv_DeviceHandle);
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int StandDeviationAlgorithm(int cameraNO, HImage hi_average, HImage hi_deviation,

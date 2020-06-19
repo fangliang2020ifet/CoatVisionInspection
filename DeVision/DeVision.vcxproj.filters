@@ -312,9 +312,6 @@
     <Image Include="res\load.bmp">
       <Filter>资源文件</Filter>
     </Image>
-    <Image Include="res\wait.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="res\icon2.ico">
       <Filter>资源文件</Filter>
     </Image>
@@ -322,6 +319,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\login.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap3.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

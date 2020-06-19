@@ -133,6 +133,7 @@ void CLogin::OnBnClickedOk()
 					access_password = (LPCTSTR)(_bstr_t)varpassword;
 					if (cname == access_name && cpassword == access_password) {
 						ACCEPTED = TRUE;
+						m_logo_name = cname;
 						break;
 					}
 				}

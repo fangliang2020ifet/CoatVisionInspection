@@ -29,6 +29,7 @@ public:
 	BOOL m_bSave_Parameter = FALSE;          //是否保存
 	float m_wnd1_range = 0.0f;
 	float m_wnd2_range = 0.0f;
+	float m_k_speed = 0.0f;                  //速度修正系数
 	int m_threadnum = 1;
 	BOOL m_bSaveRefImg = FALSE;
 
@@ -41,6 +42,7 @@ private:
 
 	float GetWnd1DisplayRange();
 	float GetWnd2DisplayRange();
+	float GetKSpeed();
 	int GetThreadNumber();
 
 	BOOL ConnectAccess();

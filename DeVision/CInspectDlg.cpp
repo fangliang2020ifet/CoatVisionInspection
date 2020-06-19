@@ -401,6 +401,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton1()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON1);
 	m_color1 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton2()
@@ -408,6 +410,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton2()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON2);
 	m_color2 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton3()
@@ -415,6 +419,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton3()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON3);
 	m_color3 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton4()
@@ -422,6 +428,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton4()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON4);
 	m_color4 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton5()
@@ -429,6 +437,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton5()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON5);
 	m_color5 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton6()
@@ -436,6 +446,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton6()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON6);
 	m_color6 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton7()
@@ -443,6 +455,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton7()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON7);
 	m_color7 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 void CInspectDlg::OnBnClickedMfccolorbutton8()
@@ -450,6 +464,8 @@ void CInspectDlg::OnBnClickedMfccolorbutton8()
 	// TODO: 在此添加控件通知处理程序代码
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
 	m_color8 = pcolorbtn->GetColor();
+
+	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
 /************************************相机处理部分**************************************/
@@ -635,6 +651,10 @@ BOOL CInspectDlg::InitialAllBoards()
 	// Create all objects
 	if (!CreateObjects()) { EndDialog(TRUE); return FALSE; }
 
+	//设置板卡的硬件滤波
+	//SetHardwareFilter();
+
+
 	//外部触发时无需设置以下参数
 	if (FREE_RUN) {
 		m_AcqDevice1->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
@@ -781,6 +801,125 @@ BOOL CInspectDlg::InitialBoard4()
 	RecordLogList(L"4#相机初始化");
 
 	return TRUE;
+}
+
+// 板卡：硬件滤波
+typedef struct
+{
+	SapAcquisition::ImageFilterKernelSize param;
+	int dim;
+} FILTER_SIZE_PAIR;
+
+static const FILTER_SIZE_PAIR FILTER_SIZES_PRM[] = { { SapAcquisition::ImageFilterSize1x1, 1 }, { SapAcquisition::ImageFilterSize2x2, 2 },
+{ SapAcquisition::ImageFilterSize3x3, 3 }, { SapAcquisition::ImageFilterSize4x4, 4 }, { SapAcquisition::ImageFilterSize5x5, 5 },
+{ SapAcquisition::ImageFilterSize6x6, 6 }, { SapAcquisition::ImageFilterSize7x7, 7 } };
+
+static int ConvertKernelSizeToInt(SapAcquisition::ImageFilterKernelSize ksize)
+{
+	for (int i = 0; i < sizeof(FILTER_SIZES_PRM) / sizeof(FILTER_SIZES_PRM[0]); i++)
+	{
+		if (FILTER_SIZES_PRM[i].param == ksize)
+			return FILTER_SIZES_PRM[i].dim;
+	}
+
+	return 0;
+}
+
+BOOL CInspectDlg::WriteCoefficientsToBuffer(SapBuffer& buffer)
+{
+	int nWidth = buffer.GetWidth();
+	int nHeight = buffer.GetHeight();
+
+	if (nWidth != nHeight)
+	{
+		MessageBox(_T("The output buffer is not a square matrix."), _T("Image Filter Editor"), MB_ICONERROR);
+		return false;
+	}
+
+	bool bStatus = true;
+	int nValue = 1;
+	for (int iEditLine = 0; (iEditLine < nHeight) && bStatus; iEditLine++)
+	{
+		for (int iEditColumn = 0; iEditColumn < nWidth; iEditColumn++)
+		{
+			//需详细阅读帮助文档和实例程序
+			// write value to the kernel
+			SapDataMono data;
+			data.Set(nValue);
+			if (!buffer.WriteElement(iEditColumn, iEditLine, data))
+			{
+				MessageBox(_T("Failed to write a coefficient to the buffer."), _T("Image Filter Editor"), MB_ICONERROR);
+				bStatus = false;
+				break;
+			}
+		}
+	}
+
+	return bStatus;
+}
+
+BOOL CInspectDlg::SetHardwareFilter()
+{
+	bool bStatus = true; // to prevent leaking resources
+
+	//滤波器大小  3*3
+	int nSize = ConvertKernelSizeToInt((SapAcquisition::ImageFilterKernelSize)3);
+
+	SapBuffer buffer;
+	buffer.SetFormat(SapFormatInt32);
+	buffer.SetHeight(nSize);
+	buffer.SetWidth(nSize);
+
+	if (!buffer.Create())
+	{
+		MessageBox(_T("Failed to create the buffer for the kernel coefficients."), _T("Image Filter Editor"), MB_ICONERROR);
+		return false;
+	}
+
+	if (!WriteCoefficientsToBuffer(buffer))
+	{
+		MessageBox(_T("Failed to write the coefficients to the buffer."), _T("Image Filter Editor"), MB_ICONERROR);
+		bStatus = false;
+	}
+
+	//板卡 一
+	if (bStatus && m_Acq1->IsImageFilterAvailable()) {
+		if (!m_Acq1->IsImageFilterEnabled()) {
+			m_Acq1->EnableImageFilter(1);
+		}
+		if (!m_Acq1->SetImageFilter(0, &buffer))
+			bStatus = false;
+	}
+
+	//板卡 二
+	if (bStatus && m_Acq2->IsImageFilterAvailable()) {
+		if (!m_Acq2->IsImageFilterEnabled()) {
+			m_Acq2->EnableImageFilter(1);
+		}
+		if (!m_Acq2->SetImageFilter(0, &buffer))
+			bStatus = false;
+	}
+
+	//板卡 三
+	if (bStatus && m_Acq3->IsImageFilterAvailable()) {
+		if (!m_Acq3->IsImageFilterEnabled()) {
+			m_Acq3->EnableImageFilter(1);
+		}
+		if (!m_Acq3->SetImageFilter(0, &buffer))
+			bStatus = false;
+	}
+
+	//板卡 四
+	if (bStatus && m_Acq4->IsImageFilterAvailable()) {
+		if (!m_Acq4->IsImageFilterEnabled()) {
+			m_Acq4->EnableImageFilter(1);
+		}
+		if (!m_Acq4->SetImageFilter(0, &buffer))
+			bStatus = false;
+	}
+
+	buffer.Destroy();
+	return bStatus;
 }
 
 BOOL CInspectDlg::SetCameraParemeter1()
@@ -1238,22 +1377,33 @@ void CInspectDlg::RestartInspect()
 	return;
 }
 
+//降低采集卡触发速率
+BOOL CInspectDlg::DropAcquireSpeed(int k)
+{
+	if (!m_Acq1->SetParameter(CORACQ_PRM_SHAFT_ENCODER_DROP, k, TRUE)) return FALSE;
+	if (!m_Acq2->SetParameter(CORACQ_PRM_SHAFT_ENCODER_DROP, k, TRUE)) return FALSE;
+	if (!m_Acq3->SetParameter(CORACQ_PRM_SHAFT_ENCODER_DROP, k, TRUE)) return FALSE;
+	if (!m_Acq4->SetParameter(CORACQ_PRM_SHAFT_ENCODER_DROP, k, TRUE)) return FALSE;
+
+	return TRUE;
+}
+
 //计算编码器速度
 float CInspectDlg::CalculateEncoderSpeed()
 {
+	//设置时间戳    
+	//SapAcquisition::TimeStampShaftEncoder.
+	//The time base is in external line trigger or shaft encoder pulse(before drop / multiply operation).
+	//m_Acq1->SetTimeStampBase(CORACQ_VAL_TIME_BASE_SHAFT_ENCODER);
+
 	SapXferFrameRateInfo* pStats = m_Xfer1->GetFrameRateStatistics();
-
-	if (pStats->IsLiveFrameRateAvailable() && !pStats->IsLiveFrameRateStalled())
-	{
-		float speed = pStats->GetLiveFrameRate() * 491.52f * VERTICAL_PRECISION;//8192 * 60 / 1000      0.05
-		//TRACE("frame_rate = %.1f\n", pStats->GetLiveFrameRate());
-
+	float speed;
+	if (pStats->IsLiveFrameRateAvailable() && !pStats->IsLiveFrameRateStalled()){
+		//      8192 * 60 / 1000      0.05
+		speed = pStats->GetLiveFrameRate() * m_k_speed * VERTICAL_PRECISION;
 		return speed;
 	}
-	else
-	{
-		return 0.0;
-	}
+	else return -1.0f;
 }
 
 //计算总帧数
@@ -1317,16 +1467,13 @@ void CInspectDlg::AcqCallback1(SapXferCallbackInfo *pInfo)
 {
 	CInspectDlg *pDlg = (CInspectDlg*)pInfo->GetContext();
 	int static_count = pDlg->m_static_count1;
-	if (pInfo->IsTrash())
-	{
+	if (pInfo->IsTrash()){
 		pDlg->camera1_trash_count += 1;
 		CString cstr = L"1#相机丢帧";
 		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
-	else
-	{
-		if (pDlg->camera1_show_buffer)
-		{
+	else{
+		if (pDlg->camera1_show_buffer){
 			pDlg->m_View1->Show();
 		}
 
@@ -1393,17 +1540,14 @@ void CInspectDlg::AcqCallback2(SapXferCallbackInfo *pInfo)
 {
 	CInspectDlg *pDlg = (CInspectDlg*)pInfo->GetContext();
 	int static_count = pDlg->m_static_count2;
-	if (pInfo->IsTrash())
-	{
+	if (pInfo->IsTrash()){
 		pDlg->camera2_trash_count += 1;
 		CString cstr = L"2#相机丢帧";
 		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
-	else
-	{
+	else{
 
-		if (pDlg->camera2_show_buffer)
-		{
+		if (pDlg->camera2_show_buffer){
 			pDlg->m_View2->Show();
 		}
 		HImage ho_image;
@@ -1463,17 +1607,14 @@ void CInspectDlg::AcqCallback3(SapXferCallbackInfo *pInfo)
 {
 	CInspectDlg *pDlg = (CInspectDlg*)pInfo->GetContext();
 	int static_count = pDlg->m_static_count3;
-	if (pInfo->IsTrash())
-	{
+	if (pInfo->IsTrash()){
 		pDlg->camera3_trash_count += 1;
 		CString cstr = L"3#相机丢帧";
 		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
-	else
-	{
+	else{
 
-		if (pDlg->camera3_show_buffer)
-		{
+		if (pDlg->camera3_show_buffer){
 			pDlg->m_View3->Show();
 		}
 		HImage ho_image;
@@ -1534,17 +1675,14 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 {
 	CInspectDlg *pDlg = (CInspectDlg*)pInfo->GetContext();
 	int static_count = pDlg->m_static_count4;
-	if (pInfo->IsTrash())
-	{
+	if (pInfo->IsTrash()){
 		pDlg->camera4_trash_count += 1;
 		CString cstr = L"4#相机丢帧";
 		::SendNotifyMessageW(pDlg->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 	}
-	else
-	{
+	else{
 
-		if (pDlg->camera4_show_buffer)
-		{
+		if (pDlg->camera4_show_buffer){
 			pDlg->m_View4->Show();
 		}
 		HImage ho_image;
@@ -1600,7 +1738,3 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		}
 	}
 }
-
-
-
-
