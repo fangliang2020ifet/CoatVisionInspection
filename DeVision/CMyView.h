@@ -33,11 +33,11 @@ public:
 
 	std::vector<DefectType> m_vDefect;
 	COLORREF m_acolor[5];
+	int m_flag_show = 1;
 
 private:
 	float scale_x = 0.0f;
 	float scale_y = 0.0f;
-
 
 	//float m_current_position = 0.0f;   //当前检测位置，单位: 米
 	float m_previous_position = 0.0f;  //前次刷新位置

@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "DeVision.h"
-#include "DeVisionDlg.h"
+//#include "DeVisionDlg.h"
 #include "CImageProcess.h"
 #include "Log.h"
 

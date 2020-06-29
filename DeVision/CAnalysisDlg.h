@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "COpenGLControl.h"
 
 // CAnalysisDlg 对话框
 
@@ -24,7 +25,10 @@ protected:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
+private:
+	COpenGLControl m_oglWindow;
 
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedButtonReset();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

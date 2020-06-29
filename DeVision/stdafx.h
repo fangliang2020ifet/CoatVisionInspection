@@ -72,6 +72,7 @@
 #include <afxwin.h>
 #include <afxcontrolbars.h>
 #include <afxcontrolbars.h>
+#include <afxwin.h>
 
 
 //#include <afxdb.h>

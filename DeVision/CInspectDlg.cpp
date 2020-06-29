@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "DeVision.h"
-#include "DeVisionDlg.h"
+//#include "DeVisionDlg.h"
 #include "CInspectDlg.h"
 #include "afxdialogex.h"
 
@@ -91,6 +91,7 @@ BEGIN_MESSAGE_MAP(CInspectDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON6, &CInspectDlg::OnBnClickedMfccolorbutton6)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON7, &CInspectDlg::OnBnClickedMfccolorbutton7)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON8, &CInspectDlg::OnBnClickedMfccolorbutton8)
+	ON_BN_CLICKED(IDC_CHECK1, &CInspectDlg::OnBnClickedCheck1)
 END_MESSAGE_MAP()
 
 
@@ -392,6 +393,20 @@ void CInspectDlg::OnBnClickedButton1()
 		m_eWidth.SetWindowTextW(productinfo.m_ctrWIDTH);
 		m_eModel.SetWindowTextW(productinfo.m_ctrID);
 		m_eOperator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+	}
+}
+
+//选中类型显示
+void CInspectDlg::OnBnClickedCheck1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CButton * check = (CButton*)GetDlgItem(IDC_CHECK1);
+	if (check->GetCheck()) {
+		CString cstr = L"1";
+		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
+	} else {
+		CString cstr = L"0";
+		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
 	}
 }
 
@@ -706,7 +721,7 @@ BOOL CInspectDlg::InitialBoard1()
 
 	//初始化相机参数
 	if (!SetCameraParemeter1()) {
-		Win::log("1#相机设置失败，请检查线路和电源连接");
+		//Win::log("1#相机设置失败，请检查线路和电源连接");
 		RecordWarning(L"1#相机设置失败，请检查线路和电源连接");
 		return FALSE;
 	}
@@ -715,7 +730,7 @@ BOOL CInspectDlg::InitialBoard1()
 	m_View1 = new SapView(m_Buffers1);
 
 
-	Win::log("1#相机初始化完成");
+	//Win::log("1#相机初始化完成");
 	RecordLogList(L"1#相机初始化");
 
 	return TRUE;
@@ -735,7 +750,7 @@ BOOL CInspectDlg::InitialBoard2()
 
 	//初始化相机参数
 	if (!SetCameraParemeter2()) {
-		Win::log("2#相机设置失败，请检查线路和电源连接");
+		//Win::log("2#相机设置失败，请检查线路和电源连接");
 		RecordWarning(L"2#相机设置失败，请检查线路和电源连接");
 		return FALSE;
 	}
@@ -743,7 +758,7 @@ BOOL CInspectDlg::InitialBoard2()
 	// Define other objects
 	m_View2 = new SapView(m_Buffers2);
 
-	Win::log("2#相机初始化完成");
+	//Win::log("2#相机初始化完成");
 	RecordLogList(L"2#相机初始化");
 
 	return TRUE;
@@ -762,7 +777,7 @@ BOOL CInspectDlg::InitialBoard3()
 
 	//初始化相机参数
 	if (!SetCameraParemeter3()) {
-		Win::log("3#相机设置失败，请检查线路和电源连接");
+		//Win::log("3#相机设置失败，请检查线路和电源连接");
 		RecordWarning(L"3#相机设置失败，请检查线路和电源连接");
 		return FALSE;
 	}
@@ -770,7 +785,7 @@ BOOL CInspectDlg::InitialBoard3()
 	// Define other objects
 	m_View3 = new SapView(m_Buffers3);
 
-	Win::log("3#相机初始化完成");
+	//Win::log("3#相机初始化完成");
 	RecordLogList(L"3#相机初始化");
 
 	return TRUE;
@@ -789,7 +804,7 @@ BOOL CInspectDlg::InitialBoard4()
 
 	//初始化相机参数
 	if (!SetCameraParemeter4()) {
-		Win::log("4#相机设置失败，请检查线路和电源连接");
+		//Win::log("4#相机设置失败，请检查线路和电源连接");
 		RecordWarning(L"4#相机设置失败，请检查线路和电源连接");
 		return FALSE;
 	}
@@ -797,7 +812,7 @@ BOOL CInspectDlg::InitialBoard4()
 	// Define other objects
 	m_View4 = new SapView(m_Buffers4);
 
-	Win::log("4#相机初始化完成");
+	//Win::log("4#相机初始化完成");
 	RecordLogList(L"4#相机初始化");
 
 	return TRUE;
@@ -1216,7 +1231,7 @@ BOOL CInspectDlg::CreateObjects()
 		return FALSE;
 	}
 
-	Win::log("创建缓存对象成功");
+	//Win::log("创建缓存对象成功");
 	RecordLogList(L"创建缓存对象成功");
 
 	return TRUE;
@@ -1265,7 +1280,7 @@ BOOL CInspectDlg::DestroyObjects()
 	if (m_Acq4 && *m_Acq4) m_Acq4->Destroy();
 
 
-	Win::log("释放缓存对象成功");
+	//Win::log("释放缓存对象成功");
 	RecordLogList(L"释放缓存对象成功");
 
 	return TRUE;
@@ -1304,22 +1319,22 @@ int CInspectDlg::Grab()
 void CInspectDlg::Snap()
 {
 	if (!m_Xfer1->Snap()) {
-		Win::log("1#相机获取图像失败");
+		//Win::log("1#相机获取图像失败");
 		RecordWarning(L"1#相机获取图像失败");
 		return;
 	}
 	if (!m_Xfer2->Snap()) {
-		Win::log("2#相机获取图像失败");
+		//Win::log("2#相机获取图像失败");
 		RecordWarning(L"2#相机获取图像失败");
 		return;
 	}
 	if (!m_Xfer3->Snap()) {
-		Win::log("3#相机获取图像失败");
+		//Win::log("3#相机获取图像失败");
 		RecordWarning(L"3#相机获取图像失败");
 		return;
 	}
 	if (!m_Xfer4->Snap()) {
-		Win::log("4#相机获取图像失败");
+		//Win::log("4#相机获取图像失败");
 		RecordWarning(L"4#相机获取图像失败");
 		return;
 	}
@@ -1738,3 +1753,5 @@ void CInspectDlg::AcqCallback4(SapXferCallbackInfo *pInfo)
 		}
 	}
 }
+
+

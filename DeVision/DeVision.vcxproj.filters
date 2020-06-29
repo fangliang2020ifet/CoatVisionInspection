@@ -168,6 +168,9 @@
     <ClInclude Include="ImportHalconCpp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="COpenGLControl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeVision.cpp">
@@ -240,6 +243,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CRemote.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="COpenGLControl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

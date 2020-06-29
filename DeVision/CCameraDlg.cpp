@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "DeVision.h"
-#include "DeVisionDlg.h"
+//#include "DeVisionDlg.h"
 #include "CCameraDlg.h"
 #include "afxdialogex.h"
 #include <string>
@@ -15,7 +15,6 @@ IMPLEMENT_DYNAMIC(CCameraDlg, CDialogEx)
 CCameraDlg::CCameraDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_CAMERA, pParent)
 {
-
 }
 
 CCameraDlg::~CCameraDlg()
@@ -27,7 +26,6 @@ CCameraDlg::~CCameraDlg()
 		if (mUart.isConnected())
 			mUart.ClosePort();
 	}
-
 }
 
 void CCameraDlg::DoDataExchange(CDataExchange* pDX)
@@ -51,7 +49,6 @@ void CCameraDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUFFER_SIZE, m_buffer_size);
 }
 
-
 BEGIN_MESSAGE_MAP(CCameraDlg, CDialogEx)
 
 	ON_BN_CLICKED(IDC_BUTTON_OPENUART, &CCameraDlg::OnBnClickedButtonOpenuart)
@@ -66,7 +63,6 @@ BEGIN_MESSAGE_MAP(CCameraDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SET_EXPOSURE, &CCameraDlg::OnBnClickedButtonSetExposure)
 END_MESSAGE_MAP()
 
-
 // CCameraDlg 消息处理程序
 
 BOOL CCameraDlg::OnInitDialog()
@@ -80,15 +76,14 @@ BOOL CCameraDlg::OnInitDialog()
 
 	//***********************相机******************************
 	//获取父窗口指针
-	CDeVisionDlg * pMainDlg = (CDeVisionDlg*)this->GetParent();
-	pInspectDlg = &(pMainDlg->m_inspectDlg);
+	//CDeVisionDlg * pMainDlg = (CDeVisionDlg*)this->GetParent();
+	//pInspectDlg = &(pMainDlg->m_inspectDlg);
 
 	m_camera1_selected.SetCheck(TRUE);
 	//初始化图像显示窗
 	//m_Image_Wnd_Initialized = InitializeCWndAndView();
 
 	SetTimer(1, 1000, NULL);
-
 
 	//***********************光源******************************
 	InitialUartPort();
@@ -99,12 +94,11 @@ BOOL CCameraDlg::OnInitDialog()
 
 	CSliderCtrl* pslider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER_LIGHT);
 	pslider->SetRange(0, 255, 0);
-	pslider->SetPos(150);	
+	pslider->SetPos(150);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
-
 
 void CCameraDlg::OnDestroy()
 {
@@ -122,7 +116,6 @@ void CCameraDlg::OnDestroy()
 		pInspectDlg->camera2_show_buffer = FALSE;
 		pInspectDlg->camera3_show_buffer = FALSE;
 		pInspectDlg->camera4_show_buffer = FALSE;
-
 	}
 
 	//m_ImageWnd1.DestroyWindow();
@@ -138,8 +131,6 @@ void CCameraDlg::OnDestroy()
 	//	pInspectDlg->m_View3->Destroy();
 	//if (pInspectDlg->m_View4 && *pInspectDlg->m_View4)
 	//	pInspectDlg->m_View4->Destroy();
-
-
 }
 
 void CCameraDlg::OnEndSession(BOOL bEnding)
@@ -152,9 +143,7 @@ void CCameraDlg::OnEndSession(BOOL bEnding)
 		// If ending the session, free the resources.
 		OnDestroy();
 	}
-
 }
-
 
 void CCameraDlg::OnSize(UINT nType, int cx, int cy)
 {
@@ -201,7 +190,6 @@ void CCameraDlg::OnSize(UINT nType, int cx, int cy)
 	//	//rWnd.bottom = rClient.bottom - 5;
 	//	m_ImageWnd4.MoveWindow(rWnd);
 	//}
-
 }
 
 void CCameraDlg::InitialUartPort()
@@ -247,7 +235,6 @@ void CCameraDlg::InitialUartPort()
 	pComBox->SetCurSel(0);
 
 	LoadRegConfig();
-
 }
 
 //写入注册表数据
@@ -370,7 +357,7 @@ DCB CCameraDlg::GetUartConfigDCB(void)
 
 	pCombox = (CComboBox*)GetDlgItem(IDC_COMBO_STOP);
 	configDCB.StopBits = pCombox->GetCurSel();
-	   
+
 	////设定串口参数
 	//configDCB.BaudRate = _ttoi("19200");
 	//configDCB.Parity = 0;
@@ -397,11 +384,8 @@ void CCameraDlg::OnChangeEditTxData(CStringA strtmp)
 		// 自动在AT指令后加上换行符
 		//strtmp.Append("\r\n");
 		AsyncSend(strtmp);
-
 	}
-
 }
-
 
 void CCameraDlg::OnBnClickedButtonOpenuart()
 {
@@ -422,7 +406,6 @@ void CCameraDlg::OnBnClickedButtonOpenuart()
 	GetDlgItem(IDC_BUTTON4)->EnableWindow(true);
 }
 
-
 void CCameraDlg::OnBnClickedButtonCloseuart()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -435,7 +418,6 @@ void CCameraDlg::OnBnClickedButtonCloseuart()
 
 	GetDlgItem(IDC_BUTTON_OPENUART)->EnableWindow(true);
 	GetDlgItem(IDC_BUTTON_CLOSEUART)->EnableWindow(false);
-
 }
 
 //常亮
@@ -450,7 +432,6 @@ void CCameraDlg::OnBnClickedButton3()
 
 		CString cstr = L"光源设置为常亮";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
 	}
 }
 
@@ -466,11 +447,8 @@ void CCameraDlg::OnBnClickedButton4()
 
 		CString cstr = L"光源设置为常灭";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
 	}
-
 }
-
 
 void CCameraDlg::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -535,11 +513,10 @@ void CCameraDlg::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 			}
 		}
 		*/
-	
+
 		CString cstr;
 		cstr.Format(_T("设置光源亮度为： %d"), position);
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
 	}
 
 	*pResult = 0;
@@ -555,7 +532,6 @@ BOOL CCameraDlg::InitializeCWndAndView()
 	//	m_ImageWnd2.AttachSapView(pInspectDlg->m_View2);
 	//if (pInspectDlg->m_View3) 	m_ImageWnd3.AttachSapView(pInspectDlg->m_View3);
 	//if (pInspectDlg->m_View4) 	m_ImageWnd4.AttachSapView(pInspectDlg->m_View4);
-
 
 	//// Create view object
 	//if (pInspectDlg->m_View1)
@@ -604,7 +580,7 @@ void CCameraDlg::OnTimer(UINT_PTR nIDEvent)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 1)
 	{
-		if(m_Image_Wnd_Initialized) 		UpdateCameraParameter();
+		if (m_Image_Wnd_Initialized) 		UpdateCameraParameter();
 	}
 
 	__super::OnTimer(nIDEvent);
@@ -631,13 +607,9 @@ void CCameraDlg::GetCameraParameter(SapAcqDevice* m_AcqDevice)
 
 			m_AcqDevice->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
 			camera_exposure = exposureTime;
-			m_exposuretime_display.SetWindowTextW(camera_exposure);					
-
+			m_exposuretime_display.SetWindowTextW(camera_exposure);
 		}
-
-		
 	}
-
 }
 
 //更新帧率
@@ -657,9 +629,8 @@ void CCameraDlg::GetFrameRate(SapTransfer *m_Xfer)
 		{
 			m_current_frame.SetWindowTextW(_T("N/A"));
 		}
-
 	}
-} 
+}
 
 //获取图像尺寸
 void CCameraDlg::GetBufferSize(SapBuffer * m_buffer)
@@ -675,7 +646,6 @@ void CCameraDlg::GetBufferSize(SapBuffer * m_buffer)
 	csize = csize + cheight;
 
 	m_buffer_size.SetWindowTextW(csize);
-
 }
 
 void CCameraDlg::UpdateCameraParameter()
@@ -718,8 +688,6 @@ void CCameraDlg::UpdateCameraParameter()
 	GetFrameRate(m_pXfer);
 	//获取图像尺寸
 	GetBufferSize(pInspectDlg->m_Buffers1);
-
-
 }
 
 //设置曝光时间
@@ -748,7 +716,6 @@ void CCameraDlg::OnBnClickedButtonSetExposure()
 				}
 			}
 		}
-
 	}
 	else	if (m_camera2_selected.GetCheck())
 	{
@@ -768,7 +735,6 @@ void CCameraDlg::OnBnClickedButtonSetExposure()
 				}
 			}
 		}
-
 	}
 	else	if (m_camera3_selected.GetCheck())
 	{

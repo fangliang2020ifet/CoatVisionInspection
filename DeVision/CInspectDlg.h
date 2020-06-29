@@ -7,7 +7,6 @@
 #include "SapClassBasic.h"
 #include "SapClassGui.h"
 
-
 // CInspectDlg 对话框
 
 class CInspectDlg : public CDialogEx, public CImageExWndEventHandler, public SapManager
@@ -19,12 +18,12 @@ public:
 
 	virtual ~CInspectDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_DIALOG_INSPECT };
 #endif
 
-// Enumerations
+	// Enumerations
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
@@ -40,7 +39,7 @@ public:
 public:
 	BOOL FREE_RUN = FALSE;                       //相机内部触发模式
 	BOOL SLOW_DOWN = FALSE;
-	int SCANE_RATE = 10000; 
+	int SCANE_RATE = 10000;
 	float m_k_speed = 0.0f;                      //  编码器速度较正系数
 	CFont m_font;
 	BOOL m_is_system_pause;
@@ -49,6 +48,7 @@ public:
 	BOOL m_camera2_thread_alive = FALSE;
 	BOOL m_camera3_thread_alive = FALSE;
 	BOOL m_camera4_thread_alive = FALSE;
+
 
 	COLORREF m_color1;
 	COLORREF m_color2;
@@ -124,7 +124,7 @@ public:
 	BOOL camera3_show_buffer = FALSE;
 	BOOL camera4_show_buffer = FALSE;
 
-//自动搜索板卡和相机
+	//自动搜索板卡和相机
 protected:
 	BOOL InitServer();
 	std::vector<CString> m_vServerName;
@@ -157,7 +157,7 @@ protected:
 	char configFilename2[MAX_PATH];
 	char configFilename3[MAX_PATH];
 	char configFilename4[MAX_PATH];
-	char acqDeviceName1[CORSERVER_MAX_STRLEN] = "CameraLink_1";  
+	char acqDeviceName1[CORSERVER_MAX_STRLEN] = "CameraLink_1";
 	char acqDeviceName2[CORSERVER_MAX_STRLEN] = "CameraLink_2";
 	char acqDeviceName3[CORSERVER_MAX_STRLEN] = "CameraLink_3";   //CameraLink的名称有颠倒，3，4
 	char acqDeviceName4[CORSERVER_MAX_STRLEN] = "CameraLink_4";
@@ -200,4 +200,5 @@ public:
 	afx_msg void OnBnClickedMfccolorbutton6();
 	afx_msg void OnBnClickedMfccolorbutton7();
 	afx_msg void OnBnClickedMfccolorbutton8();
+	afx_msg void OnBnClickedCheck1();
 };

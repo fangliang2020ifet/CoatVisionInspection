@@ -60,8 +60,8 @@ public:
 	//算法参数
 	int m_k_normal_distribution = 5;       //概率密度(3 = 92%, 5 = 98%)，标准差的倍数
 	int m_median_filter_size = 1;          //滤波器大小,直接关系检出率,并且size越大计算速度越慢
-	float m_fMin_Radius = 0.0f;	           //半径删选
-	float m_fMax_Radius = 0.0f;
+	float m_fMin_Radius = 0.05f;	           //半径删选
+	float m_fMax_Radius = 50.0f;
 	int m_threadnum = 1;                    //单相机处理的线程数量
 
 	BOOL InitialImageProcess();
