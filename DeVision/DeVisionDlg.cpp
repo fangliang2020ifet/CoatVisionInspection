@@ -271,17 +271,16 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 
 	// TODO:  在此添加您专用的创建代码
-
 	//登录窗口
-	//CLogin loginDlg;
-	//loginDlg.DoModal();
+	CLogin loginDlg;
+	loginDlg.DoModal();
 
-	//if (!loginDlg.ACCEPTED)
-	//	return -1;
-	//else {
-	//	m_logo_name = loginDlg.m_logo_name;
-	//	return 0;
-	//}
+	if (!loginDlg.ACCEPTED)
+		return -1;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
+		return 0;
+	}
 
 	return 0;
 }

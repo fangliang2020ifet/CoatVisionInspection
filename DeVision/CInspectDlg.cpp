@@ -329,20 +329,12 @@ void CInspectDlg::RecordWarning(const std::wstring& str)
 
 void CInspectDlg::RecordWarning(int test, CString cstr)
 {
-	CString cstr_log;
-	CString strSpace, strNextLine, strTime;
-	strSpace.Format(_T("%s"), _T("  "));
-	strNextLine.Format(_T("%s"), _T("\r\n"));
-
+	CString clog, ctime;
 	CTime tm; tm = CTime::GetCurrentTime();
-	strTime = tm.Format("%X:");
-	cstr_log += strTime;
-	cstr_log += strSpace;
-	cstr_log += cstr;
-	cstr_log += strNextLine;
-
-	m_listWarning.AddString(cstr_log);
-	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	ctime = tm.Format("[%X] ");
+	clog.Format(L"\r\n");
+	m_listWarning.AddString(ctime + cstr + clog);
+	m_listWarning.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 void CInspectDlg::RecordLogList(const std::wstring& str)
@@ -366,19 +358,11 @@ void CInspectDlg::RecordLogList(const std::wstring& str)
 
 void CInspectDlg::RecordLogList(int test, CString cstr)
 {
-	CString cstr_log;
-	CString strSpace, strNextLine, strTime;
-	strSpace.Format(_T("%s"), _T("  "));
-	strNextLine.Format(_T("%s"), _T("\r\n"));
-
+	CString clog, ctime;
 	CTime tm; tm = CTime::GetCurrentTime();
-	strTime = tm.Format("%X:");
-	cstr_log += strTime;
-	cstr_log += strSpace;
-	cstr_log += cstr;
-	cstr_log += strNextLine;
-
-	m_listLog.AddString(cstr_log);
+	ctime = tm.Format("[%X] ");
+	clog.Format(L"\r\n");
+	m_listLog.AddString(ctime + cstr + clog);
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
