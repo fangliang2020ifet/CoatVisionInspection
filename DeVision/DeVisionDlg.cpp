@@ -464,6 +464,17 @@ void CDeVisionDlg::OnTcnSelchangeTabDialog(NMHDR *pNMHDR, LRESULT *pResult)
 	pDialog[m_CurSelTab]->ShowWindow(SW_HIDE);
 	//得到新的页面索引
 	m_CurSelTab = m_tab.GetCurSel();
+	switch (m_CurSelTab)
+	{
+	case 0:
+		break;
+	case 1:
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
 	//把新的页面显示出来
 	pDialog[m_CurSelTab]->ShowWindow(SW_SHOW);
 

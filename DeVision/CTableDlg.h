@@ -26,12 +26,12 @@ public:
 	int m_iSystemState;                      //系统状态
 	std::string m_DFT_img_path;
 	//std::wstring m_save_path = L"D:\\report\\";
-	std::wstring m_save_path;
-	std::wstring m_wstr_num;               //批号
-	std::wstring m_wstr_id;                //型号
-	std::wstring m_wstr_width;             //宽度
-	std::wstring m_wstr_user;              //操作员
-	std::wstring m_wstr_speed;             //平均速度
+	std::wstring m_save_path = L"D:\\report\\";
+	std::wstring m_wstr_num = L"NO1";               //批号
+	std::wstring m_wstr_id = L"PET-1";                //型号
+	std::wstring m_wstr_width = L"1650";             //宽度
+	std::wstring m_wstr_user = L"张三";              //操作员
+	std::wstring m_wstr_speed = L"20";             //平均速度
 	int m_product_rank = 0;                //产品评级
 	int m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
 	int m_serious_num = 0;                 //严重缺陷数目
