@@ -33,7 +33,7 @@ public:
 
 	std::vector<DefectType> m_vDefect;
 	COLORREF m_acolor[5];
-	int m_flag_show = 1;
+	bool m_bFlagShow[8];
 
 private:
 	float scale_x = 0.0f;

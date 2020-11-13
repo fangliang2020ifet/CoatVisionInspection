@@ -17,6 +17,8 @@ CMyView::CMyView()
 	//m_acolor[3] = RGB(255, 255, 0);
 	//m_acolor[4] = RGB(225, 35, 225);
 
+	for (INT i = 0; i < 8; i++) {m_bFlagShow[i] = true;}
+
 	m_vDefect.clear();
 }
 
@@ -138,28 +140,38 @@ void CMyView::CreateFlag(CDC &mDC, int x, int y, int kind)
 	switch (kind)
 	{
 	case 0: {
-		mDC.SetBkColor(m_acolor[0]);
-		mDC.TextOutW(x, y, _T("A"));
+		if (m_bFlagShow[0]) {
+			mDC.SetBkColor(m_acolor[0]);
+			mDC.TextOutW(x, y, _T("A"));
+		}
 		break;
 	}
 	case 1: {
-		mDC.SetBkColor(m_acolor[1]);
-		mDC.TextOutW(x, y, _T("B"));
+		if (m_bFlagShow[1]) {
+			mDC.SetBkColor(m_acolor[1]);
+			mDC.TextOutW(x, y, _T("B"));
+		}
 		break;
 	}
 	case 2: {
-		mDC.SetBkColor(m_acolor[2]);
-		mDC.TextOutW(x, y, _T("C"));
+		if (m_bFlagShow[2]) {
+			mDC.SetBkColor(m_acolor[2]);
+			mDC.TextOutW(x, y, _T("C"));
+		}
 		break;
 	}
 	case 3: {
-		mDC.SetBkColor(m_acolor[3]);
-		mDC.TextOutW(x, y, _T("D"));
+		if (m_bFlagShow[3]) {
+			mDC.SetBkColor(m_acolor[3]);
+			mDC.TextOutW(x, y, _T("D"));
+		}
 		break;
 	}
 	case 4: {
-		mDC.SetBkColor(m_acolor[4]);
-		mDC.TextOutW(x, y, _T("E"));
+		if (m_bFlagShow[4]) {
+			mDC.SetBkColor(m_acolor[4]);
+			mDC.TextOutW(x, y, _T("E"));
+		}
 		break;
 	}
 	default: {
@@ -228,7 +240,7 @@ void CMyView::AddFlag(CDC &mDC, int test)
 			if (y_coord > wnd_height * wnd_scroll_scale_size)
 				break;
 
-			if(m_flag_show != 0) CreateFlag(mDC, x_coord, y_coord, temp_def.type);
+			CreateFlag(mDC, x_coord, y_coord, temp_def.type);
 		}
 	}
 }

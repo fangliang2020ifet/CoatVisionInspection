@@ -214,6 +214,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//主界面信息刷新定时器
 	SetTimer(1, 1000, 0);
 
+	InitialImageAcquire();
 	//m_inspectDlg.FREE_RUN = FALSE;
 	m_ImgProc.TEST_MODEL = TRUE;
 
@@ -324,7 +325,7 @@ void CDeVisionDlg::ReadFromRegedit()
 {
 	m_wnd1_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd1 range", 0);
 	m_wnd2_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd2 range", 0);
-	m_inspectDlg.m_k_speed = ((float)AfxGetApp()->GetProfileIntW(L"System Setup", L"speed revise", 0)) / 100.0f;
+	m_ImgAcq.m_k_speed = ((float)AfxGetApp()->GetProfileIntW(L"System Setup", L"speed revise", 0)) / 100.0f;
 	m_ImgProc.m_threadnum = AfxGetApp()->GetProfileIntW(L"System Setup", L"parallel thread", 0);
 	m_ImgProc.SAVE_REFERENCE_IMAGE = (bool)AfxGetApp()->GetProfileIntW(L"System Setup", L"save reference image", 0);
 	m_strDeffect_Path = (CW2A)AfxGetApp()->GetProfileStringW(L"System Setup", L"deffect path", _T("")).GetBuffer();
@@ -351,7 +352,7 @@ void CDeVisionDlg::WriteToRegedit()
 	//系统设置
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd1 range", (int)m_wnd1_range);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd2 range", (int)m_wnd2_range);
-	AfxGetApp()->WriteProfileInt(L"System Setup", L"speed revise", (int)(m_inspectDlg.m_k_speed * 100));
+	AfxGetApp()->WriteProfileInt(L"System Setup", L"speed revise", (int)(m_ImgAcq.m_k_speed * 100));
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"parallel thread", m_ImgProc.m_threadnum);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"save reference image", m_ImgProc.SAVE_REFERENCE_IMAGE);
 	AfxGetApp()->WriteProfileStringW(L"System Setup", L"deffect path", (CA2W)m_strDeffect_Path.c_str());
@@ -535,6 +536,16 @@ void CDeVisionDlg::TabDlgResize()
 	m_analysisDlg.MoveWindow(&rc);
 	m_tableDlg.MoveWindow(&rc);
 	m_historyDlg.MoveWindow(&rc);
+}
+
+//图像采集系统初始化
+void CDeVisionDlg::InitialImageAcquire()
+{
+	m_ImgAcq.m_pWndHandle = &m_inspectDlg;
+	for (int i = 0; i < 4; i++) {
+		m_ImgAcq.m_pImageWnd[i] = &m_inspectDlg.m_ImageWnd[i];
+	}
+
 }
 
 //状态栏初始化
@@ -734,28 +745,38 @@ void CDeVisionDlg::CreateFlag(CDC &mDC, int x, int y, int kind)
 	switch (kind)
 	{
 	case 0: {
-		mDC.SetBkColor(pView->m_acolor[0]);
-		mDC.TextOutW(x, y, _T("A"));
+		if (pView->m_bFlagShow[0]) {
+			mDC.SetBkColor(pView->m_acolor[0]);
+			mDC.TextOutW(x, y, _T("A"));
+		}
 		break;
 	}
 	case 1: {
-		mDC.SetBkColor(pView->m_acolor[1]);
-		mDC.TextOutW(x, y, _T("B"));
+		if (pView->m_bFlagShow[1]) {
+			mDC.SetBkColor(pView->m_acolor[1]);
+			mDC.TextOutW(x, y, _T("B"));
+		}
 		break;
 	}
 	case 2: {
-		mDC.SetBkColor(pView->m_acolor[2]);
-		mDC.TextOutW(x, y, _T("C"));
+		if (pView->m_bFlagShow[2]) {
+			mDC.SetBkColor(pView->m_acolor[2]);
+			mDC.TextOutW(x, y, _T("C"));
+		}
 		break;
 	}
 	case 3: {
-		mDC.SetBkColor(pView->m_acolor[3]);
-		mDC.TextOutW(x, y, _T("D"));
+		if (pView->m_bFlagShow[3]) {
+			mDC.SetBkColor(pView->m_acolor[3]);
+			mDC.TextOutW(x, y, _T("D"));
+		}
 		break;
 	}
 	case 4:
-		mDC.SetBkColor(pView->m_acolor[4]);
-		mDC.TextOutW(x, y, _T("E"));
+		if (pView->m_bFlagShow[4]) {
+			mDC.SetBkColor(pView->m_acolor[4]);
+			mDC.TextOutW(x, y, _T("E"));
+		}
 		break;
 	default: {
 		mDC.SetBkColor(RGB(0, 0, 0));
@@ -805,7 +826,7 @@ void CDeVisionDlg::DrawPartial(int test)
 			if (y_coord > wnd_height)
 				break;
 			//创建标记
-			if(m_flag_show != 0) CreateFlag(MemDC, x_coord, y_coord, temp_def.type);
+			CreateFlag(MemDC, x_coord, y_coord, temp_def.type);
 			// 刷新控件显示
 			if (itvalue == 0) {
 				CString cwidth, cposition;
@@ -952,7 +973,7 @@ void CDeVisionDlg::UpdateSysStatus()
 		}
 
 		if (!m_ImgProc.TEST_MODEL)
-			m_speed = m_inspectDlg.CalculateEncoderSpeed();
+			m_speed = m_ImgAcq.CalculateEncoderSpeed();
 		if (m_speed > 0) {
 			CString cstr_speed;
 			cstr_speed.Format(L"当前速度：%.2f 米/分钟", m_speed);
@@ -960,14 +981,15 @@ void CDeVisionDlg::UpdateSysStatus()
 		}
 
 		//总处理数量
-		UINT64 acquire_frame_count = m_inspectDlg.GetTotalFrameCount();
+		UINT64 acquire_frame_count = m_ImgAcq.GetTotalFrameCount();
 		if (acquire_frame_count >= 0) {
 			CString cstr_frame_count;
 			cstr_frame_count.Format(L"总帧数：%d 帧(%d)", acquire_frame_count, m_ImgProc.m_total_list_size);
 			m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
 			if (m_ImgProc.m_total_list_size > 250 && m_ImgProc.m_total_list_size < 300) {
-				if (!m_inspectDlg.SLOW_DOWN && m_inspectDlg.DropAcquireSpeed(1)) {
-					m_inspectDlg.SLOW_DOWN = TRUE;
+				if (!m_ImgAcq.SLOW_DOWN) {
+					m_ImgAcq.DropAcquireSpeed(1);
+					m_ImgAcq.SLOW_DOWN = TRUE;
 					CString warning = L"车速过快，已降低纵向检测精度";
 					::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
 				}
@@ -979,7 +1001,7 @@ void CDeVisionDlg::UpdateSysStatus()
 			}
 		}
 
-		int trash_count = m_inspectDlg.GetTotalTrashCount();
+		int trash_count = m_ImgAcq.GetTotalTrashCount();
 		if (trash_count > 0) {
 			CString cstr_trash_count;
 			cstr_trash_count.Format(L"丢帧数： %d 帧", trash_count);
@@ -1133,7 +1155,7 @@ void CDeVisionDlg::ReStartPrepare()
 
 	m_vDFT.clear();
 	m_ImgProc.RestartProcess();
-	m_inspectDlg.RestartInspect();
+	m_ImgAcq.ResetAcquire();
 	pView->Redraw();
 
 	//创建工作目录
@@ -1154,7 +1176,7 @@ void CDeVisionDlg::AutoStop()
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
 		if (!m_ImgProc.TEST_MODEL) {
-			if (m_inspectDlg.Freeze() != 0) return;
+			if (!m_ImgAcq.Freeze()) return;
 		}
 
 		//等待列表中的图像都处理完成, 之后结束处理线程
@@ -1165,7 +1187,6 @@ void CDeVisionDlg::AutoStop()
 
 		m_tableDlg.TableSaved_Event.ResetEvent();
 
-		m_inspectDlg.m_is_system_pause = FALSE;
 	}
 
 	CString cstr = L"保护性停机";
@@ -1336,7 +1357,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 
 		//启动图像采集
 		if (!m_ImgProc.TEST_MODEL) {
-			if (m_inspectDlg.Grab() != 0) return;
+			if (!m_ImgAcq.Grab()) return;
 		}
 
 		//启动图像处理线程
@@ -1352,7 +1373,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		}
 		else {
 			//处理线程启动失败则结束采集
-			m_inspectDlg.Freeze();
+			m_ImgAcq.Freeze();
 			CString cstr = L"图像处理线程启动失败";
 			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return;
@@ -1383,7 +1404,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
 		if (!m_ImgProc.TEST_MODEL) {
-			if (m_inspectDlg.Freeze() != 0) return;
+			if (!m_ImgAcq.Freeze()) return;
 		}
 
 		//等待列表中的图像都处理完成, 之后结束处理线程
@@ -1428,7 +1449,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
 		//采集系统初始化
 		if (!m_ImgProc.TEST_MODEL) {
-			if (!m_inspectDlg.CameraSystemInitial()) return;
+			if (!m_ImgAcq.CameraSystemInitial())
+				return;
 		}
 
 		//初始化算法类
@@ -1522,7 +1544,7 @@ void CDeVisionDlg::OnSetup()
 	CSetupDlg setup;
 	setup.m_wnd1_range = m_wnd1_range;
 	setup.m_wnd2_range = m_wnd2_range;
-	setup.m_k_speed = m_inspectDlg.m_k_speed;
+	setup.m_k_speed = m_ImgAcq.m_k_speed;
 	setup.m_threadnum = m_ImgProc.m_threadnum;
 	setup.m_bSaveRefImg = m_ImgProc.SAVE_REFERENCE_IMAGE;
 	setup.m_strDeffect_Path = m_strDeffect_Path;
@@ -1535,7 +1557,7 @@ void CDeVisionDlg::OnSetup()
 		m_edisplay_range.SetWindowTextW(ctext);
 		m_wnd2_range = setup.m_wnd2_range;
 
-		m_inspectDlg.m_k_speed = setup.m_k_speed;
+		m_ImgAcq.m_k_speed = setup.m_k_speed;
 
 		m_ImgProc.m_threadnum = setup.m_threadnum;
 		m_ImgProc.SAVE_REFERENCE_IMAGE = setup.m_bSaveRefImg;
@@ -1766,7 +1788,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		m_historyDlg.m_btn_pre_page.EnableWindow(false);
 		m_historyDlg.m_btn_next_page.EnableWindow(false);
 
-		m_inspectDlg.m_is_system_pause = FALSE;
+		m_ImgAcq.m_bSystemPause = FALSE;
 		m_ImgProc.SYSTEM_PAUSE = FALSE;
 
 		if (pMenu) {
@@ -1788,7 +1810,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		m_historyDlg.m_btn_pre_page.EnableWindow(true);
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
 
-		m_inspectDlg.m_is_system_pause = TRUE;
+		m_ImgAcq.m_bSystemPause = TRUE;
 		m_ImgProc.SYSTEM_PAUSE = TRUE;
 
 		break;
@@ -1804,7 +1826,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		m_historyDlg.m_btn_pre_page.EnableWindow(true);
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
 
-		m_inspectDlg.m_is_system_pause = FALSE;
+		m_ImgAcq.m_bSystemPause = FALSE;
 		m_ImgProc.SYSTEM_PAUSE = FALSE;
 
 		if (pMenu) {
@@ -1848,9 +1870,12 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateHistory(WPARAM wParam, LPARAM lParam)
 afx_msg LRESULT CDeVisionDlg::OnUpdateMainwnd(WPARAM wParam, LPARAM lParam)
 {
 	CString *cstrMsg = (CString*)wParam;
-	std::string str = (CW2A)cstrMsg->GetBuffer();
-	m_flag_show = std::stoi(str);
-	pView->m_flag_show = m_flag_show;
+	std::string strmsg = (CW2A)cstrMsg->GetBuffer();
+	std::string strdeffect_kind = strmsg.substr(0, 1);
+	std::string strdisplay = strmsg.substr(2, 1);
+	int kind = std::stoi(strdeffect_kind);
+	bool show = (bool)std::stoi(strdisplay);
+	pView->m_bFlagShow[kind - 1] = show;
 
 	return 0;
 }

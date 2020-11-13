@@ -8,7 +8,9 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include "CLogin.h"
+#include "CAcquireImage.h"
 #include "CImageProcess.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
@@ -45,9 +47,10 @@ protected:
 
 public:
 	void ExitProgram();
+	CAcquireImage   m_ImgAcq;               //图像获取
+	CImageProcess   m_ImgProc;
 
 	CMyView* pView;                                   //全局瑕疵滚动显示区域
-	CImageProcess  m_ImgProc;
 	CDialog         *pDialog[4];                       //用来保存对话框对象指针
 	CTabCtrl        m_tab;
 	CInspectDlg     m_inspectDlg;
@@ -60,6 +63,7 @@ public:
 	void InitialTabDlg();                         //初始化 tab control
 	void TabDlgResize();
 	bool isTabInitialized = false;
+	void InitialImageAcquire();
 	void InitialStateBar();                       //初始化状态栏
 	void InitialBtnIcon();
 	BOOL InitialTotalDefect();                    //全部瑕疵显示区
@@ -82,7 +86,6 @@ public:
 	void AutoStop();
 
 	long start_time;
-
 
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;
@@ -148,7 +151,6 @@ public:
 	int serious_def_num = 0;                              //严重瑕疵个数
 	float total_def_length = 0.0f;							  //瑕疵总米数
 	float m_width;
-	int m_flag_show = 1;                          //  标记显示控制
 
 protected:
 	CEdit m_edisplay_range;

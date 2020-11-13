@@ -110,13 +110,6 @@ void CCameraDlg::OnDestroy()
 		mTimer = 0;
 	}
 
-	if (pInspectDlg)
-	{
-		pInspectDlg->camera1_show_buffer = FALSE;
-		pInspectDlg->camera2_show_buffer = FALSE;
-		pInspectDlg->camera3_show_buffer = FALSE;
-		pInspectDlg->camera4_show_buffer = FALSE;
-	}
 
 	//m_ImageWnd1.DestroyWindow();
 	//m_ImageWnd2.DestroyWindow();
@@ -650,128 +643,128 @@ void CCameraDlg::GetBufferSize(SapBuffer * m_buffer)
 
 void CCameraDlg::UpdateCameraParameter()
 {
-	SapAcqDevice * m_pAcqDevice = NULL;
-	SapBuffer * m_pBuffer = NULL;
-	SapTransfer *m_pXfer = NULL;
-	if (m_camera1_selected.GetCheck())
-	{
-		m_pAcqDevice = pInspectDlg->m_AcqDevice1;
-		m_pBuffer = pInspectDlg->m_Buffers1;
-		m_pXfer = pInspectDlg->m_Xfer1;
-		select_camera_number = 1;
-	}
-	else if (m_camera2_selected.GetCheck())
-	{
-		m_pAcqDevice = pInspectDlg->m_AcqDevice2;
-		m_pBuffer = pInspectDlg->m_Buffers2;
-		m_pXfer = pInspectDlg->m_Xfer2;
-		select_camera_number = 2;
-	}
-	else if (m_camera3_selected.GetCheck())
-	{
-		m_pAcqDevice = pInspectDlg->m_AcqDevice3;
-		m_pBuffer = pInspectDlg->m_Buffers3;
-		m_pXfer = pInspectDlg->m_Xfer3;
-		select_camera_number = 3;
-	}
-	else if (m_camera4_selected.GetCheck())
-	{
-		m_pAcqDevice = pInspectDlg->m_AcqDevice4;
-		m_pBuffer = pInspectDlg->m_Buffers4;
-		m_pXfer = pInspectDlg->m_Xfer4;
-		select_camera_number = 4;
-	}
+	//SapAcqDevice * m_pAcqDevice = NULL;
+	//SapBuffer * m_pBuffer = NULL;
+	//SapTransfer *m_pXfer = NULL;
+	//if (m_camera1_selected.GetCheck())
+	//{
+	//	m_pAcqDevice = pInspectDlg->m_AcqDevice1;
+	//	m_pBuffer = pInspectDlg->m_Buffers1;
+	//	m_pXfer = pInspectDlg->m_Xfer1;
+	//	select_camera_number = 1;
+	//}
+	//else if (m_camera2_selected.GetCheck())
+	//{
+	//	m_pAcqDevice = pInspectDlg->m_AcqDevice2;
+	//	m_pBuffer = pInspectDlg->m_Buffers2;
+	//	m_pXfer = pInspectDlg->m_Xfer2;
+	//	select_camera_number = 2;
+	//}
+	//else if (m_camera3_selected.GetCheck())
+	//{
+	//	m_pAcqDevice = pInspectDlg->m_AcqDevice3;
+	//	m_pBuffer = pInspectDlg->m_Buffers3;
+	//	m_pXfer = pInspectDlg->m_Xfer3;
+	//	select_camera_number = 3;
+	//}
+	//else if (m_camera4_selected.GetCheck())
+	//{
+	//	m_pAcqDevice = pInspectDlg->m_AcqDevice4;
+	//	m_pBuffer = pInspectDlg->m_Buffers4;
+	//	m_pXfer = pInspectDlg->m_Xfer4;
+	//	select_camera_number = 4;
+	//}
 
-	//获取相机参数
-	GetCameraParameter(m_pAcqDevice);
-	//获取帧率
-	GetFrameRate(m_pXfer);
-	//获取图像尺寸
-	GetBufferSize(pInspectDlg->m_Buffers1);
+	////获取相机参数
+	//GetCameraParameter(m_pAcqDevice);
+	////获取帧率
+	//GetFrameRate(m_pXfer);
+	////获取图像尺寸
+	//GetBufferSize(pInspectDlg->m_Buffers1);
 }
 
 //设置曝光时间
 void CCameraDlg::OnBnClickedButtonSetExposure()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString str_edit_exposure_time;
-	m_exposure_time.GetWindowTextW(str_edit_exposure_time);
-	exposure_time = _ttof(str_edit_exposure_time);
+	//CString str_edit_exposure_time;
+	//m_exposure_time.GetWindowTextW(str_edit_exposure_time);
+	//exposure_time = _ttof(str_edit_exposure_time);
 
-	if (m_camera1_selected.GetCheck())
-	{
-		if (pInspectDlg->m_AcqDevice1)
-		{
-			char exposureTime[6];
-			CString str_exposure_time;
-			pInspectDlg->m_AcqDevice1->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
-			str_exposure_time = exposureTime;
-			double f_time_read = _ttof(str_exposure_time);
+	//if (m_camera1_selected.GetCheck())
+	//{
+	//	if (pInspectDlg->m_AcqDevice1)
+	//	{
+	//		char exposureTime[6];
+	//		CString str_exposure_time;
+	//		pInspectDlg->m_AcqDevice1->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
+	//		str_exposure_time = exposureTime;
+	//		double f_time_read = _ttof(str_exposure_time);
 
-			if (abs(exposure_time - f_time_read) > 0.1)
-			{
-				if (3 < exposure_time && exposure_time < 80)
-				{
-					pInspectDlg->m_AcqDevice1->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
-				}
-			}
-		}
-	}
-	else	if (m_camera2_selected.GetCheck())
-	{
-		if (pInspectDlg->m_AcqDevice2)
-		{
-			char exposureTime[6];
-			CString str_exposure_time;
-			pInspectDlg->m_AcqDevice2->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
-			str_exposure_time = exposureTime;
-			double f_time_read = _ttof(str_exposure_time);
+	//		if (abs(exposure_time - f_time_read) > 0.1)
+	//		{
+	//			if (3 < exposure_time && exposure_time < 80)
+	//			{
+	//				pInspectDlg->m_AcqDevice1->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
+	//			}
+	//		}
+	//	}
+	//}
+	//else	if (m_camera2_selected.GetCheck())
+	//{
+	//	if (pInspectDlg->m_AcqDevice2)
+	//	{
+	//		char exposureTime[6];
+	//		CString str_exposure_time;
+	//		pInspectDlg->m_AcqDevice2->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
+	//		str_exposure_time = exposureTime;
+	//		double f_time_read = _ttof(str_exposure_time);
 
-			if (abs(exposure_time - f_time_read) > 0.1)
-			{
-				if (3 < exposure_time && exposure_time < 80)
-				{
-					pInspectDlg->m_AcqDevice2->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
-				}
-			}
-		}
-	}
-	else	if (m_camera3_selected.GetCheck())
-	{
-		if (pInspectDlg->m_AcqDevice3)
-		{
-			char exposureTime[6];
-			CString str_exposure_time;
-			pInspectDlg->m_AcqDevice3->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
-			str_exposure_time = exposureTime;
-			double f_time_read = _ttof(str_exposure_time);
+	//		if (abs(exposure_time - f_time_read) > 0.1)
+	//		{
+	//			if (3 < exposure_time && exposure_time < 80)
+	//			{
+	//				pInspectDlg->m_AcqDevice2->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
+	//			}
+	//		}
+	//	}
+	//}
+	//else	if (m_camera3_selected.GetCheck())
+	//{
+	//	if (pInspectDlg->m_AcqDevice3)
+	//	{
+	//		char exposureTime[6];
+	//		CString str_exposure_time;
+	//		pInspectDlg->m_AcqDevice3->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
+	//		str_exposure_time = exposureTime;
+	//		double f_time_read = _ttof(str_exposure_time);
 
-			if (abs(exposure_time - f_time_read) > 0.1)
-			{
-				if (3 < exposure_time && exposure_time < 80)
-				{
-					pInspectDlg->m_AcqDevice3->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
-				}
-			}
-		}
-	}
-	else	if (m_camera4_selected.GetCheck())
-	{
-		if (pInspectDlg->m_AcqDevice4)
-		{
-			char exposureTime[6];
-			CString str_exposure_time;
-			pInspectDlg->m_AcqDevice4->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
-			str_exposure_time = exposureTime;
-			double f_time_read = _ttof(str_exposure_time);
+	//		if (abs(exposure_time - f_time_read) > 0.1)
+	//		{
+	//			if (3 < exposure_time && exposure_time < 80)
+	//			{
+	//				pInspectDlg->m_AcqDevice3->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
+	//			}
+	//		}
+	//	}
+	//}
+	//else	if (m_camera4_selected.GetCheck())
+	//{
+	//	if (pInspectDlg->m_AcqDevice4)
+	//	{
+	//		char exposureTime[6];
+	//		CString str_exposure_time;
+	//		pInspectDlg->m_AcqDevice4->GetFeatureValue("ExposureTime", exposureTime, sizeof(exposureTime));
+	//		str_exposure_time = exposureTime;
+	//		double f_time_read = _ttof(str_exposure_time);
 
-			if (abs(exposure_time - f_time_read) > 0.1)
-			{
-				if (3 < exposure_time && exposure_time < 80)
-				{
-					pInspectDlg->m_AcqDevice4->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
-				}
-			}
-		}
-	}
+	//		if (abs(exposure_time - f_time_read) > 0.1)
+	//		{
+	//			if (3 < exposure_time && exposure_time < 80)
+	//			{
+	//				pInspectDlg->m_AcqDevice4->SetFeatureValue("ExposureTime", exposure_time);//设定曝光时间
+	//			}
+	//		}
+	//	}
+	//}
 }

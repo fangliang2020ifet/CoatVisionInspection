@@ -19,7 +19,7 @@ CImageProcess::CImageProcess()
 	InitializeCriticalSection(&m_csCalculateThread3);
 	InitializeCriticalSection(&m_csCalculateThread4);
 	//InitializeCriticalSection(&m_csNO_dft);
-
+	InitializeCriticalSection(&m_csDefImgList);
 }
 
 CImageProcess::~CImageProcess()
@@ -29,6 +29,7 @@ CImageProcess::~CImageProcess()
 	DeleteCriticalSection(&m_csCalculateThread3);
 	DeleteCriticalSection(&m_csCalculateThread4);
 	//DeleteCriticalSection(&m_csNO_dft);
+	DeleteCriticalSection(&m_csDefImgList);
 
 	try
 	{
@@ -121,6 +122,7 @@ void CImageProcess::HalconOpenGPU(HTuple &hv_DeviceHandle)
 	//HalconCpp::DeactivateComputeDevice(hv_DeviceHandle);
 }
 
+//获取主窗口类
 BOOL CImageProcess::InitialImageProcess()
 {
 	hMainWnd = AfxGetMainWnd()->m_hWnd;
@@ -1401,6 +1403,8 @@ void CImageProcess::SaveDefectImage(HObject &ho_img, HTuple name)
 	return;
 }
 
+
+
 // 检测算法：2020.4.3 以前（分割成小图后检测）
 int CImageProcess::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
 {
@@ -1837,6 +1841,13 @@ int CImageProcess::StandDeviationAlgorithm(int cameraNO, HImage hi_average, HIma
 											+ "_A" + hv_harea
 											+ "_K" + hv_kind;
 				SaveDefectImage(ho_ImagePart, hv_img_name);
+				//DefectImage img;
+				//img.ho_img = ho_ImagePart;
+				//img.hv_name = hv_img_name;
+				//EnterCriticalSection(&m_csDefImgList);
+				//DefImgList.push_back(img);
+				//LeaveCriticalSection(&m_csDefImgList);
+
 			}
 		}		
 	}

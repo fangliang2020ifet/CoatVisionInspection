@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{1ADCDEA0-2FFD-41EC-B039-A08C841FCD90}</ProjectGuid>
+    <ProjectGuid>{D110DC51-AF15-4BDA-9468-782B4FA0E92C}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
-    <RootNamespace>DeVision</RootNamespace>
+    <RootNamespace>AcquireDevice</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -30,7 +30,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -78,10 +78,10 @@
     <Import Project="SaperaLT84_x64_release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -90,13 +90,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -112,18 +113,17 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;C:\Program Files\Teledyne DALSA\Sapera\Lib\Win64\VS2017\SapClassGuiD.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -135,10 +135,6 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <PostBuildEvent>
-      <Command>
-      </Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -149,6 +145,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,12 +172,12 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;C:\Program Files\Teledyne DALSA\Sapera\Lib\Win64\VS2017\SapClassGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -194,124 +191,34 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AcquireDevice.h" />
+    <ClInclude Include="AcquireDeviceDlg.h" />
     <ClInclude Include="CAcquireImage.h" />
-    <ClInclude Include="CAlgorithmDlg.h" />
-    <ClInclude Include="CAnalysisDlg.h" />
-    <ClInclude Include="CApplication.h" />
-    <ClInclude Include="CAxes.h" />
-    <ClInclude Include="CAxis.h" />
-    <ClInclude Include="CBorder.h" />
-    <ClInclude Include="CCameraDlg.h" />
-    <ClInclude Include="CChart.h" />
-    <ClInclude Include="CChartObject.h" />
-    <ClInclude Include="CChartObjects.h" />
-    <ClInclude Include="CCharts.h" />
-    <ClInclude Include="CControl.h" />
-    <ClInclude Include="CFont0.h" />
-    <ClInclude Include="CGridlines.h" />
-    <ClInclude Include="CHistoryDlg.h" />
-    <ClInclude Include="CImageProcess.h" />
-    <ClInclude Include="CInspectDlg.h" />
-    <ClInclude Include="CLoad.h" />
-    <ClInclude Include="CLogin.h" />
-    <ClInclude Include="CMyDocument.h" />
-    <ClInclude Include="CMyView.h" />
-    <ClInclude Include="COpenGLControl.h" />
-    <ClInclude Include="CPlotArea.h" />
-    <ClInclude Include="CPoint0.h" />
-    <ClInclude Include="CPoints.h" />
-    <ClInclude Include="CProductInfo.h" />
-    <ClInclude Include="CRange.h" />
-    <ClInclude Include="CRemote.h" />
-    <ClInclude Include="CSetupDlg.h" />
-    <ClInclude Include="CShape.h" />
-    <ClInclude Include="CShapeRange.h" />
-    <ClInclude Include="CShapes.h" />
-    <ClInclude Include="CTableDlg.h" />
-    <ClInclude Include="CWorkbook.h" />
-    <ClInclude Include="CWorkbooks.h" />
-    <ClInclude Include="CWorksheet.h" />
-    <ClInclude Include="CWorksheets.h" />
-    <ClInclude Include="DeVision.h" />
-    <ClInclude Include="DeVisionDlg.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="ImportHalconCpp.h" />
-    <ClInclude Include="iUart.h" />
-    <ClInclude Include="Log.h" />
-    <ClInclude Include="logResource.h" />
-    <ClInclude Include="PictureEx.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SerialPort.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Text.h" />
-    <ClInclude Include="UBase.h" />
-    <ClInclude Include="wcharUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AcquireDevice.cpp" />
+    <ClCompile Include="AcquireDeviceDlg.cpp" />
     <ClCompile Include="CAcquireImage.cpp" />
-    <ClCompile Include="CAlgorithmDlg.cpp" />
-    <ClCompile Include="CAnalysisDlg.cpp" />
-    <ClCompile Include="CCameraDlg.cpp" />
-    <ClCompile Include="CControl.cpp" />
-    <ClCompile Include="CHistoryDlg.cpp" />
-    <ClCompile Include="CImageProcess.cpp" />
-    <ClCompile Include="CInspectDlg.cpp" />
-    <ClCompile Include="CLoad.cpp" />
-    <ClCompile Include="CLogin.cpp" />
-    <ClCompile Include="CMyDocument.cpp" />
-    <ClCompile Include="CMyView.cpp" />
-    <ClCompile Include="COpenGLControl.cpp" />
-    <ClCompile Include="CProductInfo.cpp" />
-    <ClCompile Include="CRemote.cpp" />
-    <ClCompile Include="CSetupDlg.cpp" />
-    <ClCompile Include="CTableDlg.cpp" />
-    <ClCompile Include="DeVision.cpp" />
-    <ClCompile Include="DeVisionDlg.cpp" />
-    <ClCompile Include="iUart.cpp" />
-    <ClCompile Include="Log.cpp" />
-    <ClCompile Include="PictureEx.cpp" />
-    <ClCompile Include="SerialPort.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Text.cpp" />
-    <ClCompile Include="wcharUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="DeVision.rc" />
-    <ResourceCompile Include="log.rc" />
+    <ResourceCompile Include="AcquireDevice.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\..\..\ImageTest\11.bmp" />
-    <Image Include="res\bitmap3.bmp" />
-    <Image Include="res\icon2.ico" />
-    <Image Include="res\loggin.ico" />
-    <Image Include="res\login.ico" />
-    <Image Include="res\DeVision.ico" />
-    <Image Include="res\exit.ico" />
-    <Image Include="res\go_down.ico" />
-    <Image Include="res\go_up.ico" />
-    <Image Include="res\load.bmp" />
-    <Image Include="res\loading.bmp" />
-    <Image Include="res\lock.ico" />
-    <Image Include="res\logo128.ico" />
-    <Image Include="res\logo32.ico" />
-    <Image Include="res\offline.ico" />
-    <Image Include="res\online.ico" />
-    <Image Include="res\pause.ico" />
-    <Image Include="res\process.gif" />
-    <Image Include="res\start.ico" />
-    <Image Include="res\start_ss.ico" />
-    <Image Include="res\stop.ico" />
-    <Image Include="res\unlock.ico" />
-    <Image Include="source.bmp" />
-    <Image Include="start.bmp" />
+    <None Include="res\AcquireDevice.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\DeVision.rc2" />
+    <Image Include="res\AcquireDevice.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

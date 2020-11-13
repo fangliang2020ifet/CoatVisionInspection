@@ -36,8 +36,15 @@ struct SelectRegion
 	float pixelvalue;
 };
 
+struct DefectImage
+{
+	HObject ho_img;
+	HTuple  hv_name;
+};
+
 typedef std::list<HImage> ImgList;
 typedef std::list<DefectType> DFTList;
+
 
 class CImageProcess
 {
@@ -53,6 +60,7 @@ public:
 
 	BOOL SYSTEM_PAUSE = FALSE;
 	BOOL TEST_MODEL = FALSE;               //使用本地图像运行程序
+	BOOL LOAD_LOCAL_IMAGE = FALSE;
 	BOOL REDUCE_BLACK_EDGE = FALSE;        //剔除黑边
 	BOOL SAVE_REFERENCE_IMAGE = FALSE;     //是否保存生成的参考图像
 
@@ -107,6 +115,7 @@ public:
 	DFTList m_DFTList3;
 	DFTList m_DFTList4;
 	DFTList m_Sorted_DFTList;
+	std::list<DefectImage> DefImgList;
 
 	//测试变量
 	HImage m_hi_test1;
@@ -169,6 +178,7 @@ private:
 	HANDLE                m_hStopEvent;
 
 	CWinThread *m_ManageThread;
+	CWinThread *m_ImageSaveThread;
 	CWinThread *m_CalculateThread1_1;
 	CWinThread *m_CalculateThread1_2;
 	CWinThread *m_CalculateThread1_3;
@@ -194,6 +204,7 @@ private:
 	CRITICAL_SECTION m_csCalculateThread3;
 	CRITICAL_SECTION m_csCalculateThread4;
 	CRITICAL_SECTION m_csNO_dft;
+	CRITICAL_SECTION m_csDefImgList;
 	BOOL is_manage_thread_alive;
 	BOOL is_thread1_1_alive;
 	BOOL is_thread1_2_alive;
