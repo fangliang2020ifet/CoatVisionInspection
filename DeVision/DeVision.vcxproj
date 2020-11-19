@@ -210,7 +210,7 @@
     <ClInclude Include="CFont0.h" />
     <ClInclude Include="CGridlines.h" />
     <ClInclude Include="CHistoryDlg.h" />
-    <ClInclude Include="CImageProcess.h" />
+    <ClInclude Include="CImageProcessing.h" />
     <ClInclude Include="CInspectDlg.h" />
     <ClInclude Include="CLoad.h" />
     <ClInclude Include="CLogin.h" />
@@ -254,7 +254,7 @@
     <ClCompile Include="CCameraDlg.cpp" />
     <ClCompile Include="CControl.cpp" />
     <ClCompile Include="CHistoryDlg.cpp" />
-    <ClCompile Include="CImageProcess.cpp" />
+    <ClCompile Include="CImageProcessing.cpp" />
     <ClCompile Include="CInspectDlg.cpp" />
     <ClCompile Include="CLoad.cpp" />
     <ClCompile Include="CLogin.cpp" />

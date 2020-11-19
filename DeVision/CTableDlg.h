@@ -54,8 +54,10 @@ public:
 	void BeginSaveTable();
 
 	CFont m_font;
-	std::vector<DefectType> *m_pvDFT;
-	std::vector<DefectType> m_vecDFT;
+	//std::vector<DefectType> *m_pvDFT;
+	std::vector<DeffectInfo> *m_pvDFT;
+	//std::vector<DefectType> m_vecDFT;
+	std::vector<DeffectInfo> m_vecDFT;
 	float m_current_position;
 	float scale_x;
 	float scale_y;

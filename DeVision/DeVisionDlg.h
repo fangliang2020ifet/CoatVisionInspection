@@ -11,7 +11,8 @@
 #include <memory>
 #include "CLogin.h"
 #include "CAcquireImage.h"
-#include "CImageProcess.h"
+//#include "CImageProcess.h"
+#include "CImageProcessing.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
 #include "CRemote.h"
@@ -46,9 +47,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	void ExitProgram();
+	bool m_bTestModel = TRUE;
+	bool m_bSaveRefImg;
+
 	CAcquireImage   m_ImgAcq;               //图像获取
-	CImageProcess   m_ImgProc;
+	int m_nConnectedCameras = 0;                //已连接相机数
+	CImageProcessing   *m_pImgProc[4];
 
 	CMyView* pView;                                   //全局瑕疵滚动显示区域
 	CDialog         *pDialog[4];                       //用来保存对话框对象指针
@@ -59,6 +63,7 @@ public:
 	CHistoryDlg     m_historyDlg;
 	CCameraDlg      *m_pCamera;
 
+	void ExitProgram();
 	int m_CurSelTab;                              //标记当前选择的页面
 	void InitialTabDlg();                         //初始化 tab control
 	void TabDlgResize();
@@ -82,6 +87,7 @@ public:
 	void UpdateSysStatus();
 	void UpdateSysColor();
 	float GetRunTime();
+	float UpdateCurrentInspectPosition();
 	void ReStartPrepare();
 	void AutoStop();
 
@@ -97,6 +103,7 @@ public:
 	int test_num = 0;
 
 private:
+	CString cstrlog;
 	HICON m_hIcon;
 	HICON m_hOnlineIcon;
 	HICON m_hOfflineIcon;
@@ -109,10 +116,18 @@ private:
 	HICON m_hUnlockIcon;
 	HICON m_hExitIcon;
 
+	int m_nThreadNumbers;
+	int m_nNormalDistribution;
+	int m_nFIlterSize;
+	float m_fRadiusMin;
+	float m_fRadiusMax;
+
+
 	CEvent StopRefrush_Event;
 	CEvent RefrushThreadStopped_Event;
+	HANDLE *m_phFinishProcessEvent[4];              //处理完成事件
 
-	CRITICAL_SECTION m_csVecDFT;                  //定义一个临界区
+	CRITICAL_SECTION m_csListDftDisplay;                  //定义一个临界区
 	CWinThread *m_RefrushThread;
 	static UINT RefrushWnd(LPVOID pParam);
 
@@ -124,11 +139,19 @@ private:
 
 	void ReadFromRegedit();
 	void WriteToRegedit();
+	void SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information);
+	void SaveImages(int index, unsigned &numbers);
 
 public:
 	std::string m_strDeffect_Path;                             //工作路径
 	std::string m_strTable_Path;
+	std::string m_strDeffectImgSavePath;
 	std::vector<std::wstring> m_vec_refpath;
+
+	std::list<DeffectInfo> m_listDftInfo[4];                   //瑕疵信息
+	//std::list<HalconCpp::HObject> m_listDftImg[4];              //瑕疵图像队列
+	//std::vector<DefectType> m_vDFT;
+	std::vector<DeffectInfo> m_vecDftDisplay;            //x,y的单位已转为毫米/米
 
 	//离线， 在线， 运行， 停止， 暂停
 	enum { SYSTEM_STATE_OFFLINE = 0, SYSTEM_STATE_ONLINE, SYSTEM_STATE_RUN, SYSTEM_STATE_STOP, SYSTEM_STATE_PAUSE };
@@ -138,18 +161,17 @@ public:
 	int m_rank[5] = { 0 };
 	enum { SCREEN_UNLOCK = 0, SCREEN_LOCK };
 	int m_screen_state;                                  //屏幕状态
-
-
-	int online_camera_num = 1;                        //在线相机数量
 	float m_speed = 0.0f;                             //当前车速
-	//float current_position = 0;                       //当前检测位置
+	float m_fCurrentPosition = 0.0f;
 	float m_previous_position = 0.0;
 	float m_wnd1_range = 0.0f;                   //全局瑕疵显示窗口显示范围：米
 	float m_wnd2_range = 0.0f;
-	std::vector<DefectType> m_vDFT;
-	int total_number_def = 0;                             //当前检测到的瑕疵总数
-	int serious_def_num = 0;                              //严重瑕疵个数
-	float total_def_length = 0.0f;							  //瑕疵总米数
+	//int total_number_def = 0;                             //当前检测到的瑕疵总数
+	int m_nTotalDeffects = 0;
+	//int serious_def_num = 0;                              //严重瑕疵个数
+	int m_nSeriousDeffects = 0;
+	//float total_def_length = 0.0f;							  //瑕疵总米数
+	float m_fTotalDeffectsLength = 0.0f;
 	float m_width;
 
 protected:
@@ -161,7 +183,6 @@ protected:
 	CEdit m_ewidth2;
 	CEdit m_elongth1;
 	CEdit m_elongth2;
-
 	CMFCButton m_button_start;
 	CMFCButton m_button_stop;
 	CMFCButton m_button_pause;
@@ -170,7 +191,7 @@ protected:
 	CButton m_button_exit;
 	CStatic m_partical_picture;
 	CStatic m_PictureControlTotal;
-
+	CStatic m_sSystem_Statue;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
@@ -210,10 +231,6 @@ protected:
 	afx_msg void OnBnClickedButtonLock();
 	afx_msg void OnBnClickedButtonExit();
 	afx_msg void OnRemote();
-
-public:
-	CStatic m_sSystem_Statue;
-protected:
 	afx_msg LRESULT OnUpdateControls(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateHistory(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateMainwnd(WPARAM wParam, LPARAM lParam);

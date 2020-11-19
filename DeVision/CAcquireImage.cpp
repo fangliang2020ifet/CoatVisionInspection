@@ -8,6 +8,7 @@
 CAcquireImage::CAcquireImage()
 {
 	m_bSystemPause = FALSE;
+	m_nCameraNum = 0;
 	m_camera_system_initialled = FALSE;
 	for (int i = 0; i < 4; i++) { 
 		m_pImageWnd[i] = NULL;
@@ -46,7 +47,6 @@ CAcquireImage::~CAcquireImage()
 		if (m_AcqDevice[index]) delete m_AcqDevice[index];
 		if (m_Acq[index]) delete m_Acq[index];
 	}
-
 }
 
 
@@ -166,7 +166,7 @@ int CAcquireImage::InitialAcqDevices()
 		
 		initial_num += 1;
 	}
-
+	m_nCameraNum = initial_num;
 	return initial_num;
 }
 
@@ -450,26 +450,11 @@ void CAcquireImage::AcqCallback1(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			switch (INDEX)
-			{
-			case 0:
-				pThis->m_listImage1.push_back(ho_image);
-				break;
-			case 1:
-				pThis->m_listImage2.push_back(ho_image);
-				break;
-			case 2:
-				pThis->m_listImage3.push_back(ho_image);
-				break;
-			case 3:
-				pThis->m_listImage4.push_back(ho_image);
-				break;
-			default:
-				break;
-			}
-			pThis->m_arrayFrameCount[INDEX] += 1;
+			if (pThis->m_pProcessing[INDEX] != NULL) {
+				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
+				pThis->m_arrayFrameCount[INDEX] += 1;
+			}			
 		}
-
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;
 	}
@@ -489,26 +474,11 @@ void CAcquireImage::AcqCallback2(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			switch (INDEX)
-			{
-			case 0:
-				pThis->m_listImage1.push_back(ho_image);
-				break;
-			case 1:
-				pThis->m_listImage2.push_back(ho_image);
-				break;
-			case 2:
-				pThis->m_listImage3.push_back(ho_image);
-				break;
-			case 3:
-				pThis->m_listImage4.push_back(ho_image);
-				break;
-			default:
-				break;
+			if (pThis->m_pProcessing[INDEX] != NULL) {
+				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
+				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
-			pThis->m_arrayFrameCount[INDEX] += 1;
 		}
-
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;
 	}
@@ -528,26 +498,11 @@ void CAcquireImage::AcqCallback3(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			switch (INDEX)
-			{
-			case 0:
-				pThis->m_listImage1.push_back(ho_image);
-				break;
-			case 1:
-				pThis->m_listImage2.push_back(ho_image);
-				break;
-			case 2:
-				pThis->m_listImage3.push_back(ho_image);
-				break;
-			case 3:
-				pThis->m_listImage4.push_back(ho_image);
-				break;
-			default:
-				break;
+			if (pThis->m_pProcessing[INDEX] != NULL) {
+				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
+				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
-			pThis->m_arrayFrameCount[INDEX] += 1;
 		}
-
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;
 	}
@@ -567,26 +522,12 @@ void CAcquireImage::AcqCallback4(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			switch (INDEX)
-			{
-			case 0:
-				pThis->m_listImage1.push_back(ho_image);
-				break;
-			case 1:
-				pThis->m_listImage2.push_back(ho_image);
-				break;
-			case 2:
-				pThis->m_listImage3.push_back(ho_image);
-				break;
-			case 3:
-				pThis->m_listImage4.push_back(ho_image);
-				break;
-			default:
-				break;
+			if (pThis->m_pProcessing[INDEX] != NULL) {
+				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
+				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
 			pThis->m_arrayFrameCount[INDEX] += 1;
 		}
-
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;
 	}

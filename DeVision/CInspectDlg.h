@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "CImageProcess.h"
+//#include "CImageProcess.h"
 #include "CProductInfo.h"
 #include "SapClassBasic.h"
 #include "SapClassGui.h"
@@ -26,7 +26,6 @@ public:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
-	CImageProcess *m_pImgProc;
 	CImageExWnd		m_ImageWnd[4];
 
 	CFont m_font;

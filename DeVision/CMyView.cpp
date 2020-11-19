@@ -19,7 +19,6 @@ CMyView::CMyView()
 
 	for (INT i = 0; i < 8; i++) {m_bFlagShow[i] = true;}
 
-	m_vDefect.clear();
 }
 
 CMyView::~CMyView()
@@ -181,66 +180,23 @@ void CMyView::CreateFlag(CDC &mDC, int x, int y, int kind)
 	}
 }
 
-// 方法一
-void CMyView::AddFlag(CDC &mDC)
-{
-	DefectType temp_def;
-
-	if (!m_vDefect.empty()) {
-		//方法III：反向迭代器输出
-		std::vector<DefectType>::reverse_iterator it = m_vDefect.rbegin();
-		temp_def = *(it);
-		const float image_size = IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;   //单位：米
-		//float origin_point_y = temp_def.image_order * image_size;
-
-		for (; it != m_vDefect.rend(); ++it)
-		{
-			temp_def = *it;
-			int itvalue = (int)(std::distance(m_vDefect.rbegin(), it));
-			//float current_origin_point_y = temp_def.image_order * image_size;
-			int x_coord = (int)(temp_def.center_x * scale_x);
-			//int y_coord = (int)((temp_def.absolute_position - current_origin_point_y + 1 * (origin_point_y - current_origin_point_y)) / scale_y);
-			//if (y_coord > wnd_height * (wnd_scroll_scale_size + 1))
-			//	break;
-			//CreateFlag(mDC, x_coord, y_coord, temp_def.type);
-
-			//不滚屏的计算方式
-			//int x_coord = (int)(wnd_width - temp_def.center_x * scale_x);
-			//int y_coord = (int)(wnd_height * wnd_scroll_scale_size - temp_def.absolute_position * scale_y);
-			//CreateFlag(mDC, x_coord, y_coord, temp_def.type);
-
-			////超出显示范围则结束循环
-			//if (y_coord > wnd_height * wnd_scroll_scale_size)
-			//	TRACE("Out Display y_coord = %d\n", y_coord);
-			//else TRACE("In y_coord = %d\n", y_coord);
-			//	//break;
-
-			//TRACE("MyView->x_coord = %d\n", x_coord);
-			//TRACE("MyView->y_coord = %d\n", y_coord);
-		}
-	}
-}
-
 // 方法二
 void CMyView::AddFlag(CDC &mDC, int test)
 {
-	DefectType temp_def;
-
-	if (!m_vDefect.empty()) {
-		//方法III：反向迭代器输出
-		std::vector<DefectType>::reverse_iterator it = m_vDefect.rbegin();
-		for (; it != m_vDefect.rend(); it++)
-		{
-			temp_def = *it;
-			int x_coord = (int)(temp_def.center_x * scale_x);
-			int y_coord = wnd_height * wnd_scroll_scale_size - (int)((temp_def.absolute_position - m_previous_position) / scale_y);
-
+	DeffectInfo info;
+	if (!m_pvecDFT->empty()) {
+		int x_coord = 0, y_coord = 0;
+		std::vector<DeffectInfo>::reverse_iterator rit = m_pvecDFT->rbegin();
+		for (; rit != m_pvecDFT->rend(); ++rit) {
+			info = *rit;
+			x_coord = (int)(info.x * scale_x);
+			y_coord = wnd_height * wnd_scroll_scale_size - (int)((info.y - m_previous_position) / scale_y);
 			if (y_coord < 0)
-				m_previous_position = temp_def.absolute_position - m_display_range;
+				m_previous_position = info.y - m_display_range;
 			if (y_coord > wnd_height * wnd_scroll_scale_size)
 				break;
 
-			CreateFlag(mDC, x_coord, y_coord, temp_def.type);
+			CreateFlag(mDC, x_coord, y_coord, info.type);
 		}
 	}
 }
@@ -250,5 +206,6 @@ void CMyView::Redraw()
 	scale_y = 0.0f;
 	m_display_range = 0.0f;
 	m_previous_position = 0.0f;
-	m_vDefect.clear();
+	m_pvecDFT->clear();
+
 }

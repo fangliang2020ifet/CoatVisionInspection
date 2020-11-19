@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <vector>
-#include "CImageProcess.h"
+#include "CImageProcessing.h"
 
 // CMyView view
 class CDialogView;
@@ -30,8 +30,10 @@ public:
 	int wnd_width;
 	int wnd_height;
 	int wnd_scroll_scale_size;                     //窗口滚动范围
+	unsigned m_unDisplayRangeIndex;
 
-	std::vector<DefectType> m_vDefect;
+	//std::vector<DefectType> m_vDefect;
+	std::vector<DeffectInfo> *m_pvecDFT;
 	COLORREF m_acolor[5];
 	bool m_bFlagShow[8];
 
@@ -43,7 +45,6 @@ private:
 	float m_previous_position = 0.0f;  //前次刷新位置
 	float m_display_range = 0.0f;
 	CFont *m_font;
-	void AddFlag(CDC &mDC);
 	void AddFlag(CDC &mDC, int test);
 	void CreateFlag(CDC &mDC, int x, int y, int kind);
 

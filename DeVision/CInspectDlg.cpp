@@ -13,7 +13,6 @@ IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_INSPECT, pParent)
 {
-	m_pImgProc = NULL;
 	for (int i = 0; i < 8; i++) { m_bDeffectDisplay[i] = TRUE; }
 
 }
@@ -141,11 +140,6 @@ void CInspectDlg::OnDestroy()
 	__super::OnDestroy();
 
 	// TODO: 在此处添加消息处理程序代码
-	while (m_pImgProc->IsThreadsAlive())
-	{
-		m_pImgProc->StopProcess();
-		Sleep(50);
-	}
 }
 
 HBRUSH CInspectDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)

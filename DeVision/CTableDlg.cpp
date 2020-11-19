@@ -132,6 +132,7 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	CDC *dc = pClipAppWnd->GetDC();
 	int wnd_width = rect.Width();
 	int wnd_height = rect.Height();
+
 	scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
 	if (m_current_position != 0)
 		scale_y = wnd_height / m_current_position;
@@ -330,15 +331,15 @@ void CTableDlg::DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height)
 	else {
 		if (!m_pvDFT->empty()) {
 			
-			DefectType dft;
-			for (int i = 0; i < m_pvDFT->size(); i++)
-			{
+			//DefectType dft;
+			DeffectInfo dft;
+			for (int i = 0; i < m_pvDFT->size(); i++){
 				dft = m_pvDFT->at(i);
-				int x = (int)(dft.center_x * scale_x);
-				int y = (int)(wnd_height - dft.absolute_position * scale_y);
+				int x = (int)(dft.x * scale_x);
+				int y = (int)(wnd_height - dft.y * scale_y);
 				CreateFlag(mDC, x, y, dft.type);
 
-				AddToDetailList(i + 1, dft.type, dft.absolute_position, dft.circle_radius, dft.rank);
+				AddToDetailList(i + 1, dft.type, dft.y, dft.radius, dft.rank);
 			}
 		}
 	}
@@ -1321,7 +1322,8 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	EnterCriticalSection(&pThis->m_csvec);
 	for (int i = 0; i < (int)pThis->m_vecDFT.size(); i++)
 	{
-		DefectType dft;
+		//DefectType dft;
+		DeffectInfo dft;
 		dft = pThis->m_vecDFT.at(i);
 		for (int j = 1; j < 9; j++)
 		{
@@ -1339,19 +1341,19 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 				break; }
 			case 3: {
 				CString cx;
-				cx.Format(_T("%.2f"), dft.center_x);
+				cx.Format(_T("%.2f"), dft.x);
 				COleVariant vResult(cx);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
 			case 4: {
 				CString cy;
-				cy.Format(_T("%.2f"), dft.absolute_position);
+				cy.Format(_T("%.2f"), dft.y);
 				COleVariant vResult(cy);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
 			case 5: {
 				CString cradius;
-				cradius.Format(_T("%.2f"), dft.circle_radius);
+				cradius.Format(_T("%.2f"), dft.radius);
 				COleVariant vResult(cradius);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -1654,7 +1656,8 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	EnterCriticalSection(&pThis->m_csvec);
 	for (int i = 0; i < (int)pThis->m_vecDFT.size(); i++)
 	{
-		DefectType dft;
+		//DefectType dft;
+		DeffectInfo dft;
 		dft = pThis->m_vecDFT.at(i);
 		for (int j = 1; j < 9; j++)
 		{
@@ -1672,19 +1675,19 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 				break; }
 			case 3: {
 				CString cx;
-				cx.Format(_T("%.2f"), dft.center_x);
+				cx.Format(_T("%.2f"), dft.x);
 				COleVariant vResult(cx);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
 			case 4: {
 				CString cy;
-				cy.Format(_T("%.2f"), dft.absolute_position);
+				cy.Format(_T("%.2f"), dft.y);
 				COleVariant vResult(cy);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
 			case 5: {
 				CString cradius;
-				cradius.Format(_T("%.2f"), dft.circle_radius);
+				cradius.Format(_T("%.2f"), dft.radius);
 				COleVariant vResult(cradius);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -2223,24 +2226,25 @@ void CTableDlg::OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (!m_pvDFT->empty()) {
 		int nsize = m_ListCtrlDetail.GetItemCount();
-		DefectType dtype = m_pvDFT->at(nsize - index - 1);
+		//DefectType dtype = m_pvDFT->at(nsize - index - 1);
+		DeffectInfo dtype = m_pvDFT->at(nsize - index - 1);
 		//标记的位置
 		CRect rect;
 		GetDlgItem(IDC_STATIC_REPORT)->GetClientRect(&rect);
-		m_selected_x = (int)(dtype.center_x * scale_x);
-		m_selected_y = (int)(rect.Height() - dtype.absolute_position * scale_y);
+		m_selected_x = (int)(dtype.x * scale_x);
+		m_selected_y = (int)(rect.Height() - dtype.y * scale_y);
 
 		//生成图像文件名
 		HTuple hv_path = (HTuple)m_DFT_img_path.c_str();
 		char cpos[16];
-		sprintf_s(cpos, "%.3f", dtype.absolute_position);
+		sprintf_s(cpos, "%.3f", dtype.y);
 		//HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
 		HTuple hv_position = (HTuple)cpos;
 		char cX[16];
-		sprintf_s(cX, "%.3f", dtype.center_x);
+		sprintf_s(cX, "%.3f", dtype.x);
 		HTuple hv_X = (HTuple)cX;
 		char cradius[16];
-		sprintf_s(cradius, "%.3f", dtype.circle_radius);
+		sprintf_s(cradius, "%.3f", (float)dtype.radius);
 		HTuple hv_radius = (HTuple)cradius;
 		char carea[16];
 		sprintf_s(carea, "%.3f", dtype.area);

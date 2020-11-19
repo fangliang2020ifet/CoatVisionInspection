@@ -8,6 +8,8 @@
 #include "SapClassBasic.h"
 #include "SapClassGui.h"
 #include "ImportHalconCpp.h"
+#include "CImageProcessing.h"
+
 
 class CAcquireImage :	public SapManager
 {
@@ -19,8 +21,11 @@ public:
 
 public:
 	HWND hMainWnd;                                    //主窗口句柄
+	CImageProcessing *m_pProcessing[4];
+	UINT64 m_arrayFrameCount[4] = { 0,0,0,0 };
 
 	BOOL m_bSystemPause;
+	int m_nCameraNum;
 	BOOL FREE_RUN = FALSE;                            //相机内部触发模式
 	BOOL SLOW_DOWN = FALSE;
 	BOOL SHOW_BUFFER = TRUE;                          //图像显示
@@ -57,7 +62,6 @@ private:
 	std::list<HObject> m_listImage4;
 	int m_arrayBufferIndex[4] = { 0,0,0,0 };         // 切换双缓存
 	UINT m_arrayTrashCount[4] = { 0,0,0,0 };
-	UINT64 m_arrayFrameCount[4] = { 0,0,0,0 };
 	static void AcqCallback1(SapXferCallbackInfo *pInfo);
 	static void AcqCallback2(SapXferCallbackInfo *pInfo);
 	static void AcqCallback3(SapXferCallbackInfo *pInfo);
