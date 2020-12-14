@@ -1,0 +1,35 @@
+﻿1>------ 已启动全部重新生成: 项目: DeVision, 配置: Release x64 ------
+1>stdafx.cpp
+1>CAcquireImage.cpp
+1>CAlgorithmDlg.cpp
+1>CAnalysisDlg.cpp
+1>CCameraDlg.cpp
+1>CControl.cpp
+1>CHistoryDlg.cpp
+1>CImageProcessing.cpp
+1>CInspectDlg.cpp
+1>CLoad.cpp
+1>CLogin.cpp
+1>CMyDocument.cpp
+1>CMyView.cpp
+1>COpenGLControl.cpp
+1>CProductInfo.cpp
+1>CRemote.cpp
+1>CSetupDlg.cpp
+1>CTableDlg.cpp
+1>DeVision.cpp
+1>DeVisionDlg.cpp
+1>e:\projects\gitrepositories\fangliang11\coatvisioninspection\devision\devisiondlg.cpp(1315): warning C4804: “<=”: 在操作中使用类型“bool”不安全
+1>iUart.cpp
+1>正在编译...
+1>Log.cpp
+1>PictureEx.cpp
+1>SerialPort.cpp
+1>Text.cpp
+1>wcharUtil.cpp
+1>正在生成代码
+1>All 2183 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+1>已完成代码的生成
+1>DeVision.vcxproj -> E:\Projects\GitRepositories\fangliang11\CoatVisionInspection\x64\Release\DeVision.exe
+1>已完成生成项目“DeVision.vcxproj”的操作。
+========== 全部重新生成: 成功 1 个，失败 0 个，跳过 0 个 ==========

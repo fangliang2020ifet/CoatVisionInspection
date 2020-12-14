@@ -137,6 +137,7 @@ private:
 	CString m_cOperator;                          //操作员
 	CString m_cProduct_Number;                    //生产批号
 
+	void LoadRegConfig();
 	void ReadFromRegedit();
 	void WriteToRegedit();
 	void SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information);

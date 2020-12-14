@@ -217,7 +217,7 @@ BOOL CImageProcessing::LoadRefImage(std::string folder_path)
 
 	//读取参考图像1
 	if (1) {
-		std::string ref_image_name1 = "reference_image1.bmp";
+		std::string ref_image_name1 = "reference_image.png";
 		HTuple hv_ref_image_name1 = (HTuple)((folder_path + ref_image_name1).c_str());
 		if (!IsFileExist(folder_path + ref_image_name1)) {
 			CString cstr = L"参考图像1不存在";
@@ -294,9 +294,8 @@ BOOL CImageProcessing::LoadOneImageToQueue(std::string folder_path, int next_num
 
 BOOL CImageProcessing::LoadSingleImage(std::string image_name)
 {
-	std::string temp1 = "_1.bmp";
 	HTuple hv_image_name1, hv_image_name2, hv_image_name3, hv_image_name4;
-	hv_image_name1 = (HTuple)((image_name + temp1).c_str());
+	hv_image_name1 = (HTuple)(image_name.c_str());
 	//ReadImage(&ho_test1, hv_image_name1);
 	m_hi_test.ReadImage(hv_image_name1);
 
@@ -1173,13 +1172,20 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 UINT CImageProcessing::ManageThread(LPVOID pParam)
 {
 	CImageProcessing *pThis = (CImageProcessing *)pParam;
+	TCHAR path[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, path);
+	CString curpath = path;
+
 	pThis->m_nTotalListNumber = 0;
 	bool bresult = false;
 	while (1) {
 		if (!pThis->TEST_MODEL)
 			bresult = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
-		else
-			bresult = pThis->LoadRefImage("E:/DeVisionProject/OneCamera_0417/");
+		else {
+			CStringA strpath = (CW2A)curpath;
+			strpath = strpath + "\\test_image\\";
+			bresult = pThis->LoadRefImage(strpath.GetBuffer());
+		}			
 		if (bresult) {
 			CString cstr = L"参考图像已生成";
 			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1191,10 +1197,12 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 	}
 
 	if (pThis->TEST_MODEL) {
-		pThis->LoadSingleImage("E:/DeVisionProject/OneCamera_0417/test1");
+		CStringA strpath = (CW2A)curpath;
+		strpath = strpath + "\\test_image\\deffect_image.png";
+		pThis->LoadSingleImage(strpath.GetBuffer());
 		DWORD dwStop = 0;
 		for (;;) {
-			dwStop = WaitForSingleObject(pThis->StopManage_Event, 400);
+			dwStop = WaitForSingleObject(pThis->StopManage_Event, 1500);
 			switch (dwStop)
 			{
 			case WAIT_TIMEOUT: {

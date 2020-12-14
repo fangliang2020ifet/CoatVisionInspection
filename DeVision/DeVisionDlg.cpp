@@ -200,7 +200,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	InitialBtnIcon();
 
 	//加载默认设置
-	ReadFromRegedit();
+	LoadRegConfig();
 
 	//初始化全局瑕疵显示区, 设置显示范围
 	InitialTotalDefect();
@@ -316,6 +316,37 @@ void CDeVisionDlg::OnDestroy()
 }
 
 //从注册表读取
+void CDeVisionDlg::LoadRegConfig()
+{
+	float tmp = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd1 range", 0);
+	//判断是否已有注册表信息
+	if (tmp == 0.0f) {
+		//初次运行则进行默认设置
+		m_wnd1_range = 100.0f;
+		m_wnd2_range = 5.0f;
+		m_ImgAcq.m_k_speed = 491.52f;
+		m_nThreadNumbers = 1;
+		m_bSaveRefImg = false;
+		m_strDeffect_Path = "D:\\history";
+		m_strTable_Path = "D:\\report";
+		m_nNormalDistribution = 5;
+		m_nFIlterSize = 1;
+		m_fRadiusMin = 0.05f;
+		m_fRadiusMax = 50.0f;
+		m_cProduct_Number = "20200101";
+		m_inspectDlg.m_eNumber.SetWindowTextW(m_cProduct_Number);
+		m_cProduct_Model = "PET01";
+		m_inspectDlg.m_eModel.SetWindowTextW(m_cProduct_Model);
+		m_cProduct_Width = "1650";
+		m_inspectDlg.m_eWidth.SetWindowTextW(m_cProduct_Width);
+		m_cOperator = "UserA";
+		m_inspectDlg.m_eOperator.SetWindowTextW(m_cOperator);
+	}
+	else {
+		ReadFromRegedit();
+	}
+}
+
 void CDeVisionDlg::ReadFromRegedit()
 {
 	m_wnd1_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd1 range", 0);
@@ -1865,6 +1896,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_LED_SETUP, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_TRIGGER, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
 		}
 
 		break;
@@ -1881,6 +1913,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_LED_SETUP, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_TRIGGER, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
 		}
 
 		break;
