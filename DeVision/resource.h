@@ -95,6 +95,7 @@
 #define IDC_EDIT_LONGTH2                1049
 #define IDC_BUTTON1                     1050
 #define IDC_BUTTON_SELECT_DEFFECT_PATH  1050
+#define IDC_BUTTON_ANALYSIS_SAVE        1050
 #define IDC_CHECK1                      1051
 #define IDC_CHECK2                      1052
 #define IDC_CHECK3                      1053
@@ -337,6 +338,12 @@
 #define IDC_STATIC_SYSTEM_STATUE        1281
 #define IDC_EDIT_K_SPEED                1282
 #define IDC_OPENGL                      1283
+#define IDC_CHECK_GRID                  1284
+#define IDC_CHECK_TEXT                  1285
+#define IDC_CHECK_LABEL                 1286
+#define IDC_CHECK_TOOLTIPS              1287
+#define IDC_CHECK_PERCENT               1288
+#define IDC_STATIC_BARCHART             1289
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -391,7 +398,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        191
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1284
+#define _APS_NEXT_CONTROL_VALUE         1290
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -26,7 +26,7 @@ public:
 	int m_iSystemState;                      //系统状态
 	std::string m_DFT_img_path;
 	//std::wstring m_save_path = L"D:\\report\\";
-	std::wstring m_save_path = L"D:\\report\\";
+	std::wstring m_save_path = L"D:\\DetectRecords\\Reports\\";
 	std::wstring m_wstr_num = L"NO1";               //批号
 	std::wstring m_wstr_id = L"PET-1";                //型号
 	std::wstring m_wstr_width = L"1650";             //宽度
@@ -46,7 +46,7 @@ public:
 	void SaveDistributeImage();
 	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
 	bool SaveBMPToFile(HBITMAP hBitmap, LPSTR lpFileName);
-	bool SaveBitmapToFile(HBITMAP hBitmap, LPSTR lpFileName);
+	bool SaveBitmapToFile(HBITMAP hBitmap, const char* name);
 	void SaveToExcel(std::vector<DefectType> vDFT);
 	void SaveToExcelUseDefault(CString &name);
 	void SaveScatterPlotUseDefault();

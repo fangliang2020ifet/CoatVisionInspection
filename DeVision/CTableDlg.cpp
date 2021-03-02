@@ -430,7 +430,25 @@ void CTableDlg::SaveDistributeImage()
 	LPRECT prect = rect;
 	m_hbitmap = GetSrcBit(*dc, prect);
 	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
-	BOOL saved = SaveBitmapToFile(m_hbitmap, (LPSTR)_T(".\\temp\\saved.bmp"));
+
+	std::string strpath = "D:\\DetectRecords\\TableDistributes\\";
+	//获取日期
+	std::wstringstream date;
+	SYSTEMTIME sysTime;
+	::GetLocalTime(&sysTime);
+	date << sysTime.wYear << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wMonth << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wDay << L"_" << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wHour << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wMinute << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wSecond;
+	const std::wstring wdate = date.str();
+	const wchar_t* wname = wdate.c_str();
+	_bstr_t name(wname);
+	std::string strname = name + ".bmp";
+	strpath += strname;
+	BOOL saved = SaveBitmapToFile(m_hbitmap, strpath.c_str());
+
 	ReleaseDC(dc);
 }
 
@@ -550,11 +568,11 @@ bool CTableDlg::SaveBMPToFile(HBITMAP hBitmap, LPSTR lpFileName) //hBitmap 为�
 	return true;
 }
 
-bool CTableDlg::SaveBitmapToFile(HBITMAP hBitmap, LPSTR lpFileName)
+bool CTableDlg::SaveBitmapToFile(HBITMAP hBitmap, const char* name)
 {
 	CImage img;
 	img.Attach(hBitmap);
-	HRESULT hResult = img.Save((LPCWSTR)lpFileName);
+	HRESULT hResult = img.Save((CA2W)name);
 	//其它图片格式同理
 	DeleteObject(hBitmap);
 	if (FAILED(hResult))
@@ -920,10 +938,10 @@ void CTableDlg::SaveToExcelUseDefault(CString &name)
 	TCHAR path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, path);
 	CString cpath = path;
-	cpath = cpath + L"\\temp\\example.xlsx";
+	cpath = cpath + L"\\system\\ExampleModel.xlsx";
 	std::ifstream fexist(CT2A(cpath.GetBuffer()));
 	if (!fexist) {
-		CString cstr = L"打开Excel模板失败，请检查.temp\\example.xlsx文件是否存在";
+		CString cstr = L"打开Excel模板失败，请检查.system\\ExampleModel.xlsx文件是否存在";
 		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return;
 	}
@@ -976,10 +994,10 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	TCHAR excel_path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, excel_path);
 	CString cpath = excel_path;
-	cpath = L"D:\\temp\\test.xlsx";
+	cpath = cpath + L"\\system\\ExampleModel.xlsx";
 	std::ifstream fexist(CT2A(cpath.GetBuffer()));
 	if (!fexist) {
-		CString cstr = L"打开Excel模板失败，请检查\\temp\\目录下文件example.xlsx是否存在";
+		CString cstr = L"打开Excel模板失败，请检查\\system\\目录下文件ExampleModel.xlsx是否存在";
 		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return;
 	}
@@ -1549,10 +1567,10 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	TCHAR excel_path[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, excel_path);
 	CString cpath = excel_path;
-	cpath = cpath + L"\\temp\\example.xlsx";
+	cpath = cpath + L"\\system\\ExampleModel.xlsx";
 	std::ifstream fexist(CT2A(cpath.GetBuffer()));
 	if (!fexist) {
-		CString cstr = L"打开Excel模板失败，请检查\\temp\\目录下文件example.xlsx是否存在";
+		CString cstr = L"打开Excel模板失败，请检查\\system\\目录下文件ExampleModel.xlsx是否存在";
 		::SendMessage(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return -1;
 	}
@@ -1638,6 +1656,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	for (int k = 0; k < 7; k++)
 	{
 		if (k < 5) {
+			//瑕疵类型数目
 			COleVariant vkind_stastic((long)pThis->m_DFT_rank[k]); 
 			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
 		}

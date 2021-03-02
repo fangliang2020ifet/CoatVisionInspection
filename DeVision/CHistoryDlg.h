@@ -31,7 +31,7 @@ public:
 	BOOL LoadHistoryImage();
 
 	int m_pages;
-	std::string m_file_path = "D:\\history";
+	std::string m_file_path = "D:\\DetectRecords\\HistoryImages";
 
 protected:
 	CWnd *pwnd1;

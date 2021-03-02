@@ -1,6 +1,7 @@
 #pragma once
 
 #include "afxwin.h"
+#include <assert.h>
 #include <string>
 #include <vector>
 #include <list>
@@ -159,6 +160,9 @@ private:
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int StandDeviationAlgorithm(HImage hi_img, std::vector<DeffectInfo> &vecDftInfo, std::vector<HalconCpp::HObject> &vecDftImg);
+	void GetOutDeviationArea(HImage hiImg, HObject &hoSelectedArea);
+	void SplitAndMeasureDeffect(HObject selectArea);
+	void AddNoise(HObject hoImg);
 
 	static UINT ManageThread(LPVOID pParam);
 	static UINT ImageCalculate1(LPVOID pParam);
@@ -166,5 +170,4 @@ private:
 	static UINT ImageCalculate3(LPVOID pParam);
 	static UINT ImageCalculate4(LPVOID pParam);
 	static UINT ImageCalculate5(LPVOID pParam);
-
 };

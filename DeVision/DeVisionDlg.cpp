@@ -199,7 +199,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//按钮图标初始化
 	InitialBtnIcon();
 
-	//加载默认设置
+	//注册表：加载默认设置
 	LoadRegConfig();
 
 	//初始化全局瑕疵显示区, 设置显示范围
@@ -269,13 +269,15 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// TODO:  在此添加您专用的创建代码
 	
 	//登录窗口
-	CLogin loginDlg;
-	loginDlg.DoModal();
-	if (!loginDlg.ACCEPTED)
-		return -1;
-	else {
-		m_logo_name = loginDlg.m_logo_name;
-		return 0;
+	if (!m_bTestModel) {
+		CLogin loginDlg;
+		loginDlg.DoModal();
+		if (!loginDlg.ACCEPTED)
+			return -1;
+		else {
+			m_logo_name = loginDlg.m_logo_name;
+			return 0;
+		}
 	}
 
 	return 0;
@@ -327,8 +329,8 @@ void CDeVisionDlg::LoadRegConfig()
 		m_ImgAcq.m_k_speed = 491.52f;
 		m_nThreadNumbers = 1;
 		m_bSaveRefImg = false;
-		m_strDeffect_Path = "D:\\history";
-		m_strTable_Path = "D:\\report";
+		m_strDeffect_Path = "D:\\DetectRecords\\HistoryImages";
+		m_strTable_Path = "D:\\DetectRecords\\Reports";
 		m_nNormalDistribution = 5;
 		m_nFIlterSize = 1;
 		m_fRadiusMin = 0.05f;
@@ -346,6 +348,7 @@ void CDeVisionDlg::LoadRegConfig()
 		ReadFromRegedit();
 	}
 }
+
 
 void CDeVisionDlg::ReadFromRegedit()
 {
@@ -766,6 +769,7 @@ void CDeVisionDlg::DelQueueFromSource()
 
 	m_fTotalDeffectsLength = m_nTotalDeffects * 0.01f;
 	m_inspectDlg.UpdateDFTinformation(m_nTotalDeffects, m_nSeriousDeffects, m_fTotalDeffectsLength);
+	m_analysisDlg.m_dDftNumber1 = (double)m_nTotalDeffects;
 	if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
 		PostMessage(WM_UPDATE_HISTORY, 0, 0);
 }

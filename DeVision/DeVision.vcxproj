@@ -194,6 +194,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BarChart.h" />
     <ClInclude Include="CAcquireImage.h" />
     <ClInclude Include="CAlgorithmDlg.h" />
     <ClInclude Include="CAnalysisDlg.h" />
@@ -248,6 +249,7 @@
     <ClInclude Include="wcharUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BarChart.cpp" />
     <ClCompile Include="CAcquireImage.cpp" />
     <ClCompile Include="CAlgorithmDlg.cpp" />
     <ClCompile Include="CAnalysisDlg.cpp" />

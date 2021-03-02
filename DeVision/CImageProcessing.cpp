@@ -1,9 +1,14 @@
+
+
 #include "stdafx.h"
 #include "DeVision.h"
 #include "CImageProcessing.h"
 #include "Log.h"
 #include <winbase.h>
 #include <windows.h>
+#include <stdlib.h>
+#include <cstdlib>
+#include <ctime>
 
 
 CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSize, float RadiusMin, float RadiusMax)
@@ -14,7 +19,7 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 	TEST_MODEL = FALSE;
 	SAVE_REFERENCE_IMAGE = FALSE;
 	m_referenceImage_OK = FALSE;
-	m_strPath = "D:\\ImageSave\\";
+	m_strPath = "D:\\DetectRecords\\HistoryImages\\";
 
 	m_nTotalListNumber = 0;
 	m_unImageIndex = 0;
@@ -978,7 +983,11 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 	HTuple   hv_Width, hv_Height, hv_Number;
 	HTuple   hv_i, hv_Area, hv_Row, hv_Column, hv_RowCircle, hv_ColumnCircle, hv_Radius, hv_Contlength;
 
-	ho_Image = hi_img;
+	//ho_Image = hi_img;
+	HalconCpp::CopyImage(hi_img, &ho_Image);
+	if(TEST_MODEL)
+		AddNoise(ho_Image);
+
 	ho_ImageAverage = m_hi_average;
 	ho_ImageDeviation = m_hi_deviation;
 	HalconCpp::GetImageSize(ho_Image, &hv_Width, &hv_Height);
@@ -999,16 +1008,18 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 	HalconCpp::Connection(ho_RegionErosion, &ho_ConnectedRegions);
 	int min_select = (int)std::pow(2 * m_fMin_Radius / HORIZON_PRECISION, 2);
 	int max_select = (int)std::pow(2 * m_fMax_Radius / HORIZON_PRECISION, 2);
-	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",
-		min_select,
-		max_select);
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",	min_select,	max_select);
 	HalconCpp::CountObj(ho_SelectedRegions, &hv_Number);
-	if (0 != hv_Number)
-	{
+	//TRACE("DFT in current image = %d", hv_Number[0].I());
+	//CString cstr;
+	//cstr.Format(_T("DFT in current image = %d"), hv_Number[0].I());
+	//::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+
+	if (0 != hv_Number){
 		//当单张图像中选择的区域超过 64 个，则认为此图计算失败
-		if (hv_Number > 64) {
+		if (hv_Number > 128) {
 			CString cstr;
-			cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"),	m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION);
+			cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"),	m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f);
 			::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			return -1;
 		}
@@ -1042,22 +1053,6 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 			vSelect.push_back(region);
 		}
 
-		////删除相邻距离小于256的区域
-		//std::vector<SelectRegion>::iterator it;
-		//for (it = vSelect.begin(); it != vSelect.end(); it++)
-		//{
-		//	if (it != vSelect.end() - 1) {
-		//		HTuple x, y;
-		//		HalconCpp::TupleAbs(it->hv_Row_Center - (it + 1)->hv_Row_Center, &y);
-		//		HalconCpp::TupleAbs(it->hv_Column_Center - (it + 1)->hv_Column_Center, &x);
-		//		if (x < 128 || y < 128) {
-		//			//在同已区域内则面积标记为 0
-		//			it->area = 0.0f;
-		//		}
-		//	}
-		//	else break;
-		//}
-
 		//反向迭代器，保存瑕疵图像及信息
 		std::vector<SelectRegion>::reverse_iterator rit;
 		for (rit = vSelect.rbegin(); rit != vSelect.rend(); rit++)
@@ -1068,8 +1063,7 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 				continue;
 			else {
 				//当所选的区域的面积大于256*256=65536，即区域范围大于瑕疵图像的尺寸时，保存其实际图像
-				if (region.area >= 65536.0f)
-				{
+				if (region.area >= 65536.0f){
 					//直接保存整个区域
 					HTuple hv_x1, hv_y1, hv_x2, hv_y2;
 					hv_x1 = region.hv_Column_Center - (HTuple)region.radius;
@@ -1089,20 +1083,16 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 					HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
 				}
 				else {
-					if (0 != (region.hv_Row_Center < 127))
-					{
+					if (0 != (region.hv_Row_Center < 127)){
 						region.hv_Row_Center = 127;
 					}
-					else if (0 != (region.hv_Row_Center > (hv_Height - 127)))
-					{
+					else if (0 != (region.hv_Row_Center > (hv_Height - 127))){
 						region.hv_Row_Center = hv_Height - 127;
 					}
-					if (0 != (region.hv_Column_Center < 127))
-					{
+					if (0 != (region.hv_Column_Center < 127)){
 						region.hv_Column_Center = 127;
 					}
-					else if (0 != (region.hv_Column_Center > (hv_Width - 127)))
-					{
+					else if (0 != (region.hv_Column_Center > (hv_Width - 127))){
 						region.hv_Column_Center = hv_Width - 127;
 					}
 					GenRectangle1(&ho_Rectangle, region.hv_Row_Center - 127, region.hv_Column_Center - 127,
@@ -1168,6 +1158,120 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 	return 0;
 }
 
+// 检测算法：2021.2.26
+// step 1
+void CImageProcessing::GetOutDeviationArea(HImage hiImg, HObject &hoSelectedArea)
+{
+	//assert(m_hi_average);
+	//assert(m_hi_deviation);
+
+	HTuple hvWidth, hvHeight;
+	HalconCpp::GetImageSize(hiImg, &hvWidth, &hvHeight);
+	HObject hoImgMedianDFT;
+	HalconCpp::MedianImage(hiImg, &hoImgMedianDFT, "square", m_median_filter_size, "mirrored");
+	//HalconCpp::MedianRect(ho_Image, &ho_ImageMedianDFT, 1, 11);
+
+	//参考文献：一种基于多目机器视觉的光学薄膜瑕疵检测系统
+	//如果相减后像素值小于零，其结果图中会被置0；同理，如果像素值大于255，也会被截断使其最大值为255
+	//交换位置相减后再相加，相当于异或
+	HObject hoImgSub1, hoImgSub2, hoImgAddSub;
+	HalconCpp::SubImage(hoImgMedianDFT, m_hi_average, &hoImgSub1, 1, 0);
+	HalconCpp::SubImage(m_hi_average, hoImgMedianDFT, &hoImgSub2, 1, 0);
+	HalconCpp::AddImage(hoImgSub1, hoImgSub2, &hoImgAddSub, 0.5, 0);
+	HObject hoImgResult;
+	HalconCpp::SubImage(hoImgAddSub, m_hi_deviation, &hoImgResult, 1, 0);
+	HObject hoRegion;
+	HalconCpp::Threshold(hoImgResult, &hoRegion, 1, 255);
+
+	//膨胀,腐蚀,用于减少region的数量
+	HObject hoRegionDilation, hoRegionErosion, hoConnectedRegion;
+	HalconCpp::DilationCircle(hoRegion, &hoRegionDilation, 64);
+	HalconCpp::ErosionCircle(hoRegionDilation, &hoRegionErosion, 64);
+	HalconCpp::Connection(hoRegionErosion, &hoConnectedRegion);
+
+	int min_select = (int)std::pow(2 * m_fMin_Radius / HORIZON_PRECISION, 2);
+	int max_select = (int)std::pow(2 * m_fMax_Radius / HORIZON_PRECISION, 2);
+	HalconCpp::SelectShape(hoConnectedRegion, &hoSelectedArea, "area", "and",	min_select,	max_select);
+
+}
+
+// step 2
+void CImageProcessing::SplitAndMeasureDeffect(HObject selectArea)
+{
+	//assert(selectArea);
+	HTuple hvCounts;
+	HalconCpp::CountObj(selectArea, &hvCounts);
+	if (hvCounts == 0)
+		return;
+
+	//当单张图像中选择的区域超过 64 个，则认为此图计算失败
+	if (hvCounts > 64) {
+		CString cstr;
+		cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"), m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION);
+		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
+	}
+
+	std::vector<SelectRegion> vSelect;
+	HObject hvCurrentSelected;
+	HTuple hvArea, hvRow, hvColumn;
+	HTuple hvCircleRow, hvCircleColumn, hvRadius, hvContlength;
+	for (HTuple hv_i = 1; hv_i.Continue(hvCounts, 1); hv_i += 1) {
+		HalconCpp::SelectObj(selectArea, &hvCurrentSelected, hv_i);
+		//考虑是否要替换为AreaCenterGray()算子
+		HalconCpp::AreaCenter(hvCurrentSelected, &hvArea, &hvRow, &hvColumn);
+		//最小外接圆
+		HalconCpp::SmallestCircle(hvCurrentSelected, &hvCircleRow, &hvCircleColumn, &hvRadius);
+		//默认如果选择的区域大于图像尺寸的一半，则视为无效区域
+		if (hvRadius > 2048)
+			continue;
+		//区域周长
+		HalconCpp::Contlength(hvCurrentSelected, &hvContlength);
+		//计算像素平均值
+		//HTuple hv_mean, hv_deviation;
+		//HalconCpp::Intensity(hvCurrentSelected, ho_Image, &hv_mean, &hv_deviation);
+
+		SelectRegion region;
+		region.index = hv_i.TupleInt();
+		region.hv_Row_Center = hvRow;
+		region.hv_Column_Center = hvColumn;
+		region.area = (float)hvArea.D();
+		region.radius = (float)hvRadius.D();
+		region.contlength = (float)hvContlength.D();
+		region.pixelvalue = 0.0f;
+		vSelect.push_back(region);
+	}
+}
+
+// add noise
+void CImageProcessing::AddNoise(HObject hoImg)
+{
+	HTuple  hv_Width, hv_Height, hv_minvalue, hv_maxvalue;
+	HTuple  hv_Number, hv_index, hv_value;
+	HObject ho_Regions, ho_ObjectSelected;
+
+	GetImageSize(hoImg, &hv_Width, &hv_Height);
+
+	unsigned seed = std::time(0);
+	std::srand(seed);
+	int noiseNum = std::rand() % 3;
+	if (noiseNum == 0)
+		return;
+	GenRandomRegions(&ho_Regions, "ellipse", 1, 128, 1, 128, -0.7854, 0.7854, noiseNum, hv_Width, hv_Height);
+	CountObj(ho_Regions, &hv_Number);
+
+	hv_minvalue = 0;
+	hv_maxvalue = 255;
+
+	HTuple end_val19 = hv_Number;
+	HTuple step_val19 = 1;
+	for (hv_index = 1; hv_index.Continue(end_val19, step_val19); hv_index += step_val19){
+		SelectObj(ho_Regions, &ho_ObjectSelected, hv_index);
+		hv_value = hv_minvalue + (HTuple::TupleRand(1)*(hv_maxvalue - hv_minvalue));
+		OverpaintRegion(hoImg, ho_ObjectSelected, hv_value, "fill");
+	}
+}
+
 //管理线程
 UINT CImageProcessing::ManageThread(LPVOID pParam)
 {
@@ -1198,11 +1302,11 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 
 	if (pThis->TEST_MODEL) {
 		CStringA strpath = (CW2A)curpath;
-		strpath = strpath + "\\test_image\\deffect_image.png";
+		strpath = strpath + "\\test_image\\test_image.png";
 		pThis->LoadSingleImage(strpath.GetBuffer());
 		DWORD dwStop = 0;
 		for (;;) {
-			dwStop = WaitForSingleObject(pThis->StopManage_Event, 1500);
+			dwStop = WaitForSingleObject(pThis->StopManage_Event, 1000);
 			switch (dwStop)
 			{
 			case WAIT_TIMEOUT: {

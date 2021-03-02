@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "COpenGLControl.h"
+#include "BarChart.h"
+
 
 // CAnalysisDlg 对话框
 
@@ -25,10 +27,46 @@ protected:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
+	enum { IDD = IDD_DIALOG_ANALYSIS };
+	BOOL m_bShowGrid;
+	BOOL m_bShowText;
+	BOOL m_bShowLable;
+	BOOL m_bShowTip;
+	BOOL m_bShowPercent;
+	double m_dDftNumber1;
+	double m_dDftNumber2;
+	double m_dDftNumber3;
+	double m_dDftNumber4;
+	double m_dDftNumber5;
+	double m_dDftNumber6;
+	double m_dDftNumber7;
+	double m_dDftNumber8;
+
+	void ClearAll();
+	void UpdateChartValue();
+
+protected:
+
+	HICON m_hIcon;
+	CBarChart m_chart;
+	CBrush m_brushBK;
+
+	void CreateCustomBarChart();
+
+
 private:
-	COpenGLControl m_oglWindow;
+	//COpenGLControl m_oglWindow;
+	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
+	bool SaveBitmapToFile(HBITMAP hBitmap, const char* name);
 
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedButtonReset();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnBnClickedCheckGrid();
+	afx_msg void OnBnClickedCheckText();
+	afx_msg void OnBnClickedCheckLabel();
+	afx_msg void OnBnClickedCheckTooltips();
+	afx_msg void OnBnClickedCheckPercent();
+public:
+	afx_msg void OnBnClickedButtonAnalysisSave();
 };
