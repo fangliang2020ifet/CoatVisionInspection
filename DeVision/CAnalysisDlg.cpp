@@ -324,4 +324,3 @@ void CAnalysisDlg::OnBnClickedCheckPercent()
 
 }
 
-

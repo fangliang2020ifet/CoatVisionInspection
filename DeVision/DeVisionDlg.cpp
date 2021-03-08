@@ -740,7 +740,7 @@ void CDeVisionDlg::DelQueueFromSource()
 				m_vecDftDisplay.push_back(info);
 				m_nTotalDeffects += 1;
 				//判断是否是严重缺陷
-				if (info.area > 0.5f || info.contlength > 32)
+				if (info.area > 5.0f || info.contlength > 32)
 					m_nSeriousDeffects += 1;
 
 				//瑕疵类型统计
@@ -769,7 +769,12 @@ void CDeVisionDlg::DelQueueFromSource()
 
 	m_fTotalDeffectsLength = m_nTotalDeffects * 0.01f;
 	m_inspectDlg.UpdateDFTinformation(m_nTotalDeffects, m_nSeriousDeffects, m_fTotalDeffectsLength);
-	m_analysisDlg.m_dDftNumber1 = (double)m_nTotalDeffects;
+	m_analysisDlg.m_dDftNumber1 = (double)m_rank[0];
+	m_analysisDlg.m_dDftNumber2 = (double)m_rank[1];
+	m_analysisDlg.m_dDftNumber3 = (double)m_rank[2];
+	m_analysisDlg.m_dDftNumber4 = (double)m_rank[3];
+	m_analysisDlg.m_dDftNumber5 = (double)m_rank[4];
+	// ......
 	if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
 		PostMessage(WM_UPDATE_HISTORY, 0, 0);
 }
@@ -830,6 +835,24 @@ void CDeVisionDlg::CreateFlag(CDC &mDC, int x, int y, int kind)
 			mDC.TextOutW(x, y, _T("E"));
 		}
 		break;
+	case 5:
+		if (pView->m_bFlagShow[5]) {
+			mDC.SetBkColor(pView->m_acolor[5]);
+			mDC.TextOutW(x, y, _T("F"));
+		}
+		break;
+	case 6:
+		if (pView->m_bFlagShow[6]) {
+			mDC.SetBkColor(pView->m_acolor[6]);
+			mDC.TextOutW(x, y, _T("G"));
+		}
+		break;
+	case 7:
+		if (pView->m_bFlagShow[7]) {
+			mDC.SetBkColor(pView->m_acolor[7]);
+			mDC.TextOutW(x, y, _T("H"));
+		}
+		break;
 	default: {
 		mDC.SetBkColor(RGB(0, 0, 0));
 		break;
@@ -877,6 +900,7 @@ void CDeVisionDlg::DrawPartial(int test)
 
 			//创建标记
 			CreateFlag(MemDC, x_coord, y_coord, info.type);
+			TRACE("type = %d\n", info.type);
 			// 刷新控件显示
 			if (std::distance(m_vecDftDisplay.rbegin(), rit) == 0) {
 				CString cwidth, cposition;
@@ -1116,6 +1140,10 @@ void CDeVisionDlg::UpdateSysColor()
 	pView->m_acolor[2] = m_inspectDlg.m_color3;
 	pView->m_acolor[3] = m_inspectDlg.m_color4;
 	pView->m_acolor[4] = m_inspectDlg.m_color5;
+	pView->m_acolor[5] = m_inspectDlg.m_color6;
+	pView->m_acolor[6] = m_inspectDlg.m_color7;
+	pView->m_acolor[7] = m_inspectDlg.m_color8;
+
 }
 
 //创建工作目录
@@ -1544,8 +1572,6 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 void CDeVisionDlg::OnBnClickedMfcbuttonPause()
 {
 	//暂停检测，相机获取的图像不放入图像列表
-	//m_inspectDlg.m_is_system_pause = TRUE;
-	//m_ImgProc.SYSTEM_PAUSE = TRUE;
 
 	if (m_system_state != SYSTEM_STATE_PAUSE)
 		m_system_state = SYSTEM_STATE_PAUSE;
@@ -1775,6 +1801,11 @@ void CDeVisionDlg::OnProduct()
 void CDeVisionDlg::OnDeffectTrader()
 {
 	// TODO: 在此添加命令处理程序代码
+	if (m_CurSelTab != 1) {
+		m_tab.SetCurSel(1);
+		pDialog[m_CurSelTab]->ShowWindow(SW_HIDE);
+		pDialog[1]->ShowWindow(SW_SHOW);
+	}
 }
 
 //瑕疵检测：瑕疵检测算法

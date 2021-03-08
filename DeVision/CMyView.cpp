@@ -11,11 +11,14 @@ IMPLEMENT_DYNCREATE(CMyView, CScrollView)
 
 CMyView::CMyView()
 {
-	//m_acolor[0] = RGB(255, 35, 15);
-	//m_acolor[1] = RGB(25, 255, 35);
-	//m_acolor[2] = RGB(35, 55, 225);
-	//m_acolor[3] = RGB(255, 255, 0);
-	//m_acolor[4] = RGB(225, 35, 225);
+	m_acolor[0] = RGB(255, 35, 15);
+	m_acolor[1] = RGB(25, 255, 35);
+	m_acolor[2] = RGB(35, 55, 225);
+	m_acolor[3] = RGB(255, 255, 0);
+	m_acolor[4] = RGB(55, 35, 55);
+	m_acolor[5] = RGB(255, 255, 255);
+	m_acolor[6] = RGB(155, 35, 155);
+	m_acolor[7] = RGB(155, 155, 85);
 
 	for (INT i = 0; i < 8; i++) {m_bFlagShow[i] = true;}
 
@@ -170,6 +173,27 @@ void CMyView::CreateFlag(CDC &mDC, int x, int y, int kind)
 		if (m_bFlagShow[4]) {
 			mDC.SetBkColor(m_acolor[4]);
 			mDC.TextOutW(x, y, _T("E"));
+		}
+		break;
+	}
+	case 5: {
+		if (m_bFlagShow[5]) {
+			mDC.SetBkColor(m_acolor[5]);
+			mDC.TextOutW(x, y, _T("F"));
+		}
+		break;
+	}
+	case 6: {
+		if (m_bFlagShow[6]) {
+			mDC.SetBkColor(m_acolor[6]);
+			mDC.TextOutW(x, y, _T("G"));
+		}
+		break;
+	}
+	case 7: {
+		if (m_bFlagShow[7]) {
+			mDC.SetBkColor(m_acolor[7]);
+			mDC.TextOutW(x, y, _T("H"));
 		}
 		break;
 	}

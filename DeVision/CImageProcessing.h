@@ -152,7 +152,7 @@ private:
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
 		HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
-	unsigned short int  ImageClassification(HObject ho_img);
+	unsigned short int  ImageClassification(float radius);
 	int  RankDivide(DefectType dtype);
 	unsigned short int RankDivide(DeffectInfo dft_info);
 	

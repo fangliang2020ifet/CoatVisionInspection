@@ -688,11 +688,32 @@ unsigned short int CImageProcessing::RankDivide(DeffectInfo dft_info)
 }
 
 //分类算法，分类器
-unsigned short int CImageProcessing::ImageClassification(HObject ho_img)
+unsigned short int CImageProcessing::ImageClassification(float radius)
 {
 	unsigned short int kind = 0;
-	HObject ho_region;
-	HalconCpp::AutoThreshold(ho_img, &ho_region, 3);
+	//HObject ho_region;
+	//HalconCpp::AutoThreshold(ho_img, &ho_region, 3);
+
+	//HTuple hv_RowCircle, hv_ColumnCircle, hv_Radius;
+	//HalconCpp::SmallestCircle(ho_img, &hv_RowCircle, &hv_ColumnCircle, &hv_Radius);
+	//float radius = (float)hv_Radius.D();
+
+	if (0 <= radius && radius < 16)
+		kind = 0;
+	else if (16 <= radius && radius < 32)
+		kind = 1;
+	else if (32 <= radius && radius < 48)
+		kind = 2;
+	else if (48 <= radius && radius < 64)
+		kind = 3;
+	else if (64 <= radius && radius < 80)
+		kind = 4;
+	else if (80 <= radius && radius < 96)
+		kind = 5;
+	else if (96 <= radius && radius < 112)
+		kind = 6;
+	else if (112 <= radius && radius <= 128)
+		kind = 7;
 
 	return kind;
 }
@@ -1103,7 +1124,8 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 
 				//瑕疵信息处理
 				DeffectInfo dftInfo;
-				dftInfo.type = ImageClassification(ho_ImagePart);
+				//dftInfo.type = ImageClassification(ho_ImagePart);  // 分类器
+				dftInfo.type = ImageClassification(region.radius);
 				dftInfo.x = (float)region.hv_Column_Center.D();
 				dftInfo.y = (float)region.hv_Row_Center.D();
 				dftInfo.area = region.area;
@@ -1252,7 +1274,7 @@ void CImageProcessing::AddNoise(HObject hoImg)
 
 	GetImageSize(hoImg, &hv_Width, &hv_Height);
 
-	unsigned seed = std::time(0);
+	unsigned seed = (unsigned)std::time(0);
 	std::srand(seed);
 	int noiseNum = std::rand() % 3;
 	if (noiseNum == 0)
