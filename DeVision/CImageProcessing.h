@@ -1,6 +1,7 @@
 #pragma once
 
 #include "afxwin.h"
+#include <mutex>
 #include <assert.h>
 #include <string>
 #include <vector>
@@ -67,6 +68,7 @@ class CImageProcessing
 public:
 	CImageProcessing(int ThreadNum, int Distribution, int FilterSize, float RadiusMin, float RadiusMax);
 	~CImageProcessing();
+	void ClearThisClass();
 
 public:
 	HWND hMainWnd;                               //Ö÷´°¿Ú¾ä±ú
@@ -139,7 +141,12 @@ private:
 			ImageCalculate3, ImageCalculate4, ImageCalculate5 };
 	BOOL m_bThreadAlive[5] = { 0 };
 	CRITICAL_SECTION m_csCalculateThread;
-	CRITICAL_SECTION m_csDefImgList;
+	CRITICAL_SECTION m_csDefImgList1;
+	CRITICAL_SECTION m_csDefImgList2;
+	CRITICAL_SECTION m_csDefImgList3;
+	CRITICAL_SECTION m_csDefImgList4;
+	CRITICAL_SECTION m_csDefImgList5;
+	std::mutex mtx;
 
 	void HalconInitAOP();
 	BOOL LoadDefaultRefAndDevImage(std::string path);

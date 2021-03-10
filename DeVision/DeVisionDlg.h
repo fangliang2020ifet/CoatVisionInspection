@@ -47,7 +47,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	bool m_bTestModel = FALSE;
+	bool m_bTestModel = TRUE;
 	bool m_bSaveRefImg;
 
 	CAcquireImage   m_ImgAcq;               //图像获取

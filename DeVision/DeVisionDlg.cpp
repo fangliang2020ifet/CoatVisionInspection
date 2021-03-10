@@ -269,16 +269,16 @@ int CDeVisionDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// TODO:  在此添加您专用的创建代码
 	
 	//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return -1;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-			return 0;
-		}
-	}
+	//if (!m_bTestModel) {
+	//	CLogin loginDlg;
+	//	loginDlg.DoModal();
+	//	if (!loginDlg.ACCEPTED)
+	//		return -1;
+	//	else {
+	//		m_logo_name = loginDlg.m_logo_name;
+	//		return 0;
+	//	}
+	//}
 
 	return 0;
 }
@@ -1543,9 +1543,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CWaitCursor wait;
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
-		if (!m_bTestModel) {
-			if (!m_ImgAcq.Freeze()) return;
-		}
+		m_ImgAcq.Freeze();
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			if (m_bTestModel) {
 				m_pImgProc[index]->StopManageThread();
@@ -1621,6 +1619,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		//删除图像处理线程
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			//应当在数据保存之后删除
+			m_pImgProc[index]->ClearThisClass();
 			delete m_pImgProc[index];
 			m_pImgProc[index] = NULL;
 		}

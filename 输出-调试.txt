@@ -1,75 +1,76 @@
-﻿Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“E:\Projects\GitRepositories\fangliang11\CoatVisionInspection\x64\Debug\DeVision.exe”。已加载符号。
+﻿“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\DeVision.exe”。已加载符号。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\ntdll.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\kernel32.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\KernelBase.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\user32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\SapClassGui84.NET_2017.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\win32u.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\glu32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\opengl32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\halconcpp.dll”。模块已生成，不包含符号。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\SapClassBasic84.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\gdi32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcrt.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcrt.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\msvcrt.dll”
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\gdi32full.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\advapi32.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcp_win.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\sechost.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\rpcrt4.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\ucrtbase.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\shell32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\combase.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\shlwapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ole32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“E:\Projects\GitRepositories\fangliang11\CoatVisionInspection\x64\Debug\SapClassGui84D.NET_2017.dll”。已加载符号。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\oleaut32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\advapi32.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\comdlg32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\mfc140ud.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\shell32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcrt.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcrt.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\mfc140u.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\msvcrt.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\combase.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\sechost.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cfgmgr32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ole32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\rpcrt4.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\rpcrt4.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\SHCore.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\rpcrt4.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\rpcrt4.dll”
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\rpcrt4.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\bcryptprimitives.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\windows.storage.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\oleaut32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\corapi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\shlwapi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\shlwapi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\profapi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\shlwapi.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\powrprof.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\imm32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\SapClassBasic84.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.746_none_ca02b4b61b8320a4\comctl32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.19041.789_none_faf0a7e97612e7bb\GdiPlus.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcp140d.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\odbc32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\vcruntime140d.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\crypt32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ucrtbased.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\uxtheme.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\umpdc.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\winmm.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\kernel.appcore.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\halcon.dll”。模块已生成，不包含符号。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cryptsp.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\setupapi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\bcrypt.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\vcruntime140.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ws2_32.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcp120.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\msvcr120.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“F:\CoatVisionInspection\x64\Release\msvcr120.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\crypt32.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcr120.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\dpapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\MVTec\HALCON-18.11-Progress\bin\x64-win64\halconcpp.dll”。模块已生成，不包含符号。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\corapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\corapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\corapi.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msasn1.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\wintrust.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\CorUtility.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\version.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\netapi32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\MVTec\HALCON-18.11-Progress\bin\x64-win64\halcon.dll”。模块已生成，不包含符号。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\setupapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cfgmgr32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\bcrypt.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ws2_32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.18362.1379_none_9e7ff3b3e45cc0c4\comctl32.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\uxtheme.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcp140.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winmmbase.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winmmbase.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\winmmbase.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winmmbase.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\winmmbase.dll”
+“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.18362.1379_none_cf6ae6993eef3a92\GdiPlus.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\IPHLPAPI.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\wintrust.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\dhcpcsvc.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorUtility.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorLog.dll”。无法查找或打开 PDB 文件。
-d:\program files\teledyne dalsa\sapera\classes\gui\sapclassgui.cpp(34) : atlTraceGeneral - SAPCLASSGUI.DLL Initializing!
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msasn1.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\bcryptprimitives.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\nsi.dll”。无法查找或打开 PDB 文件。
+“DeVision.exe”(Win32): 已加载“F:\CoatVisionInspection\x64\Release\CorLog.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\msctf.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\kernel.appcore.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\TextInputFramework.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\CoreUIComponents.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\CoreMessaging.dll”。无法查找或打开 PDB 文件。
@@ -77,375 +78,21 @@ d:\program files\teledyne dalsa\sapera\classes\gui\sapclassgui.cpp(34) : atlTrac
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\WinTypes.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\WinTypes.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已卸载“C:\Windows\System32\WinTypes.dll”
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
+“DeVision.exe”(Win32): 已加载“C:\Windows\System32\iertutil.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorHost.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorPci.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorMem.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorBuff.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorCam.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorDisp.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorFile.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\TIFfiles.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\JPEGfiles.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorGraph.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorLut.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorVic.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorView.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_ara_x.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9625_none_08e1c10da83fbc83\msvcr90.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_gencp_cl_x.cxm”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorGigEServerLib.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorGigEServerLib.DLL”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\CorGigEServerLib.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniec640_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniec640_s.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniec640_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniehm_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniehm_s.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniehm_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniem640_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniem640_s.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_geniem640_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_SapGige_s.dll”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_SapGige_s.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_cam_SapGige_s.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\wininet.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9625_none_08e1c10da83fbc83\msvcp90.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GCBase_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GCBase_MD_VC80_v2_4.dll”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GCBase_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.vc80.crt_1fc8b3b9a1e18e3b_8.0.50727.9672_none_88e266cb2fac7c0d\msvcp80.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\WinSxS\amd64_microsoft.vc80.crt_1fc8b3b9a1e18e3b_8.0.50727.9672_none_88e266cb2fac7c0d\msvcr80.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GenApi_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GenApi_MD_VC80_v2_4.dll”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\GenApi_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\log4cpp_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\log4cpp_MD_VC80_v2_4.dll”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\Log_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\MathParser_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\Log_MD_VC80_v2_4.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\MathParser_MD_VC80_v2_4.dll”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\log4cpp_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\MathParser_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\GenICam_v2_4\bin\Win64_x64\Log_MD_VC80_v2_4.dll”。无法查找或打开 PDB 文件。
-=>LOG :  : Loading logger parameter file 'C:\Program Files\GenICam_v2_4\log\config\DebugLogging.properties'
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cor_gencp_cl_s.dll”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\GCBase_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\GenApi_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\Log_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\XmlParser_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\NodeMapData_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\MathParser_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\log4cpp_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-0x00007FFFA8A4D759 处(位于 DeVision.exe 中)引发的异常: Microsoft C++ 异常: GenICam_3_0::RuntimeException，位于内存位置 0x0000004B084F56F0 处。
-=>LOG :  : SetGenICamLogConfig(path) not called, and environment variable GENICAM_LOG_CONFIG_V3_0 not found. Using default logging configuration.
-=>LOG :  : Loading logger parameter file 'C:/Program Files/Teledyne DALSA/GenICam/log/config/DefaultLogging.properties'
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Teledyne DALSA\GenICam\bin\Win64_x64\CLProtocol_MD_VC120_v3_0.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\TextShaping.dll”。无法查找或打开 PDB 文件。
 “DeVision.exe”(Win32): 已加载“C:\Windows\System32\msimg32.dll”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\WindowsCodecs.dll”。无法查找或打开 PDB 文件。
-线程 0x2070 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x1a64 已退出，返回值为 1 (0x1)。
-线程 0x3878 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x27b8 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x2378 已退出，返回值为 1 (0x1)。
-线程 0x1c1c 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x16a0 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x3990 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0xb64 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x3a6c 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-线程 0x1be8 已退出，返回值为 1 (0x1)。
-线程 0x3dd0 已退出，返回值为 1 (0x1)。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\clbcatq.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\System\ado\msado15.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msdart.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\System\Ole DB\oledb32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\comsvcs.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACEOLEDB.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\vcruntime140.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\Mso20win32client.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msvcp140.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\vcruntime140_1.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\Mso30win32client.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\Mso40UIwin32client.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\Mso99Lwin32client.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\slc.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\sppc.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\sppc.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\sppc.dll”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\MSO.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\cryptbase.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\msi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\srpapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACECORE.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\d2d1.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\wtsapi32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winsta.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\dxgi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ResourcePolicyClient.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\ResourcePolicyClient.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\windows.storage.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\wldp.dll”。无法查找或打开 PDB 文件。
-onecore\windows\directx\database\helperlibrary\lib\directxdatabasehelper.cpp(652)\dxgi.dll!00007FFFA6FDA7D1: (caller: 00007FFFA6FDA2D8) ReturnHr(1) tid(3550) 80004002 不支持此接口
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\DWrite.dll”。无法查找或打开 PDB 文件。
-onecore\windows\directx\database\helperlibrary\lib\directxdatabasehelper.cpp(652)\dxgi.dll!00007FFFA6FDA7D1: (caller: 00007FFFA6FDA2D8) ReturnHr(2) tid(1d3c) 80004002 不支持此接口
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\d3d10_1.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\d3d10_1core.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\d3d11.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\d3d10warp.dll”。无法查找或打开 PDB 文件。
-onecore\windows\directx\database\helperlibrary\lib\directxdatabasehelper.cpp(652)\dxgi.dll!00007FFFA6FDA7D1: (caller: 00007FFFA6FDA2D8) ReturnHr(3) tid(3550) 80004002 不支持此接口
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\DXCore.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igd10iumd64.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ncrypt.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ntasn1.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\davclnt.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\davhlpr.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igdgmm64.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igc64.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\profapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\xmllite.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\mlang.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\1033\ACEWSTR.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACEWDAT.DLL”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACEWDAT.DLL”
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACEWDAT.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\Common Files\microsoft shared\OFFICE16\ACEWDAT.DLL”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\netprofm.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\npmproxy.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\webservices.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\secur32.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\sspicli.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\normaliz.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winhttp.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\nsi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\dhcpcsvc6.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\OnDemandConnRouteHelper.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\OnDemandConnRouteHelper.dll”
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\urlmon.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\iertutil.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\OnDemandConnRouteHelper.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\mswsock.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\winnsi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\webio.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\dnsapi.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\rasadhlp.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\FWPUCLNT.DLL”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\schannel.dll”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\mskeyprotect.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\ncryptsslp.dll”。无法查找或打开 PDB 文件。
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-Qt VS Tools: QML debug: Debugging project 'DeVision'...
-Qt VS Tools: QML debug: DISABLED: Non-Qt/MSBuild project
-“DeVision.exe”(Win32): 已加载“C:\Program Files\Common Files\System\ado\msadrh15.dll”。无法查找或打开 PDB 文件。
-线程 0x3d8c 已退出，返回值为 0 (0x0)。
-线程 0x29a0 已退出，返回值为 0 (0x0)。
-线程 0x3f1c 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\powrprof.dll”。无法查找或打开 PDB 文件。
-“DeVision.exe”(Win32): 已加载“C:\Windows\System32\umpdc.dll”。无法查找或打开 PDB 文件。
-线程 0x1bb8 已退出，返回值为 0 (0x0)。
-线程 0x2a24 已退出，返回值为 0 (0x0)。
-线程 0x1a50 已退出，返回值为 1 (0x1)。
-线程 0x3b9c 已退出，返回值为 0 (0x0)。
-线程 0x1fa8 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igc64.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igdgmm64.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_a086f01cc7be643a\igd10iumd64.dll”
-线程 0x1d3c 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\d3d10warp.dll”
-0x00007FFFA8A4D759 (KernelBase.dll)处(位于 DeVision.exe 中)引发的异常: 0x0000071A: The remote procedure call was canceled, or if a call time-out was specified, the call timed out。
-线程 0x3538 已退出，返回值为 0 (0x0)。
-线程 0x2ed8 已退出，返回值为 0 (0x0)。
-线程 0x3f3c 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniec640_s.dll”
-线程 0x1ee0 已退出，返回值为 0 (0x0)。
-线程 0xd40 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniehm_s.dll”
-线程 0x3ffc 已退出，返回值为 0 (0x0)。
-线程 0x346c 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_geniem640_s.dll”
-线程 0x119c 已退出，返回值为 0 (0x0)。
-线程 0x864 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9625_none_08e1c10da83fbc83\msvcp90.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_cam_SapGige_s.dll”
-线程 0x3c50 已退出，返回值为 0 (0x0)。
-线程 0x2100 已退出，返回值为 0 (0x0)。
-线程 0x1e94 已退出，返回值为 0 (0x0)。
-线程 0x1b60 已退出，返回值为 0 (0x0)。
-线程 0x2b80 已退出，返回值为 0 (0x0)。
-线程 0x3ab0 已退出，返回值为 0 (0x0)。
-线程 0x1270 已退出，返回值为 0 (0x0)。
-线程 0x3954 已退出，返回值为 0 (0x0)。
-线程 0x1308 已退出，返回值为 0 (0x0)。
-线程 0x3808 已退出，返回值为 0 (0x0)。
-线程 0x3dc4 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorGigEServerLib.DLL”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_gencp_cl_s.dll”
-线程 0x4fc 已退出，返回值为 0 (0x0)。
-线程 0x379c 已退出，返回值为 0 (0x0)。
-线程 0x2864 已退出，返回值为 0 (0x0)。
-线程 0x2a74 已退出，返回值为 0 (0x0)。
-线程 0x132c 已退出，返回值为 0 (0x0)。
-线程 0x1c3c 已退出，返回值为 0 (0x0)。
-线程 0x2a84 已退出，返回值为 0 (0x0)。
-线程 0x2348 已退出，返回值为 0 (0x0)。
-线程 0xb84 已退出，返回值为 0 (0x0)。
-线程 0x3d14 已退出，返回值为 0 (0x0)。
-线程 0x518 已退出，返回值为 0 (0x0)。
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorBuff.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorCam.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorDisp.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\JPEGfiles.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\TIFfiles.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorFile.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorGraph.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorLut.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorVic.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorView.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9625_none_08e1c10da83fbc83\msvcr90.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_ara_x.cxm”
-“DeVision.exe”(Win32): 已卸载“C:\Windows\System32\cor_gencp_cl_x.cxm”
-线程 0x2fe4 已退出，返回值为 0 (0x0)。
-线程 0x6f8 已退出，返回值为 0 (0x0)。
-线程 0x2418 已退出，返回值为 0 (0x0)。
-线程 0x3e44 已退出，返回值为 0 (0x0)。
+线程 0x3928 已退出，返回值为 0 (0x0)。
+线程 0x4a8 已退出，返回值为 0 (0x0)。
+线程 0x13c0 已退出，返回值为 0 (0x0)。
+线程 0x23c 已退出，返回值为 0 (0x0)。
 “DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorMem.dll”
 “DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorPci.dll”
 “DeVision.exe”(Win32): 已卸载“C:\Windows\System32\CorHost.dll”
-“DeVision.exe”(Win32): 已卸载“C:\Program Files\Common Files\System\ado\msado15.dll”
-线程 0x3cc4 已退出，返回值为 0 (0x0)。
-线程 0x2ad4 已退出，返回值为 0 (0x0)。
-线程 0x2d5c 已退出，返回值为 0 (0x0)。
-线程 0x28cc 已退出，返回值为 0 (0x0)。
-线程 0x31bc 已退出，返回值为 0 (0x0)。
-线程 0x1b68 已退出，返回值为 0 (0x0)。
-线程 0x1a4c 已退出，返回值为 0 (0x0)。
-线程 0x38b8 已退出，返回值为 0 (0x0)。
-线程 0x724 已退出，返回值为 0 (0x0)。
-线程 0x393c 已退出，返回值为 0 (0x0)。
-线程 0x1e64 已退出，返回值为 0 (0x0)。
-d:\program files\teledyne dalsa\sapera\classes\gui\sapclassgui.cpp(56) : atlTraceGeneral - SAPCLASSGUI.DLL Terminating!
-程序“[3224] DeVision.exe”已退出，返回值为 0 (0x0)。
+线程 0x3194 已退出，返回值为 0 (0x0)。
+线程 0xffc 已退出，返回值为 0 (0x0)。
+线程 0x2440 已退出，返回值为 0 (0x0)。
+线程 0xd44 已退出，返回值为 0 (0x0)。
+线程 0x778 已退出，返回值为 0 (0x0)。
+程序“[7840] DeVision.exe”已退出，返回值为 0 (0x0)。

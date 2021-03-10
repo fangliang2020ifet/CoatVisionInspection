@@ -25,7 +25,11 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 	m_unImageIndex = 0;
 
 	InitializeCriticalSection(&m_csCalculateThread);
-	InitializeCriticalSection(&m_csDefImgList);
+	InitializeCriticalSection(&m_csDefImgList1);
+	InitializeCriticalSection(&m_csDefImgList2);
+	InitializeCriticalSection(&m_csDefImgList3);
+	InitializeCriticalSection(&m_csDefImgList4);
+	InitializeCriticalSection(&m_csDefImgList5);
 
 	InitialImageProcess();
 }
@@ -33,7 +37,11 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 CImageProcessing::~CImageProcessing()
 {
 	DeleteCriticalSection(&m_csCalculateThread);
-	DeleteCriticalSection(&m_csDefImgList);
+	DeleteCriticalSection(&m_csDefImgList1);
+	DeleteCriticalSection(&m_csDefImgList2);
+	DeleteCriticalSection(&m_csDefImgList3);
+	DeleteCriticalSection(&m_csDefImgList4);
+	DeleteCriticalSection(&m_csDefImgList5);
 
 	try	{
 		m_listAcquiredImage.clear();
@@ -41,6 +49,15 @@ CImageProcessing::~CImageProcessing()
 	catch (...) {}
 
 }
+
+void CImageProcessing::ClearThisClass()
+{
+	m_listAcquiredImage.clear();
+	m_listDftInfo.clear();
+	m_listDftImg.clear();
+
+}
+
 
 void CImageProcessing::HalconInitAOP()
 {
@@ -360,9 +377,16 @@ BOOL CImageProcessing::GenerateReferenceImage(HImage &hi_average, HImage &hi_dev
 	if (m_listAcquiredImage.size() >= 4) {
 		m_listAcquiredImage.pop_front();
 		for (int i = 0; i < 3; i++) {
-			tempimg = m_listAcquiredImage.front();
-			m_listAcquiredImage.pop_front();
-			HalconCpp::AddImage(result, tempimg, &result, 0.5, 0);
+			if (i == 0) {
+				result = m_listAcquiredImage.front();
+				m_listAcquiredImage.pop_front();
+				continue;
+			}
+			else {
+				tempimg = m_listAcquiredImage.front();
+				m_listAcquiredImage.pop_front();
+				HalconCpp::AddImage(result, tempimg, &result, 0.5, 0);
+			}
 		}
 	}
 	else
@@ -1458,11 +1482,16 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList);
-			hi_acquire = pImgProc->m_listAcquiredImage.front();
-			pImgProc->m_listAcquiredImage.pop_front();
-			pImgProc->m_unImageIndex += 1;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList);
+			EnterCriticalSection(&pImgProc->m_csDefImgList1);
+			if (pImgProc->mtx.try_lock()) {
+				hi_acquire = pImgProc->m_listAcquiredImage.front();
+				pImgProc->m_listAcquiredImage.pop_front();
+				pImgProc->m_unImageIndex += 1;
+				pImgProc->mtx.unlock();
+			}
+			else
+				continue;
+			LeaveCriticalSection(&pImgProc->m_csDefImgList1);
 
 			//è¦´Ã¼ì²âËã·¨
 			pImgProc->StandDeviationAlgorithm(hi_acquire, vec_dft_info, vec_dft_img);
@@ -1490,10 +1519,14 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 			break;
 		case WAIT_FAILED:
 			return -1;
-		case WAIT_OBJECT_0:
+		case WAIT_OBJECT_0: {
 			pImgProc->m_listAcquiredImage.clear();
 			SetEvent(pImgProc->m_hFinishedProcess);
+			CString cstr = L"¼ÆËãÏß³ÌÒÑ½áÊø";
+			::SendMessage(pImgProc->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			::SendMessage(pImgProc->hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
 			return 0;
+		}
 		}
 	}
 	else {
@@ -1529,11 +1562,16 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList);
-			hi_acquire = pImgProc->m_listAcquiredImage.front();
-			pImgProc->m_listAcquiredImage.pop_front();
-			pImgProc->m_unImageIndex += 1;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList);
+			EnterCriticalSection(&pImgProc->m_csDefImgList2);
+			if (pImgProc->mtx.try_lock()) {
+				hi_acquire = pImgProc->m_listAcquiredImage.front();
+				pImgProc->m_listAcquiredImage.pop_front();
+				pImgProc->m_unImageIndex += 1;
+				pImgProc->mtx.unlock();
+			}
+			else
+				continue;
+			LeaveCriticalSection(&pImgProc->m_csDefImgList2);
 
 			//è¦´Ã¼ì²âËã·¨
 			pImgProc->StandDeviationAlgorithm(hi_acquire, vec_dft_info, vec_dft_img);
@@ -1596,11 +1634,16 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList);
-			hi_acquire = pImgProc->m_listAcquiredImage.front();
-			pImgProc->m_listAcquiredImage.pop_front();
-			pImgProc->m_unImageIndex += 1;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList);
+			EnterCriticalSection(&pImgProc->m_csDefImgList3);
+			if (pImgProc->mtx.try_lock()) {
+				hi_acquire = pImgProc->m_listAcquiredImage.front();
+				pImgProc->m_listAcquiredImage.pop_front();
+				pImgProc->m_unImageIndex += 1;
+				pImgProc->mtx.unlock();
+			}
+			else
+				continue;
+			LeaveCriticalSection(&pImgProc->m_csDefImgList3);
 
 			//è¦´Ã¼ì²âËã·¨
 			pImgProc->StandDeviationAlgorithm(hi_acquire, vec_dft_info, vec_dft_img);
@@ -1661,11 +1704,16 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList);
-			hi_acquire = pImgProc->m_listAcquiredImage.front();
-			pImgProc->m_listAcquiredImage.pop_front();
-			pImgProc->m_unImageIndex += 1;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList);
+			EnterCriticalSection(&pImgProc->m_csDefImgList4);
+			if (pImgProc->mtx.try_lock()) {
+				hi_acquire = pImgProc->m_listAcquiredImage.front();
+				pImgProc->m_listAcquiredImage.pop_front();
+				pImgProc->m_unImageIndex += 1;
+				pImgProc->mtx.unlock();
+			}
+			else
+				continue;
+			LeaveCriticalSection(&pImgProc->m_csDefImgList4);
 
 			//è¦´Ã¼ì²âËã·¨
 			pImgProc->StandDeviationAlgorithm(hi_acquire, vec_dft_info, vec_dft_img);
@@ -1726,11 +1774,16 @@ UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList);
-			hi_acquire = pImgProc->m_listAcquiredImage.front();
-			pImgProc->m_listAcquiredImage.pop_front();
-			pImgProc->m_unImageIndex += 1;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList);
+			EnterCriticalSection(&pImgProc->m_csDefImgList5);
+			if (pImgProc->mtx.try_lock()) {
+				hi_acquire = pImgProc->m_listAcquiredImage.front();
+				pImgProc->m_listAcquiredImage.pop_front();
+				pImgProc->m_unImageIndex += 1;
+				pImgProc->mtx.unlock();
+			}
+			else
+				continue;
+			LeaveCriticalSection(&pImgProc->m_csDefImgList5);
 
 			//è¦´Ã¼ì²âËã·¨
 			pImgProc->StandDeviationAlgorithm(hi_acquire, vec_dft_info, vec_dft_img);
