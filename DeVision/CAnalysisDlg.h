@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "COpenGLControl.h"
 #include "BarChart.h"
 
 

@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeVision", "DeVision\DeVisi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AcquireDevice", "AcquireDevice\AcquireDevice.vcxproj", "{D110DC51-AF15-4BDA-9468-782B4FA0E92C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FindCamera", "FindCamera\FindCamera.vcxproj", "{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{D110DC51-AF15-4BDA-9468-782B4FA0E92C}.Release|x64.Build.0 = Release|x64
 		{D110DC51-AF15-4BDA-9468-782B4FA0E92C}.Release|x86.ActiveCfg = Release|Win32
 		{D110DC51-AF15-4BDA-9468-782B4FA0E92C}.Release|x86.Build.0 = Release|Win32
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Debug|x64.ActiveCfg = Debug|x64
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Debug|x64.Build.0 = Debug|x64
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Debug|x86.ActiveCfg = Debug|Win32
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Debug|x86.Build.0 = Debug|Win32
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Release|x64.ActiveCfg = Release|x64
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Release|x64.Build.0 = Release|x64
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Release|x86.ActiveCfg = Release|Win32
+		{C6AA676C-36E4-4EE5-A7E9-C78B5C391A5C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

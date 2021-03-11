@@ -175,12 +175,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;C:\Program Files\Teledyne DALSA\Sapera\Lib\Win64\VS2017\SapClassGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -217,7 +219,6 @@
     <ClInclude Include="CLogin.h" />
     <ClInclude Include="CMyDocument.h" />
     <ClInclude Include="CMyView.h" />
-    <ClInclude Include="COpenGLControl.h" />
     <ClInclude Include="CPlotArea.h" />
     <ClInclude Include="CPoint0.h" />
     <ClInclude Include="CPoints.h" />
@@ -262,7 +263,6 @@
     <ClCompile Include="CLogin.cpp" />
     <ClCompile Include="CMyDocument.cpp" />
     <ClCompile Include="CMyView.cpp" />
-    <ClCompile Include="COpenGLControl.cpp" />
     <ClCompile Include="CProductInfo.cpp" />
     <ClCompile Include="CRemote.cpp" />
     <ClCompile Include="CSetupDlg.cpp" />

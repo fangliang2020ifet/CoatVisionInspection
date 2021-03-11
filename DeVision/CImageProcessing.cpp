@@ -1329,6 +1329,7 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 	pThis->m_nTotalListNumber = 0;
 	bool bresult = false;
 	while (1) {
+		Sleep(100);
 		if (!pThis->TEST_MODEL)
 			bresult = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
 		else {

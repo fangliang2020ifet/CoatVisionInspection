@@ -165,9 +165,6 @@
     <ClInclude Include="ImportHalconCpp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="COpenGLControl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="CAcquireImage.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -246,9 +243,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CRemote.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="COpenGLControl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CAcquireImage.cpp">
