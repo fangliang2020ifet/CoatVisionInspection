@@ -19,10 +19,11 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 	TEST_MODEL = FALSE;
 	SAVE_REFERENCE_IMAGE = FALSE;
 	m_referenceImage_OK = FALSE;
-	m_strPath = "D:\\DetectRecords\\HistoryImages\\";
-
+	m_strPath = "D:\\瑕疵检测数据记录\\2瑕疵图像记录\\";
 	m_nTotalListNumber = 0;
 	m_unImageIndex = 0;
+	m_nCutBorderValue = 100;            //   100像素约 5mm
+	m_nCutBorderStatue = 0;
 
 	InitializeCriticalSection(&m_csCalculateThread);
 	InitializeCriticalSection(&m_csDefImgList1);
@@ -55,7 +56,6 @@ void CImageProcessing::ClearThisClass()
 	m_listAcquiredImage.clear();
 	m_listDftInfo.clear();
 	m_listDftImg.clear();
-
 }
 
 
@@ -145,7 +145,7 @@ BOOL CImageProcessing::BeginProcess()
 	m_unImageIndex = 0;
 	state = m_ManageThread = AfxBeginThread(ManageThread, this);
 	if (!state) {
-		cstrlog.Format(_T("Manage线程创建失败"));
+		cstrlog.Format(_T("管理线程创建失败"));
 		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
 		return FALSE;
 	}
@@ -169,8 +169,7 @@ BOOL CImageProcessing::BeginProcess()
 	CalculateThread_2_StoppedEvent.ResetEvent();
 	CalculateThread_3_StoppedEvent.ResetEvent();
 	CalculateThread_4_StoppedEvent.ResetEvent();
-	CalculateThread_5_StoppedEvent.ResetEvent();
-	
+	CalculateThread_5_StoppedEvent.ResetEvent();	
 
 	return TRUE;
 }
@@ -233,13 +232,13 @@ BOOL CImageProcessing::LoadRefImage(std::string folder_path)
 {
 	if (!IsPathExist(folder_path)) {
 		CString cstr = L"参考图像目录不存在";
-		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 		return FALSE;
 	}
 
 	//读取参考图像1
 	if (1) {
-		std::string ref_image_name1 = "reference_image.png";
+		std::string ref_image_name1 = "reference_imageX.png";
 		HTuple hv_ref_image_name1 = (HTuple)((folder_path + ref_image_name1).c_str());
 		if (!IsFileExist(folder_path + ref_image_name1)) {
 			CString cstr = L"参考图像1不存在";
@@ -278,6 +277,109 @@ BOOL CImageProcessing::LoadRefImage(std::string folder_path)
 		m_hi_deviation = ho_ImageDeviation;
 	}
 	return TRUE;
+}
+
+BOOL CImageProcessing::GetRefImgWithoutBouder(std::string folder_path)
+{
+	if (!IsPathExist(folder_path)) {
+		//CString cstr = L"参考图像目录不存在";
+		//SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return FALSE;
+	}
+
+	//读取参考图像1
+	if (1) {
+		std::string ref_image_name1 = "reference_image.png";
+		HTuple hv_ref_image_name1 = (HTuple)((folder_path + ref_image_name1).c_str());
+		if (!IsFileExist(folder_path + ref_image_name1)) {
+			//CString cstr = L"参考图像1不存在";
+			//::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+			return FALSE;
+		}
+		HImage img1;
+		ReadImage(&img1, hv_ref_image_name1);
+		//HalconCpp::MedianImage(img1, &m_hi_ref1, "circle", 1, "mirrored");
+		//高斯滤波
+		//HalconCpp::GaussFilter(img1, &m_hi_ref1, 5);
+
+		HObject ho_ImagePart;
+		m_nCutBorderStatue = ifCutBouder(img1, ho_ImagePart, m_hoBorderRegion);
+		if (m_nCutBorderStatue > 0) {
+			img1 = ho_ImagePart;
+		}
+
+		m_hi_ref = img1;
+		HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
+		HTuple  hv_Deviation, hv_StandardDeviation;
+		HObject ho_ImageMedian, ho_ImageAverage, ho_ImageDeviation, ho_Rectangle;
+
+		HalconCpp::GetImageSize(img1, &hv_Width, &hv_Height);
+		HalconCpp::MedianImage(img1, &ho_ImageMedian, "square", m_median_filter_size, "mirrored");
+		//创建 全 0 值图像
+		HalconCpp::GenImageConst(&ho_ImageAverage, "byte", hv_Width, hv_Height);
+		HalconCpp::GenImageConst(&ho_ImageDeviation, "byte", hv_Width, hv_Height);
+		HTuple end_val8 = hv_Width - 1;
+		HTuple step_val8 = 1;
+		for (hv_column = 0; hv_column.Continue(end_val8, step_val8); hv_column += step_val8) {
+			//参数2：左上角点的行，参数3：左上角点的列，参数4：右下角点的行，参数5：右下角点的列
+			HalconCpp::GenRectangle1(&ho_Rectangle, 0, hv_column, 8192, hv_column + 1);
+			//均值/方差/标准差
+			HalconCpp::Intensity(ho_Rectangle, ho_ImageMedian, &hv_Mean, &hv_Deviation);
+			HalconCpp::TupleSqrt(hv_Deviation, &hv_StandardDeviation);
+			HalconCpp::OverpaintRegion(ho_ImageAverage, ho_Rectangle, hv_Mean, "fill");
+			HalconCpp::OverpaintRegion(ho_ImageDeviation, ho_Rectangle,
+				((m_k_normal_distribution * hv_StandardDeviation).TupleConcat(255)).TupleMin(),
+				"fill");
+		}
+		m_hi_average = ho_ImageAverage;
+		m_hi_deviation = ho_ImageDeviation;
+	}
+	return TRUE;
+}
+
+int CImageProcessing::ifCutBouder(HObject src, HObject &dst, HObject &region)
+{
+	int state = 0;
+
+	//自动去除边界：减去平均像素值, 如过有边界则返回 true
+	HObject ho_Region, ho_ImageMean, ho_ImageSub, ho_Region2, ho_RegionMoved, ho_RectanglePart;
+	HTuple hv_Width, hv_Height, hv_Mean, hv_Deviation, hv_Row1, hv_Row2, hv_Column1, hv_Column2;
+	HTuple hv_Value, hv_TopLeft, hv_Border;
+
+	HalconCpp::GetImageSize(src, &hv_Width, &hv_Height);
+	HalconCpp::Threshold(src, &ho_Region, 1, 255);
+	HalconCpp::Intensity(ho_Region, src, &hv_Mean, &hv_Deviation);
+	HalconCpp::GenImageConst(&ho_ImageMean, "byte", hv_Width, hv_Height);
+	HalconCpp::OverpaintRegion(ho_ImageMean, ho_Region, hv_Mean, "fill");
+	HalconCpp::SubImage(ho_ImageMean, src, &ho_ImageSub, 1, 0);
+	HalconCpp::Threshold(ho_ImageSub, &ho_Region2, 1, 255);
+	HalconCpp::RegionFeatures(ho_Region2, "width", &hv_Value);
+	if (0 != (hv_Value == hv_Width)){
+		dst = src;
+		region = ho_Region;
+		return state;
+	}
+
+	//判断是左侧去边还是右侧
+	HalconCpp::RegionFeatures(ho_Region2, "column1", &hv_TopLeft);
+	hv_Border = (HTuple)m_nCutBorderValue;      
+	if (0 != (hv_TopLeft > 0)){
+		HalconCpp::MoveRegion(ho_Region2, &ho_RegionMoved, 0, hv_Border);
+		state = 1;
+	}
+	else{
+		HalconCpp::MoveRegion(ho_Region2, &ho_RegionMoved, 0, -hv_Border);
+		state = 2;
+	}
+
+	//将区域拟合成矩形
+	HalconCpp::SmallestRectangle1(ho_RegionMoved, &hv_Row1, &hv_Column1, &hv_Row2, &hv_Column2);
+	HalconCpp::GenRectangle1(&ho_RectanglePart, hv_Row1, hv_Column1, hv_Row2, hv_Column2);
+	//对原图进行裁剪
+	HalconCpp::ReduceDomain(src, ho_RectanglePart, &region);
+	HalconCpp::CropDomain(region, &dst);
+
+	return state;
 }
 
 //把图像加载到内存队列
@@ -371,6 +473,7 @@ BOOL CImageProcessing::LoadDefaultRefAndDevImage(std::string path)
 	return TRUE;
 }
 
+//生成参考图像
 BOOL CImageProcessing::GenerateReferenceImage(HImage &hi_average, HImage &hi_deviation)
 {
 	HImage result, tempimg;
@@ -391,6 +494,13 @@ BOOL CImageProcessing::GenerateReferenceImage(HImage &hi_average, HImage &hi_dev
 	}
 	else
 		return FALSE;
+
+	// 检测并切边
+	HObject ho_ImagePart;
+	m_nCutBorderStatue = ifCutBouder(result, ho_ImagePart, m_hoBorderRegion);
+	if (m_nCutBorderStatue > 0) {
+		result = ho_ImagePart;
+	}
 
 	m_hi_ref = result;
 	HTuple  hv_Width, hv_Height, hv_column, hv_Mean;
@@ -507,15 +617,15 @@ int CImageProcessing::ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3)
 		return 0;
 }
 
-BOOL CImageProcessing::SaveReferenceImage()
+void CImageProcessing::SaveReferenceImage(const char* filename)
 {
-	SaveDefectImage(m_hi_ref, "D:/SaveImage/ref.bmp");
+	HTuple hv_name;
+	hv_name = (HTuple)filename;
+	if (!m_hi_ref.IsInitialized())
+		return;
 
-	CString cstr = L"图像已保存";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-
-	return TRUE;
+	HalconCpp::WriteImage(m_hi_ref, "png", 0, hv_name);
+	return;
 }
 
 BOOL CImageProcessing::GetSavePath(std::string &path)
@@ -532,7 +642,6 @@ BOOL CImageProcessing::GetSavePath(std::string &path)
 	else
 		return TRUE;
 }
-
 
 //分割后的瑕疵图像处理
 DefectType CImageProcessing::LocateDefectPosition(int camera_number, HObject ho_selectedregion,
@@ -1030,6 +1139,15 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 
 	//ho_Image = hi_img;
 	HalconCpp::CopyImage(hi_img, &ho_Image);
+	//是否需要切边
+	if (m_nCutBorderStatue > 0) {
+		// m_nCutBorder = 1为左切边， m_nCutBorder = 2为右切边
+		HObject ho_ImageReduced, ho_ImagePart;
+		HalconCpp::ReduceDomain(ho_Image, m_hoBorderRegion, &ho_ImageReduced);
+		HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
+		ho_Image = ho_ImagePart;
+	}
+
 	if(TEST_MODEL)
 		AddNoise(ho_Image);
 
@@ -1100,8 +1218,7 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, std::vector<Deffect
 
 		//反向迭代器，保存瑕疵图像及信息
 		std::vector<SelectRegion>::reverse_iterator rit;
-		for (rit = vSelect.rbegin(); rit != vSelect.rend(); rit++)
-		{
+		for (rit = vSelect.rbegin(); rit != vSelect.rend(); rit++){
 			SelectRegion region;
 			region = *rit;
 			if (region.area == 0.0f)
@@ -1303,7 +1420,7 @@ void CImageProcessing::AddNoise(HObject hoImg)
 	int noiseNum = std::rand() % 3;
 	if (noiseNum == 0)
 		return;
-	GenRandomRegions(&ho_Regions, "ellipse", 1, 128, 1, 128, -0.7854, 0.7854, noiseNum, hv_Width, hv_Height);
+	GenRandomRegions(&ho_Regions, "ellipse", 1, 32, 1, 32, -0.7854, 0.7854, noiseNum, hv_Width, hv_Height);
 	CountObj(ho_Regions, &hv_Number);
 
 	hv_minvalue = 0;
@@ -1329,15 +1446,22 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 	pThis->m_nTotalListNumber = 0;
 	bool bresult = false;
 	while (1) {
-		Sleep(100);
+		Sleep(200);
 		if (!pThis->TEST_MODEL)
 			bresult = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
 		else {
 			CStringA strpath = (CW2A)curpath;
 			strpath = strpath + "\\test_image\\";
-			bresult = pThis->LoadRefImage(strpath.GetBuffer());
+			//bresult = pThis->LoadRefImage(strpath.GetBuffer());
+			bresult = pThis->GetRefImgWithoutBouder(strpath.GetBuffer());
 		}			
 		if (bresult) {
+			if (pThis->SAVE_REFERENCE_IMAGE) {
+				//std::string filename = "D:\\DetectRecords\\ReferenceImage.png";
+				//pThis->SaveReferenceImage(filename.c_str());
+				CString cstr = L"参考图像已保存";
+				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			}
 			CString cstr = L"参考图像已生成";
 			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			::SendMessage(pThis->hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
@@ -1371,90 +1495,6 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 		}		
 	}
 
-	/*
-	
-	//判断是否内存中是否已有参考图像
-	pThis->m_referenceImage_OK = pThis->CheckReferenceImageAvilable();
-	BOOL got_ref = FALSE;
-	for(;;){
-		if (!pThis->m_referenceImage_OK) {
-			//生成参考图像的三种方式：
-			//1、从本地加载均值图像和标准差图像；
-			//2、从本地加载测试图然后程序生成；
-			//3、从相机获取图像然后生成；
-			if (!pThis->TEST_MODEL) {
-
-
-
-				if (!got_ref) {
-					got_ref = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
-					if (got_ref) {
-						CString cstr = L"获取1#相机参考图像";
-						::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-					}
-				}
-			}
-			else {
-				if (pThis->LoadRefImage("E:/DeVisionProject/OneCamera_0417/")) {
-					got_ref = TRUE;
-					CString cstr = L"已加载测试参考图像";
-					::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-				}
-
-				pThis->LoadSingleImage("E:/DeVisionProject/OneCamera_0417/test1");
-				CString cstr = L"已加载测试图";
-				::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			}
-
-			//四台相机都获取到后保存图像并结束获取
-			if (got_ref) {
-				pThis->m_referenceImage_OK = TRUE;
-				if (pThis->SAVE_REFERENCE_IMAGE) {
-					pThis->SaveDefectImage(pThis->m_hi_average, (HTuple)pThis->m_strPath.c_str() + "ref\\reference_image.bmp");
-					pThis->SaveDefectImage(pThis->m_hi_deviation, (HTuple)pThis->m_strPath.c_str() + "ref\\dev.bmp");
-				}
-				::SendMessage(pThis->hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
-			}
-		}
-
-		//更新队列的总大小
-		pThis->m_total_list_size = pThis->CheckTotalListSize();
-
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 400);
-		switch (dwStop)
-		{
-		case WAIT_TIMEOUT: {
-			if (pThis->TEST_MODEL && !pThis->SYSTEM_PAUSE) {
-				pThis->LoadImageToQueue();
-				//CString cstr = L"加载测试图像到处理队列";
-				//::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			}
-			break;
-		}
-		case WAIT_FAILED:
-			return -1;
-		case WAIT_OBJECT_0: {
-			//while (pThis->CheckTotalListSize() > 0)
-			//{
-			//	//Sleep(200);
-			//}
-			pThis->m_total_list_size = 0;
-			pThis->StopCalculateThreads();
-			pThis->AllCalculateThreadStopped_Event.SetEvent();
-
-			if (pThis->hv_GPU_Handle.Length() > 0)
-				HalconCpp::DeactivateComputeDevice(pThis->hv_GPU_Handle);
-
-			CString cstr = L"结束处理线程";
-			::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			return 0;
-		}
-		}
-
-	}
-	*/
-	
-	
 	return 0;
 }
 

@@ -15,6 +15,9 @@ CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 {
 	for (int i = 0; i < 8; i++) { m_bDeffectDisplay[i] = TRUE; }
 
+	m_hChangeIcon = AfxGetApp()->LoadIcon(IDI_ICON_CHANGE);
+	m_hChangeXIcon = AfxGetApp()->LoadIcon(IDI_ICON_CHANGEX);
+
 }
 
 CInspectDlg::~CInspectDlg()
@@ -78,6 +81,10 @@ BOOL CInspectDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_TOTAL_DFT_NUM)->SetWindowPos(0, 580, 25, 100, 30, SWP_SHOWWINDOW);
 	GetDlgItem(IDC_STATIC_GREAT_DFT_NUM)->SetWindowPos(0, 580, 70, 100, 30, SWP_SHOWWINDOW);
 	GetDlgItem(IDC_STATIC_DFT_LONGTH)->SetWindowPos(0, 580, 110, 100, 30, SWP_SHOWWINDOW);
+
+	m_btn_changeinfo.SetIcon(m_hChangeIcon);
+	m_btn_changeinfo.SetFont(&m_font);
+	m_btn_changeinfo.SetWindowTextW(L"切卷");
 
 	CButton *pcheck =(CButton*)GetDlgItem(IDC_CHECK1);
 	pcheck->SetCheck(TRUE);
@@ -269,7 +276,7 @@ void CInspectDlg::RecordLogList(int test, CString cstr)
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
-//修改产品信息
+// 切卷
 void CInspectDlg::OnBnClickedButtonInfoChange()
 {
 	// TODO: 在此添加控件通知处理程序代码

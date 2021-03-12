@@ -9,9 +9,10 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+#include <cmath>
+
 #include "CLogin.h"
 #include "CAcquireImage.h"
-//#include "CImageProcess.h"
 #include "CImageProcessing.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
@@ -107,6 +108,8 @@ private:
 	HICON m_hIcon;
 	HICON m_hOnlineIcon;
 	HICON m_hOfflineIcon;
+	HICON m_hCameraInIcon;
+	HICON m_hCameraOutIcon;
 	HICON m_hStartIcon;
 	HICON m_hStopIcon;
 	HICON m_hPauseIcon;

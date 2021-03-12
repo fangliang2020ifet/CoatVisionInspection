@@ -70,6 +70,7 @@ BOOL CAnalysisDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
+	m_strSavePath = "D:\\瑕疵检测数据记录\\3瑕疵柱状图记录\\";
 
 	m_bShowGrid = TRUE;
 	m_bShowLable = TRUE;
@@ -205,8 +206,6 @@ void CAnalysisDlg::OnBnClickedButtonAnalysisSave()
 	HBITMAP m_hbitmap;
 	m_hbitmap = GetSrcBit(*dc, prect);
 
-
-	std::string strpath = "D:\\DetectRecords\\AnalysisBarCharts\\";
 	//获取日期
 	std::wstringstream date;
 	SYSTEMTIME sysTime;
@@ -221,13 +220,12 @@ void CAnalysisDlg::OnBnClickedButtonAnalysisSave()
 	const wchar_t* wname = wdate.c_str();
 	_bstr_t name(wname);
 	std::string strname = name + ".bmp";
-	strpath += strname;
-	
+	std::string strfilename = m_strSavePath;
+	strfilename += strname;	
 
-	BOOL saved = SaveBitmapToFile(m_hbitmap, strpath.c_str());
+	BOOL saved = SaveBitmapToFile(m_hbitmap, strfilename.c_str());
 
 	ReleaseDC(dc);
-
 }
 
 HBITMAP CAnalysisDlg::GetSrcBit(HDC hDC, LPRECT rEct)

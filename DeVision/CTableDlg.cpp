@@ -101,6 +101,18 @@ BOOL CTableDlg::OnInitDialog()
 	pcheck = (CButton*)GetDlgItem(IDC_CHECK4);
 	pcheck->SetCheck(1);
 
+
+	m_save_path = "D:\\瑕疵检测数据记录\\1检测报表记录\\";
+	m_wstr_num = L"NO1";               //批号
+	m_wstr_id = L"PET-1";                //型号
+	m_wstr_width = L"1650";             //宽度
+	m_wstr_user = L"张三";              //操作员
+	m_wstr_speed = L"20";             //平均速度
+	m_product_rank = 0;                //产品评级
+	m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
+	m_serious_num = 0;                 //严重缺陷数目
+
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -431,7 +443,6 @@ void CTableDlg::SaveDistributeImage()
 	m_hbitmap = GetSrcBit(*dc, prect);
 	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
 
-	std::string strpath = "D:\\DetectRecords\\TableDistributes\\";
 	//获取日期
 	std::wstringstream date;
 	SYSTEMTIME sysTime;
@@ -446,8 +457,10 @@ void CTableDlg::SaveDistributeImage()
 	const wchar_t* wname = wdate.c_str();
 	_bstr_t name(wname);
 	std::string strname = name + ".bmp";
-	strpath += strname;
-	BOOL saved = SaveBitmapToFile(m_hbitmap, strpath.c_str());
+
+	std::string strfilename = "D:\\瑕疵检测数据记录\\4瑕疵分布图记录\\";
+	strfilename += strname;
+	BOOL saved = SaveBitmapToFile(m_hbitmap, strfilename.c_str());
 
 	ReleaseDC(dc);
 }
@@ -622,7 +635,7 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 	CRange range;      //操作单元格
 
 	//2.打开指定Excel文件，如果不存在就创建
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -967,7 +980,7 @@ void CTableDlg::SaveToExcelUseDefault(CString &name)
 	book.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -1027,7 +1040,7 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	Book_example.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -1251,7 +1264,7 @@ UINT CTableDlg::SaveTableThread(LPVOID pParam)
 	CRange range;      //操作单元格
 	
 	//2.打开指定Excel文件，如果不存在就创建
-	CString strExcelFile = pThis->m_save_path.c_str();
+	CString strExcelFile = (CA2W)pThis->m_save_path.c_str();
 
 	std::wstring strname;
 	pThis->GenerateReportName(strname);
@@ -1600,7 +1613,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	Book_example.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = pThis->m_save_path.c_str();
+	CString strExcelFile = (CA2W)pThis->m_save_path.c_str();
 	std::wstring strname;
 	pThis->GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -2095,7 +2108,7 @@ void CTableDlg::OnBnClickedButtonShowall()
 	//m_ListCtrlHis.InsertColumn(3, L"长度", LVCFMT_CENTER, 80);
 	//m_ListCtrlHis.InsertColumn(4, L"操作员", LVCFMT_CENTER, 80);
 
-	std::string _path((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string _path((LPCSTR)(m_save_path.c_str()));
 	//搜索目录下的所有 xlsx 文件
 	std::vector<std::string> vstring;
 	getExcels(_path, vstring);
@@ -2145,7 +2158,7 @@ void CTableDlg::OnBnClickedButtonOpenexcel()
 	if (nIndex == -1) return;
 	m_ListCtrlHis.DeleteItem(nIndex);
 
-	std::string filename((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string filename((LPCSTR)(m_save_path.c_str()));
 	std::string name;
 	std::vector<std::string>::reverse_iterator it = m_vstring.rbegin();
 	if (it + nIndex < m_vstring.rend()) {
@@ -2174,7 +2187,7 @@ void CTableDlg::OnBnClickedButtonDelselect()
 	if (nIndex == -1) return;
 	m_ListCtrlHis.DeleteItem(nIndex);
 
-	std::string filename((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string filename((LPCSTR)(m_save_path.c_str()));
 	std::string name;
 	std::vector<std::string>::reverse_iterator it = m_vstring.rbegin();
 	if (it + nIndex < m_vstring.rend()) {
@@ -2225,7 +2238,7 @@ void CTableDlg::OnBnClickedButtonSaveas()
 void CTableDlg::OnBnClickedButtonOpenexcelpath()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	std::string path((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string path((LPCSTR)(m_save_path.c_str()));
 	CString cpath = CA2W(path.c_str());
 	ShellExecute(NULL, L"explore", cpath, NULL, NULL, SW_SHOW);
 

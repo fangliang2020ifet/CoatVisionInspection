@@ -52,6 +52,8 @@ CDeVisionDlg::CDeVisionDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_hOnlineIcon = AfxGetApp()->LoadIcon(IDI_ICON_ONLINE);
 	m_hOfflineIcon = AfxGetApp()->LoadIcon(IDI_ICON_OFFLINE);
+	m_hCameraInIcon = AfxGetApp()->LoadIcon(IDI_ICON_CAMERA_IN);
+	m_hCameraOutIcon = AfxGetApp()->LoadIcon(IDI_ICON_CAMERA_OUT);
 	m_hStartIcon = AfxGetApp()->LoadIcon(IDI_ICON_START);
 	m_hStopIcon = AfxGetApp()->LoadIcon(IDI_ICON_STOP);
 	m_hPauseIcon = AfxGetApp()->LoadIcon(IDI_ICON_PAUSE);
@@ -186,7 +188,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetWindowPos(0, 600, 20, 400, 60, SWP_SHOWWINDOW);
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetWindowText(L"浙   清   柔   电");
 	GetDlgItem(IDC_STATIC_LOGGLE)->SetFont(&loggle_font);
-	m_sSystem_Statue.SetWindowPos(0, 350, 20, 150, 60, SWP_SHOWWINDOW);
+	m_sSystem_Statue.SetWindowPos(0, 350, 20, 180, 60, SWP_SHOWWINDOW);
 	m_sSystem_Statue.SetFont(&loggle_font);
 
 	// Table 页面初始化
@@ -329,8 +331,8 @@ void CDeVisionDlg::LoadRegConfig()
 		m_ImgAcq.m_k_speed = 491.52f;
 		m_nThreadNumbers = 1;
 		m_bSaveRefImg = false;
-		m_strDeffect_Path = "D:\\DetectRecords\\HistoryImages";
-		m_strTable_Path = "D:\\DetectRecords\\Reports";
+		m_strDeffect_Path = "D:\\瑕疵检测数据记录\\2瑕疵图像记录";
+		m_strTable_Path = "D:\\瑕疵检测数据记录\\1检测报表记录";
 		m_nNormalDistribution = 5;
 		m_nFIlterSize = 1;
 		m_fRadiusMin = 0.05f;
@@ -656,7 +658,8 @@ void CDeVisionDlg::InitialBtnIcon()
 
 	//m_button_online.m_bDontUseWinXPTheme = TRUE;
 	//m_button_online.SetFaceColor(RGB(150, 50, 150));
-	m_button_online.SetIcon(m_hOfflineIcon);
+	//m_button_online.SetIcon(m_hOfflineIcon);
+	m_button_online.SetIcon(m_hCameraOutIcon);
 
 	m_button_lock.SetIcon(m_hUnlockIcon);
 
@@ -1062,11 +1065,13 @@ void CDeVisionDlg::UpdateSysStatus()
 				frame_count = m_pImgProc[0]->m_nTotalListNumber;			
 		}
 		else
-			frame_count = m_ImgAcq.m_arrayFrameCount[0];
+			frame_count = m_ImgAcq.m_arrayFrameCount[0];            //  1#相机采集的图像总数
 		UINT64 frame_processed = 0;
 		if (m_pImgProc[0] != NULL)
-			frame_processed = m_pImgProc[0]->m_unImageIndex;
+			frame_processed = m_pImgProc[0]->m_unImageIndex;        //  多个线程合计处理的总数
 		int frame_over = (int)(frame_count - frame_processed);
+		if (frame_over < 0)
+			frame_over = 0;
 		CString cstr_frame_count;
 		cstr_frame_count.Format(L"总帧数：%d 帧(待处理：%d)", frame_count, frame_over);
 		m_StatusBar.SetPaneText(5, cstr_frame_count, 1);
@@ -1102,12 +1107,12 @@ void CDeVisionDlg::UpdateSysStatus()
 	switch (m_system_state)
 	{
 	case SYSTEM_STATE_OFFLINE:
-		cstr_statue.Format(L"离线");
+		cstr_statue.Format(L"相机离线");
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		m_sSystem_Statue.SetWindowTextW(cstr_statue);
 		break;
 	case SYSTEM_STATE_ONLINE:
-		cstr_statue.Format(L"在线");
+		cstr_statue.Format(L"相机在线");
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		m_sSystem_Statue.SetWindowTextW(cstr_statue);
 		break;
@@ -1163,16 +1168,13 @@ void CDeVisionDlg::CreateWorkPath(std::string &path)
 	const wchar_t* wname = wdate.c_str();
 	_bstr_t name(wname);
 	std::string strpath = name;
-
-	//std::string work_fold = "D:/history/";
 	std::string work_fold = m_strDeffect_Path + "\\";
-
 	path = work_fold + strpath;
 	//创建文件夹
 	_mkdir(path.c_str());
 
 	//创建参考图像文件夹
-	std::string reference_image = path + "\\ref";
+	std::string reference_image = path + "\\参考图像";
 	_mkdir(reference_image.c_str());
 	std::wstring wref = (CA2W)reference_image.c_str();
 	m_vec_refpath.push_back(wref);
@@ -1282,7 +1284,7 @@ void CDeVisionDlg::AutoStop()
 void CDeVisionDlg::SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information)
 {
 	//图像保存，格式化文件名
-	HTuple hv_path = (HTuple)m_strDeffectImgSavePath.c_str();
+	HTuple hv_path = (HTuple)((CA2W)(m_strDeffectImgSavePath.c_str()));
 	float absolute_position = ((information.image_index - 1) * IMAGE_HEIGHT + information.y) * VERTICAL_PRECISION / 1000.0f;
 	char cpos[16];
 	sprintf_s(cpos, "%.3f", absolute_position);
@@ -1383,7 +1385,7 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 				EnterCriticalSection(&pDlg->m_csListDftDisplay);
 				//报表保存路径
 				std::string table_path = pDlg->m_strTable_Path + "\\";
-				pDlg->m_tableDlg.m_save_path = (CA2W)(table_path.c_str());
+				pDlg->m_tableDlg.m_save_path = table_path.c_str();
 				pDlg->m_tableDlg.m_vecDFT = pDlg->m_vecDftDisplay;
 				//产品评级
 				pDlg->m_tableDlg.m_product_rank = pDlg->DevideDFTRank(pDlg->m_nTotalDeffects);
@@ -1482,7 +1484,7 @@ void CDeVisionDlg::OnBnClickedButtonGodown()
 	CString warning = L"向后翻页";
 	::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
 
-	PostMessage(WM_UPDATE_HISTORY, 0, 0);
+	//PostMessage(WM_UPDATE_HISTORY, 0, 0);
 }
 
 //开始  按钮
@@ -1543,7 +1545,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CWaitCursor wait;
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
-		m_ImgAcq.Freeze();
+		if(!m_bTestModel)
+			m_ImgAcq.Freeze();
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			if (m_bTestModel) {
 				m_pImgProc[index]->StopManageThread();
@@ -1580,7 +1583,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonPause()
 	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 }
 
-//在线  按钮
+//在线  按钮     连接相机 / 断开相机
 void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -1610,10 +1613,13 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 				m_nFIlterSize, m_fRadiusMin, m_fRadiusMax);
 			m_ImgAcq.m_pProcessing[index] = m_pImgProc[index];
 			m_pImgProc[index]->TEST_MODEL = m_bTestModel;
+			m_pImgProc[index]->m_threadnum = m_nThreadNumbers;
+			m_pImgProc[index]->SAVE_REFERENCE_IMAGE = m_bSaveRefImg;
 			m_phFinishProcessEvent[index] = &m_pImgProc[index]->m_hFinishedProcess;
 		}		
 		m_system_state = SYSTEM_STATE_ONLINE;
-		m_button_online.SetIcon(m_hOnlineIcon);
+		//m_button_online.SetIcon(m_hOnlineIcon);
+		m_button_online.SetIcon(m_hCameraInIcon);
 	}
 	else {		
 		//删除图像处理线程
@@ -1628,7 +1634,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		cstrlog.Format(_T("当前模式：离线"));
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
 		m_system_state = SYSTEM_STATE_OFFLINE;
-		m_button_online.SetIcon(m_hOfflineIcon);
+		//m_button_online.SetIcon(m_hOfflineIcon);
+		m_button_online.SetIcon(m_hCameraOutIcon);
 	}
 
 	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
@@ -1718,14 +1725,6 @@ void CDeVisionDlg::OnSetup()
 
 		m_nThreadNumbers = setup.m_threadnum;
 		m_bSaveRefImg = setup.m_bSaveRefImg;
-		if (m_nConnectedCameras > 0) {
-			for (int index = 0; index < m_nConnectedCameras; index++) {
-				if (m_pImgProc[index] != NULL) {
-					m_pImgProc[index]->m_threadnum = m_nThreadNumbers;
-					m_pImgProc[index]->SAVE_REFERENCE_IMAGE = m_bSaveRefImg;
-				}
-			}
-		}
 		m_strDeffect_Path = setup.m_strDeffect_Path;
 		m_strTable_Path = setup.m_strTable_Path;
 	}
@@ -1922,7 +1921,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-		m_button_online.SetWindowTextW(_T("在线"));
+		m_button_online.SetWindowTextW(_T("连接\n\n相机"));
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(true);
 		if (pMenu) {
 			pMenu->EnableMenuItem(ID_SETUP, MF_ENABLED);
@@ -1939,7 +1938,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(true);
-		m_button_online.SetWindowTextW(_T("离线"));
+		m_button_online.SetWindowTextW(_T("断开\n\n相机"));
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 		if (pMenu) {
 			pMenu->EnableMenuItem(ID_SETUP, MF_DISABLED);

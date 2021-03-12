@@ -336,6 +336,18 @@
     <Image Include="res\bitmap3.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\camera_in.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\camera_out.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\change.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\changeX.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\DeVision.rc2">

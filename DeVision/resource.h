@@ -49,6 +49,11 @@
 #define IDD_DIALOG_REMOTE               187
 #define IDI_ICON_LOGINN                 189
 #define IDB_BITMAP_WAIT0                190
+#define IDI_ICON_CAMERA_IN              191
+#define IDI_ICON_CAMERA_OUT             192
+#define IDI_ICON_CHANGE                 193
+#define IDI_ICON3                       194
+#define IDI_ICON_CHANGEX                194
 #define IDC_TAB_DIALOG                  1002
 #define IDC_STATIC_PICTURE              1004
 #define IDC_EDIT1                       1015
@@ -427,7 +432,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        191
+#define _APS_NEXT_RESOURCE_VALUE        195
 #define _APS_NEXT_COMMAND_VALUE         32818
 #define _APS_NEXT_CONTROL_VALUE         1297
 #define _APS_NEXT_SYMED_VALUE           101

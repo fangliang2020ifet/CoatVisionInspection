@@ -25,6 +25,7 @@ protected:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+	std::string m_strSavePath;
 
 	enum { IDD = IDD_DIALOG_ANALYSIS };
 	BOOL m_bShowGrid;

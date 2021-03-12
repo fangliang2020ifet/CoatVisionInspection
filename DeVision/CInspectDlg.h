@@ -44,6 +44,11 @@ public:
 	void RecordLogList(int test, CString cstr);
 	void UpdateDFTinformation(size_t total_num, int great_dft_num, float longth);
 
+private:
+	HICON m_hChangeIcon;
+	HICON m_hChangeXIcon;
+
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

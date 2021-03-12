@@ -53,15 +53,6 @@ struct SelectRegion
 	float pixelvalue;
 };
 
-//struct DefectImage
-//{
-//	HObject ho_img;
-//	HTuple  hv_name;
-//};
-
-//typedef std::list<HImage> ImgList;
-//typedef std::list<DefectType> DFTList;
-
 
 class CImageProcessing
 {
@@ -90,8 +81,9 @@ public:
 	int m_median_filter_size;                   //滤波器大小,直接关系检出率,并且size越大计算速度越慢
 	float m_fMin_Radius;	                    //半径筛选
 	float m_fMax_Radius;
+	int m_nCutBorderValue;                      //切边的大小(像素)
 	std::string m_strPath;                      //保存路径
-	int m_nTotalListNumber;                  //待处理的图像数量
+	int m_nTotalListNumber;                     //待处理的图像数量
 
 	std::list<HObject>                m_listAcquiredImage;
 	std::list<DeffectInfo>            m_listDftInfo;
@@ -106,6 +98,8 @@ public:
 	BOOL IsThreadsAlive();
 	int CheckTotalListSize();
 	BOOL LoadRefImage(std::string folder_path);
+	BOOL GetRefImgWithoutBouder(std::string folder_path);
+	int ifCutBouder(HObject src, HObject &dst, HObject &region);
 	void LoadImageToQueue();
 	BOOL LoadOneImageToQueue(std::string folder_path, int next_number);
 	BOOL LoadSingleImage(std::string image_name);
@@ -128,6 +122,9 @@ private:
 	HImage m_hi_ref;       //参考图像
 	HImage m_hi_average;   //平均图像
 	HImage m_hi_deviation;    //标准差图像
+
+	int m_nCutBorderStatue;
+	HObject m_hoBorderRegion;
 
 	HTuple hv_GPU_Handle;
 	int m_camera1_invalid_area;
@@ -155,7 +152,7 @@ private:
 	int ProduceReferenceImage4(HImage hi_ref4, HImage hi_ref3);
 	BOOL GetSavePath(std::string &path);
 	BOOL GenerateReferenceImage(HImage &hi_average, HImage &hi_deviation);
-	BOOL SaveReferenceImage();
+	void SaveReferenceImage(const char* filename);
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
 		HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
