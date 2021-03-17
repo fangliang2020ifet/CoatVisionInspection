@@ -25,6 +25,12 @@ public:
 	float m_min_radius = 0.0f;
 	float m_max_radius = 0.0f;
 
+
+	int m_nRankMethod;
+	float m_fRankValue1;
+	float m_fRankValue2;
+	float m_fRankValue3;
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
@@ -35,8 +41,6 @@ private:
 	float GetSelectAreaValueMax();
 
 public:
-	float m_fPlanValue[5][6] = {0.0f};
-
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	virtual void OnOK();
@@ -45,70 +49,16 @@ public:
 	CComboBox m_combo_select_threshold;
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonReset();
-	afx_msg void OnCbnSelchangeCombo2();
-
-private:
-	CComboBox m_comboDFTselect;
-
-	CString n11;
-	CString n12;
-	CString n13;
-	CString n14;
-	CString n15;
-	CString n16;
-	CString n21;
-	CString n22;
-	CString n23;
-	CString n24;
-	CString n25;
-	CString n26;
-	CString n31;
-	CString n32;
-	CString n33;
-	CString n34;
-	CString n35;
-	CString n36;
-	CString n41;
-	CString n42;
-	CString n43;
-	CString n44;
-	CString n45;
-	CString n46;
-	CString n51;
-	CString n52;
-	CString n53;
-	CString n54;
-	CString n55;
-	CString n56;
-	afx_msg void OnEnKillfocusEdit11();
-	afx_msg void OnEnKillfocusEdit12();
-	afx_msg void OnEnKillfocusEdit13();
-	afx_msg void OnEnKillfocusEdit14();
-	afx_msg void OnEnKillfocusEdit15();
-	afx_msg void OnEnKillfocusEdit16();
-	afx_msg void OnEnKillfocusEdit21();
-	afx_msg void OnEnKillfocusEdit22();
-	afx_msg void OnEnKillfocusEdit23();
-	afx_msg void OnEnKillfocusEdit24();
-	afx_msg void OnEnKillfocusEdit25();
-	afx_msg void OnEnKillfocusEdit26();
-	afx_msg void OnEnKillfocusEdit31();
-	afx_msg void OnEnKillfocusEdit32();
-	afx_msg void OnEnKillfocusEdit33();
-	afx_msg void OnEnKillfocusEdit34();
-	afx_msg void OnEnKillfocusEdit35();
-	afx_msg void OnEnKillfocusEdit36();
-	afx_msg void OnEnKillfocusEdit41();
-	afx_msg void OnEnKillfocusEdit42();
-	afx_msg void OnEnKillfocusEdit43();
-	afx_msg void OnEnKillfocusEdit44();
-	afx_msg void OnEnKillfocusEdit45();
-	afx_msg void OnEnKillfocusEdit46();
-	afx_msg void OnEnKillfocusEdit51();
-	afx_msg void OnEnKillfocusEdit52();
-	afx_msg void OnEnKillfocusEdit53();
-	afx_msg void OnEnKillfocusEdit54();
-	afx_msg void OnEnKillfocusEdit55();
-	afx_msg void OnEnKillfocusEdit56();
-public:
+	afx_msg void OnBnClickedRadioArea();
+	afx_msg void OnBnClickedRadioRadius();
+	afx_msg void OnBnClickedRadioContlength();
+	afx_msg void OnEnKillfocusEditAreaValue1();
+	afx_msg void OnEnKillfocusEditAreaValue2();
+	afx_msg void OnEnKillfocusEditAreaValue3();
+	afx_msg void OnEnKillfocusEditRadiusValue1();
+	afx_msg void OnEnKillfocusEditRadiusValue2();
+	afx_msg void OnEnKillfocusEditRadiusValue3();
+	afx_msg void OnEnKillfocusEditContValue1();
+	afx_msg void OnEnKillfocusEditContValue2();
+	afx_msg void OnEnKillfocusEditContValue3();
 };

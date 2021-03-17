@@ -71,7 +71,6 @@ public:
 	CEvent CalculateThread_4_StoppedEvent;
 	CEvent CalculateThread_5_StoppedEvent;
 
-
 	BOOL SYSTEM_PAUSE;
 	BOOL TEST_MODEL;                            //测试模式
 	BOOL SAVE_REFERENCE_IMAGE;                  //是否保存生成的参考图像
@@ -90,6 +89,12 @@ public:
 	std::list<HalconCpp::HObject>     m_listDftImg;
 	UINT64 m_unImageIndex;
 
+	// 瑕疵等级划分
+	int m_nrankMethod;                           // 评级方法：面积、直径、周长
+	float m_frankValue1;
+	float m_frankValue2;
+	float m_frankValue3;
+
 	void InitialImageProcess();
 	BOOL BeginProcess();
 	void StopManageThread();
@@ -98,19 +103,19 @@ public:
 	BOOL IsThreadsAlive();
 	int CheckTotalListSize();
 	BOOL LoadRefImage(std::string folder_path);
-	BOOL GetRefImgWithoutBouder(std::string folder_path);
+	BOOL GetRefImgWithoutBouder(const char* imgname);
 	int ifCutBouder(HObject src, HObject &dst, HObject &region);
 	void LoadImageToQueue();
 	BOOL LoadOneImageToQueue(std::string folder_path, int next_number);
-	BOOL LoadSingleImage(std::string image_name);
+	BOOL LoadSingleImage(const char* imgname);
 	HObject CopyHobject(HObject ho_image);
 	void SaveDefectImage(HObject &ho_img, HTuple name);
 	BOOL CheckReferenceImageAvilable();
 
 protected:
 	enum { CAMERA_1 = 1, CAMERA_2, CAMERA_3, CAMERA_4 };
-	//异物， 凹凸， 擦伤， 晶点， 漏涂
-	enum { DFT_MATTER = 0, DFT_BUMP, DFT_GRAZE, DFT_CRYSTAL, DFT_COATING };
+	//异物， 凹凸， 气泡， 涂布
+	enum { DFT_MATTER = 0, DFT_CONVEX, DFT_BUBBLE, DFT_COATTING };
 	BOOL IsFileExist(const std::string &filename);
 	BOOL IsPathExist(const std::string &pathname);
 
@@ -130,7 +135,12 @@ private:
 	int m_camera1_invalid_area;
 	int m_camera4_invalid_area;
 
-	HANDLE                m_hStopEvent;
+	//  SVM
+	CString m_modelFileName;
+	HTuple m_hvGrayMeanValue;            //  参考图像的平均灰度值
+	HTuple m_hvGrayDeviationValue;       //  参考图像的标准差
+
+	HANDLE      m_hStopEvent;
 	CWinThread *m_ManageThread;
 	CWinThread *m_ImageSaveThread;
 	CWinThread *m_CalculateThread[5];
@@ -158,12 +168,16 @@ private:
 	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
 	unsigned short int  ImageClassification(float radius);
 	int  RankDivide(DefectType dtype);
-	unsigned short int RankDivide(DeffectInfo dft_info);
+	unsigned short int RankDivide(float area, float radius, float contlength);
+
+	void InitialClassify(const char * svm_file_name, HTuple &hv_SVMHandle);
+	int ClassifyRegionsWithSVM(HTuple hv_SVMHandle, HObject src);
+	void CalculateFeatures(HObject img, HObject region, HTuple &features);
 	
 	void HalconOpenGPU(HTuple &hv_DeviceHandle);
 	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
-	int StandDeviationAlgorithm(HImage hi_img, std::vector<DeffectInfo> &vecDftInfo, std::vector<HalconCpp::HObject> &vecDftImg);
+	int StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std::vector<DeffectInfo> &vecDftInfo, std::vector<HalconCpp::HObject> &vecDftImg);
 	void GetOutDeviationArea(HImage hiImg, HObject &hoSelectedArea);
 	void SplitAndMeasureDeffect(HObject selectArea);
 	void AddNoise(HObject hoImg);

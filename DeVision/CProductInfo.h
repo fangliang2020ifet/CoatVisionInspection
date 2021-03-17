@@ -27,33 +27,37 @@ private:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
-
 	BOOL m_bSave_Parameter = FALSE;          //是否保存
 
 	LPCWSTR APPNAME = L"ProductInfo";
 	LPCWSTR FILEPATH = L"inis\\ProductInformation.ini";
 
-	CString m_ctrID;
-	CString m_ctrWIDTH;
-	CString m_ctrBASE;
-	CString m_ctrCOATING;
-	CString m_ctrOPERATOR;
-	CString m_ctrNUMBER;
-	CString m_ctrUSER;
-	CString m_ctrADDITION;
 
+	void UpdateControls();
 	void LoadInifile();
 	void SaveAll();
 
 public:
+	int     m_nBatchIndex;
+	CString m_cstrBatchTime;
+	CString m_cstrBatchCode;
+	CString m_cstrBatch;
+	CString m_cstrName;
+	CString m_cstrSchedule;
+	CString m_cstrAddition;
+
+	CString GetTimeStamp();
+	CString GenerateBatchNumber();
+
+
 	afx_msg BOOL OnInitDialog();
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
-
-	CComboBox m_combox_id;
-	CComboBox m_combox_width;
-	CComboBox m_combox_base;
-	CComboBox m_combox_coating;
-	CComboBox m_combox_operator;
+	afx_msg void OnBnClickedBtnIndexChange();
+	afx_msg void OnEnKillfocusEditInfoName();
+	afx_msg void OnEnKillfocusEditSchedule();
+	afx_msg void OnEnKillfocusEditInfoNo();
+	afx_msg void OnEnKillfocusEditAddition();
+	afx_msg void OnEnKillfocusEditNoIndex();
 };

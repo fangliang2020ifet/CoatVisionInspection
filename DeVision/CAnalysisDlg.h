@@ -37,10 +37,6 @@ public:
 	double m_dDftNumber2;
 	double m_dDftNumber3;
 	double m_dDftNumber4;
-	double m_dDftNumber5;
-	double m_dDftNumber6;
-	double m_dDftNumber7;
-	double m_dDftNumber8;
 
 	void ClearAll();
 	void UpdateChartValue();

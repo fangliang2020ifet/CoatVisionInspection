@@ -26,11 +26,6 @@ CAnalysisDlg::CAnalysisDlg(CWnd* pParent /*=nullptr*/)
 	m_dDftNumber2 = 0.0;
 	m_dDftNumber3 = 0.0;
 	m_dDftNumber4 = 0.0;
-	m_dDftNumber5 = 0.0;
-	m_dDftNumber6 = 0.0;
-	m_dDftNumber7 = 0.0;
-	m_dDftNumber8 = 0.0;
-
 
 }
 
@@ -81,11 +76,6 @@ BOOL CAnalysisDlg::OnInitDialog()
 	m_dDftNumber2 = 0.0;
 	m_dDftNumber3 = 0.0;
 	m_dDftNumber4 = 0.0;
-	m_dDftNumber5 = 0.0;
-	m_dDftNumber6 = 0.0;
-	m_dDftNumber7 = 0.0;
-	m_dDftNumber8 = 0.0;
-
 
 	CreateCustomBarChart();
 
@@ -136,16 +126,10 @@ void CAnalysisDlg::CreateCustomBarChart()
 	m_chart.ShowTooltip(TRUE);
 	//m_chart.SetAutoScale(TRUE);
 
-
 	m_chart.AddBar(m_dDftNumber1, L"异物", RGB(255, 35, 15));
-	m_chart.AddBar(m_dDftNumber2, L"擦伤", RGB(25, 255, 35));
-	m_chart.AddBar(m_dDftNumber3, L"气泡", RGB(35, 55, 225));
-	m_chart.AddBar(m_dDftNumber4, L"黑点", RGB(255, 255, 0));
-	m_chart.AddBar(m_dDftNumber5, L"斑块", RGB(55, 35, 55));
-	m_chart.AddBar(m_dDftNumber6, L"凹凸", RGB(255, 255, 255));
-	m_chart.AddBar(m_dDftNumber7, L"色差", RGB(155, 35, 155));
-	m_chart.AddBar(m_dDftNumber8, L"均匀度", RGB(155, 155, 85));
-
+	m_chart.AddBar(m_dDftNumber2, L"凹凸点", RGB(25, 255, 35));
+	m_chart.AddBar(m_dDftNumber3, L"气泡点", RGB(35, 55, 225));
+	m_chart.AddBar(m_dDftNumber4, L"涂布", RGB(255, 255, 0));
 }
 
 void CAnalysisDlg::ClearAll()
@@ -171,13 +155,9 @@ void CAnalysisDlg::UpdateChartValue()
 	m_chart.SetTitle(L"瑕疵类型与数量分布柱状图");
 	m_chart.SetBKColor(RGB(238, 238, 238));
 	m_chart.AddBar(m_dDftNumber1, L"异物", RGB(255, 35, 15));
-	m_chart.AddBar(m_dDftNumber2, L"擦伤", RGB(25, 255, 35));
-	m_chart.AddBar(m_dDftNumber3, L"气泡", RGB(35, 55, 225));
-	m_chart.AddBar(m_dDftNumber4, L"黑点", RGB(255, 255, 0));
-	m_chart.AddBar(m_dDftNumber5, L"斑块", RGB(55, 35, 55));
-	m_chart.AddBar(m_dDftNumber6, L"凹凸", RGB(255, 255, 255));
-	m_chart.AddBar(m_dDftNumber7, L"色差", RGB(155, 35, 155));
-	m_chart.AddBar(m_dDftNumber8, L"均匀度", RGB(155, 155, 85));
+	m_chart.AddBar(m_dDftNumber2, L"凹凸点", RGB(25, 255, 35));
+	m_chart.AddBar(m_dDftNumber3, L"气泡点", RGB(35, 55, 225));
+	m_chart.AddBar(m_dDftNumber4, L"涂布", RGB(255, 255, 0));
 
 	m_chart.Refresh();
 }
@@ -189,8 +169,8 @@ void CAnalysisDlg::OnBnClickedButtonReset()
 	//m_dDftNumber1 = 55.0;
 	UpdateChartValue();
 
-	CString cstr = L"重置分析结果";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	//CString cstr = L"重置分析结果";
+	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
 // 保存
