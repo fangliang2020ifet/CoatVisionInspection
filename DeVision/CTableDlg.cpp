@@ -101,6 +101,19 @@ BOOL CTableDlg::OnInitDialog()
 	pcheck = (CButton*)GetDlgItem(IDC_CHECK4);
 	pcheck->SetCheck(1);
 
+
+	m_save_path = "D:\\瑕疵检测数据记录\\1检测报表记录\\";
+	m_wstr_batch = L"NO1";               //批号
+	m_wstr_name = L"PET-1";                //型号
+	m_wstr_width = L"1650";             //宽度
+	m_wstr_schedule = L"白班";              //操作员
+	m_wstr_addition = L"无";
+	m_wstr_speed = L"20";             //平均速度
+	m_product_rank = 0;                //产品评级
+	m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
+	m_serious_num = 0;                 //严重缺陷数目
+
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -431,7 +444,6 @@ void CTableDlg::SaveDistributeImage()
 	m_hbitmap = GetSrcBit(*dc, prect);
 	//BOOL saved = SaveBMPToFile(m_hbitmap, "D:\\temp\\saved.bmp");
 
-	std::string strpath = "D:\\DetectRecords\\TableDistributes\\";
 	//获取日期
 	std::wstringstream date;
 	SYSTEMTIME sysTime;
@@ -446,8 +458,10 @@ void CTableDlg::SaveDistributeImage()
 	const wchar_t* wname = wdate.c_str();
 	_bstr_t name(wname);
 	std::string strname = name + ".bmp";
-	strpath += strname;
-	BOOL saved = SaveBitmapToFile(m_hbitmap, strpath.c_str());
+
+	std::string strfilename = "D:\\瑕疵检测数据记录\\4瑕疵分布图记录\\";
+	strfilename += strname;
+	BOOL saved = SaveBitmapToFile(m_hbitmap, strfilename.c_str());
 
 	ReleaseDC(dc);
 }
@@ -603,8 +617,8 @@ void CTableDlg::GenerateReportName(std::wstring &wstrname)
 
 	m_wstr_savetime = wdate;
 
-	wdate.append(L"_N").append(m_wstr_num).append(L"_D").append(m_wstr_id)
-		.append(L"_W").append(m_wstr_width).append(L"_U").append(m_wstr_user);
+	wdate.append(L"_N").append(m_wstr_batch).append(L"_D").append(m_wstr_name)
+		.append(L"_W").append(m_wstr_width).append(L"_U").append(m_wstr_schedule);
 
 	wstrname = wdate;
 }
@@ -622,7 +636,7 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 	CRange range;      //操作单元格
 
 	//2.打开指定Excel文件，如果不存在就创建
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -659,7 +673,7 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 	FormatTableHead(sheet, range, TRUE);
 
 	//填充表头内容
-	CString cnumber = m_wstr_num.c_str();     //批号
+	CString cnumber = m_wstr_batch.c_str();     //批号
 	COleVariant vnumber(cnumber);
 	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
 
@@ -676,15 +690,15 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 	range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
 	//range.put_UseStandardWidth(COleVariant((long)55));
 
-	CString coperator = m_wstr_user.c_str();     //检测员
+	CString coperator = m_wstr_schedule.c_str();     //检测员
 	COleVariant voperator(coperator);
 	range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
 
-	CString cID = m_wstr_id.c_str();     //型号
+	CString cID = m_wstr_name.c_str();     //型号
 	COleVariant vID(cID);
 	range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
 
-	CString clongth = m_wstr_width.c_str();     //检测长度
+	CString clongth = m_wstr_length.c_str();     //检测长度
 	COleVariant vlongth(clongth);
 	range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
 
@@ -812,7 +826,7 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 		FormatTableHead(sheet, range, FALSE);
 
 		//填充表头内容
-		CString cnumber = m_wstr_num.c_str();     //批号
+		CString cnumber = m_wstr_batch.c_str();     //批号
 		COleVariant vnumber(cnumber);
 		range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
 
@@ -820,15 +834,15 @@ void CTableDlg::SaveToExcel(std::vector<DefectType> vDFT)
 		COleVariant vtotal_time(ctotal_time);
 		range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
 
-		CString coperator = m_wstr_user.c_str();     //检测员
+		CString coperator = m_wstr_schedule.c_str();     //检测员
 		COleVariant voperator(coperator);
 		range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
 
-		CString cID = m_wstr_id.c_str();     //型号
+		CString cID = m_wstr_name.c_str();     //型号
 		COleVariant vID(cID);
 		range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
 
-		CString clongth = m_wstr_width.c_str();     //检测长度
+		CString clongth = m_wstr_length.c_str();     //检测长度
 		COleVariant vlongth(clongth);
 		range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
 
@@ -967,7 +981,7 @@ void CTableDlg::SaveToExcelUseDefault(CString &name)
 	book.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -1027,7 +1041,7 @@ void CTableDlg::SaveScatterPlotUseDefault()
 	Book_example.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = m_save_path.c_str();
+	CString strExcelFile = (CA2W)m_save_path.c_str();
 	std::wstring strname;
 	GenerateReportName(strname);
 	CString strdevName(strname.c_str());
@@ -1233,328 +1247,6 @@ void CTableDlg::BeginSaveTable()
 }
 
 //线程函数：保存excel
-UINT CTableDlg::SaveTableThread(LPVOID pParam)
-{
-	//解决多线程打开excel的错误
-	AFX_MANAGE_STATE(AfxGetStaticModuleState())
-		CoInitialize(NULL);
-	AfxEnableControlContainer();	
-
-	CTableDlg *pThis = (CTableDlg *)pParam;
-
-	//1.创建基本对象
-	CApplication App;  //创建应用程序实例
-	CWorkbooks Books;  //工作簿，多个Excel文件
-	CWorkbook Book;    //单个工作簿
-	CWorksheets sheets;//多个sheet页面
-	CWorksheet sheet;  //单个sheet页面
-	CRange range;      //操作单元格
-	
-	//2.打开指定Excel文件，如果不存在就创建
-	CString strExcelFile = pThis->m_save_path.c_str();
-
-	std::wstring strname;
-	pThis->GenerateReportName(strname);
-	CString strdevName(strname.c_str());
-	strdevName += _T(".xlsx");
-	strExcelFile += strdevName;
-
-	COleVariant
-		covTrue((short)TRUE),
-		covFalse((short)FALSE),
-		covOptional((long)DISP_E_PARAMNOTFOUND, VT_ERROR);
-
-	LPDISPATCH lpdisp = NULL;
-	//1.创建Excel实例
-	if (!App.CreateDispatch(_T("Excel.Application"), NULL))
-	{
-		CString cstr = L"创建Excel失败，请检查Excel是否正常";
-		::SendNotifyMessageW(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
-	}
-
-	App.put_Visible(FALSE);	//打开Excel, 也可设置为不打开
-	App.put_UserControl(FALSE);
-
-	//2. 得到workbooks容器
-	Books.AttachDispatch(App.get_Workbooks());
-	Book.AttachDispatch(Books.Add(covOptional));
-	sheets.AttachDispatch(Book.get_Worksheets());
-	sheet.AttachDispatch(sheets.get_Item(COleVariant((short)1)));	//获取sheet1
-	sheet.put_Name(_T("瑕疵列表"));	    //设置sheet1名字
-
-	//设置表头格式
-	pThis->FormatTableHead(sheet, range, TRUE);
-	//填充表头内容
-	CString cnumber = pThis->m_wstr_num.c_str();     //批号
-	COleVariant vnumber(cnumber);
-	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
-
-	//时间格式化
-	pThis->m_wstr_savetime.insert(4, L"年");
-	pThis->m_wstr_savetime.insert(7, L"月");
-	pThis->m_wstr_savetime.insert(10, L"日");
-	pThis->m_wstr_savetime.insert(14, L"时");
-	pThis->m_wstr_savetime.insert(17, L"分");
-	pThis->m_wstr_savetime.insert(20, L"秒");
-	CString ctotal_time = pThis->m_wstr_savetime.c_str();     //检测时间
-	COleVariant vtotal_time(ctotal_time);
-	range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
-
-	CString coperator = pThis->m_wstr_user.c_str();     //检测员
-	COleVariant voperator(coperator);
-	range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
-
-	CString cID = pThis->m_wstr_id.c_str();     //型号
-	COleVariant vID(cID);
-	range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
-
-	CString clongth = pThis->m_wstr_width.c_str();     //检测长度
-	COleVariant vlongth(clongth);
-	range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
-
-	CString cspeed = pThis->m_wstr_speed.c_str();     //平均速度
-	COleVariant vspeed(cspeed);
-	range.put_Item(COleVariant((long)3), COleVariant((long)8), vspeed);
-
-	for (int k = 0; k < 7; k++)
-	{
-		if (k < 5) {
-			COleVariant vkind_stastic((long)k);   //类型统计
-			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
-		}
-		if (k == 5) {
-			CString cserious;
-			cserious.Format(_T("0000"));
-			COleVariant vserious(cserious);   //严重缺陷
-			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
-		}
-		if (k == 6) {
-			CString cout;
-			cout.Format(_T("一级"));
-			COleVariant vout(cout);   //检测结果
-			range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
-		}
-	}
-
-	//写入瑕疵信息
-	EnterCriticalSection(&pThis->m_csvec);
-	for (int i = 0; i < (int)pThis->m_vecDFT.size(); i++)
-	{
-		//DefectType dft;
-		DeffectInfo dft;
-		dft = pThis->m_vecDFT.at(i);
-		for (int j = 1; j < 9; j++)
-		{
-			switch (j)
-			{
-			case 1: {
-				COleVariant vResult((long)(i + 1));
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 2: {
-				CString ckind;
-				ckind.Format(_T("%d"), dft.type);
-				COleVariant vResult(ckind);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 3: {
-				CString cx;
-				cx.Format(_T("%.2f"), dft.x);
-				COleVariant vResult(cx);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 4: {
-				CString cy;
-				cy.Format(_T("%.2f"), dft.y);
-				COleVariant vResult(cy);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 5: {
-				CString cradius;
-				cradius.Format(_T("%.2f"), dft.radius);
-				COleVariant vResult(cradius);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 6: {
-				CString carea;
-				carea.Format(_T("%.2f"), dft.area);
-				COleVariant vResult(carea);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 7: {
-				CString csize;
-				csize.Format(_T("%.2f"), dft.contlength);
-				COleVariant vResult(csize);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			case 8: {
-				CString ctime;
-				ctime.Format(_T("%.2f"), dft.pixel_value);
-				COleVariant vResult(ctime);
-				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
-				break; }
-			default:
-				break;
-			}
-		}
-	}
-	LeaveCriticalSection(&pThis->m_csvec);
-
-	range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
-	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
-
-	//5.设置对齐方式
-	range.put_VerticalAlignment(COleVariant((long)-4108));
-	range.put_HorizontalAlignment(COleVariant((long)-4108));
-	//6.设置字体颜色
-	CFont0 ft;
-	ft.AttachDispatch(range.get_Font());
-	ft.put_Name(COleVariant(_T("宋体")));	//字体
-	ft.put_ColorIndex(COleVariant((long)1));//颜色	//黑色
-	ft.put_Size(COleVariant((long)12));     //大小
-
-	range.AttachDispatch(sheet.get_Range(COleVariant(_T("A1")), COleVariant(_T("H1"))), TRUE);
-	ft.AttachDispatch(range.get_Font());
-	ft.put_Name(COleVariant(_T("宋体")));
-	ft.put_Bold(COleVariant((long)1));
-	ft.put_ColorIndex(COleVariant((long)1));    //颜色	
-	ft.put_Size(COleVariant((long)18));         //大小
-
-	//*****************************************************创建瑕疵分布图**********************************/
-	LPDISPATCH lpDisp;
-	LPDISPATCH lpDispLast = sheets.get_Item(COleVariant(sheets.get_Count()));
-	lpDisp = sheets.Add(vtMissing, _variant_t(lpDispLast), _variant_t((long)1), vtMissing);
-	sheet.AttachDispatch(lpDisp);
-	sheet.put_Name(L"瑕疵分布图");
-
-	if (1)
-	{
-		//设置表头格式
-		pThis->FormatTableHead(sheet, range, FALSE);
-
-		//填充表头内容
-		CString cnumber = pThis->m_wstr_num.c_str();     //批号
-		COleVariant vnumber(cnumber);
-		range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
-
-		CString ctotal_time = pThis->m_wstr_savetime.c_str();     //检测时间
-		COleVariant vtotal_time(ctotal_time);
-		range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
-
-		CString coperator = pThis->m_wstr_user.c_str();     //检测员
-		COleVariant voperator(coperator);
-		range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
-
-		CString cID = pThis->m_wstr_id.c_str();     //型号
-		COleVariant vID(cID);
-		range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
-
-		CString clongth = pThis->m_wstr_width.c_str();     //检测长度
-		COleVariant vlongth(clongth);
-		range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
-
-		CString cspeed = pThis->m_wstr_speed.c_str();     //平均速度
-		COleVariant vspeed(cspeed);
-		range.put_Item(COleVariant((long)3), COleVariant((long)8), vspeed);
-
-		for (int k = 0; k < 7; k++)
-		{
-			if (k < 5) {
-				COleVariant vkind_stastic((long)k);   //类型统计
-				range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vkind_stastic);
-			}
-			if (k == 5) {
-				CString cserious;
-				cserious.Format(_T("0000"));
-				COleVariant vserious(cserious);   //严重缺陷
-				range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vserious);
-			}
-			if (k == 6) {
-				CString cout;
-				cout.Format(_T("一级"));
-				COleVariant vout(cout);   //检测结果
-				range.put_Item(COleVariant((long)5), COleVariant((long)(k + 2)), vout);
-			}
-		}
-
-		//添加图片
-		char path[MAX_PATH];
-		GetCurrentDirectory(MAX_PATH, (TCHAR*)path);//获取当前路径
-		CString strBMP = (TCHAR*)path;
-		CString imageName("\\temp\\saved.bmp");
-		strBMP += imageName;
-		std::ifstream fin(strBMP.GetBuffer());
-		if (fin) {
-			//【2】插入图像
-			//获取图像插入的范围
-			//从Sheet对象上获得一个Shapes   
-			CShapes pShapes;
-			pShapes.AttachDispatch(sheet.get_Shapes());
-			//获得Range对象，用来插入图片
-			range.AttachDispatch(sheet.get_Range(COleVariant(_T("A6")), COleVariant(_T("H50"))), TRUE);
-			//range.Merge(COleVariant((long)0));  //合并单元格
-			VARIANT rLeft = range.get_Left();
-			VARIANT rTop = range.get_Top();
-			VARIANT rWidth = range.get_Width();
-			VARIANT rHeight = range.get_Height();
-
-			//添加图像到 H1 - K10范围区域
-			CShape pShape = pShapes.AddPicture(strBMP, TRUE, TRUE,
-				(float)rLeft.dblVal, (float)rTop.dblVal, (float)rWidth.dblVal, (float)rHeight.dblVal);
-			//设置图像所占的宽高
-			CShapeRange shapeRange = pShapes.get_Range(_variant_t(long(1)));
-			shapeRange.put_Height(float(600));
-			shapeRange.put_Width(float(450));
-		}
-
-		range.AttachDispatch(sheet.get_UsedRange());//加载已使用的单元格
-		range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
-
-		//5.设置对齐方式
-		//水平对齐：默认 1 居中 -4108， 左= -4131，右=-4152
-		//垂直对齐：默认 2 居中 -4108， 左= -4160，右=-4107
-		range.put_VerticalAlignment(COleVariant((long)-4108));
-		range.put_HorizontalAlignment(COleVariant((long)-4108));
-
-		//6.设置字体颜色
-		CFont0 ft;
-		ft.AttachDispatch(range.get_Font());
-		ft.put_Name(COleVariant(_T("宋体")));	//字体
-		ft.put_ColorIndex(COleVariant((long)1));//颜色	//黑色
-		ft.put_Size(COleVariant((long)12));     //大小
-
-		range.AttachDispatch(sheet.get_Range(COleVariant(_T("A1")), COleVariant(_T("H1"))), TRUE);
-		ft.AttachDispatch(range.get_Font());
-		ft.put_Name(COleVariant(_T("宋体")));
-		ft.put_Bold(COleVariant((long)1));
-		ft.put_ColorIndex(COleVariant((long)1));    //颜色	
-		ft.put_Size(COleVariant((long)18));         //大小
-
-
-	}
-	//**************************************************************************************************/
-
-	Book.SaveCopyAs(COleVariant(strExcelFile)); //保存
-
-	Book.put_Saved(TRUE);
-	//8.释放资源
-	range.ReleaseDispatch();
-	sheet.ReleaseDispatch();
-	sheets.ReleaseDispatch();
-	Book.ReleaseDispatch();
-	Books.ReleaseDispatch();
-	Book.Close(covOptional, covOptional, covOptional);//关闭Workbook对象
-	Books.Close();           // 关闭Workbooks对象
-	App.Quit();          // 退出_Application
-	App.ReleaseDispatch();
-
-	pThis->m_vecDFT.clear();
-
-	Win::log("报表已保存");
-
-	return 0;
-}
-
 UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 {
 	//解决多线程打开excel的错误
@@ -1600,9 +1292,10 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	Book_example.AttachDispatch(lpDisp);
 
 	//另存为
-	CString strExcelFile = pThis->m_save_path.c_str();
+	CString strExcelFile = (CA2W)pThis->m_save_path.c_str();
 	std::wstring strname;
-	pThis->GenerateReportName(strname);
+	pThis->GenerateReportName(strname);                     //  获取检测时间
+	strname = pThis->m_wstr_batch;
 	CString strdevName(strname.c_str());
 	strdevName += _T(".xlsx");
 	strExcelFile += strdevName;
@@ -1623,7 +1316,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	range.AttachDispatch(sheet.get_UsedRange());
 
 	//填充表头
-	CString cnumber = pThis->m_wstr_num.c_str();     //批号
+	CString cnumber = pThis->m_wstr_batch.c_str();     //批号
 	COleVariant vnumber(cnumber);
 	range.put_Item(COleVariant((long)2), COleVariant((long)2), vnumber);
 
@@ -1638,15 +1331,15 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	COleVariant vtotal_time(ctotal_time);
 	range.put_Item(COleVariant((long)2), COleVariant((long)5), vtotal_time);
 
-	CString coperator = pThis->m_wstr_user.c_str();     //检测员
+	CString coperator = pThis->m_wstr_schedule.c_str();      //班次
 	COleVariant voperator(coperator);
 	range.put_Item(COleVariant((long)2), COleVariant((long)8), voperator);
 
-	CString cID = pThis->m_wstr_id.c_str();     //型号
+	CString cID = pThis->m_wstr_name.c_str();     //型号
 	COleVariant vID(cID);
 	range.put_Item(COleVariant((long)3), COleVariant((long)2), vID);
 
-	CString clongth = pThis->m_wstr_width.c_str();     //检测长度
+	CString clongth = pThis->m_wstr_length.c_str();     //检测长度
 	COleVariant vlongth(clongth);
 	range.put_Item(COleVariant((long)3), COleVariant((long)5), vlongth);
 
@@ -1688,7 +1381,24 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 				break; }
 			case 2: {
 				CString ckind;
-				ckind.Format(_T("%d"), dft.type);
+				switch (dft.type)
+				{
+				case 0:
+					ckind.Format(_T("异物"));
+					break;
+				case 1:
+					ckind.Format(_T("凹凸"));
+					break;
+				case 2:
+					ckind.Format(_T("气泡"));
+					break;
+				case 3:
+					ckind.Format(_T("涂布"));
+					break;
+				case 4:
+					ckind.Format(_T("其他"));
+					break;
+				}
 				COleVariant vResult(ckind);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -1706,7 +1416,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 				break; }
 			case 5: {
 				CString cradius;
-				cradius.Format(_T("%.2f"), dft.radius);
+				cradius.Format(_T("%.2f"), (float)(dft.radius * HORIZON_PRECISION));
 				COleVariant vResult(cradius);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -1718,13 +1428,27 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 				break; }
 			case 7: {
 				CString csize;
-				csize.Format(_T("%.2f"), dft.contlength);
+				csize.Format(_T("%.2f"), (float)(dft.contlength * HORIZON_PRECISION));
 				COleVariant vResult(csize);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
 			case 8: {
 				CString ctime;
-				ctime.Format(_T("%.2f"), dft.rank);
+				switch (dft.rank)
+				{
+				case 0:
+					ctime.Format(_T("A"));
+					break;
+				case 1:
+					ctime.Format(_T("B"));
+					break;
+				case 2:
+					ctime.Format(_T("C"));
+					break;
+				case 3:
+					ctime.Format(_T("D"));
+					break;
+				}
 				COleVariant vResult(ctime);
 				range.put_Item(COleVariant((long)(i + 7)), COleVariant((long)j), vResult);
 				break; }
@@ -2095,7 +1819,7 @@ void CTableDlg::OnBnClickedButtonShowall()
 	//m_ListCtrlHis.InsertColumn(3, L"长度", LVCFMT_CENTER, 80);
 	//m_ListCtrlHis.InsertColumn(4, L"操作员", LVCFMT_CENTER, 80);
 
-	std::string _path((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string _path((LPCSTR)(m_save_path.c_str()));
 	//搜索目录下的所有 xlsx 文件
 	std::vector<std::string> vstring;
 	getExcels(_path, vstring);
@@ -2145,7 +1869,7 @@ void CTableDlg::OnBnClickedButtonOpenexcel()
 	if (nIndex == -1) return;
 	m_ListCtrlHis.DeleteItem(nIndex);
 
-	std::string filename((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string filename((LPCSTR)(m_save_path.c_str()));
 	std::string name;
 	std::vector<std::string>::reverse_iterator it = m_vstring.rbegin();
 	if (it + nIndex < m_vstring.rend()) {
@@ -2174,7 +1898,7 @@ void CTableDlg::OnBnClickedButtonDelselect()
 	if (nIndex == -1) return;
 	m_ListCtrlHis.DeleteItem(nIndex);
 
-	std::string filename((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string filename((LPCSTR)(m_save_path.c_str()));
 	std::string name;
 	std::vector<std::string>::reverse_iterator it = m_vstring.rbegin();
 	if (it + nIndex < m_vstring.rend()) {
@@ -2225,7 +1949,7 @@ void CTableDlg::OnBnClickedButtonSaveas()
 void CTableDlg::OnBnClickedButtonOpenexcelpath()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	std::string path((LPCSTR)CW2A(m_save_path.c_str()));
+	std::string path((LPCSTR)(m_save_path.c_str()));
 	CString cpath = CA2W(path.c_str());
 	ShellExecute(NULL, L"explore", cpath, NULL, NULL, SW_SHOW);
 

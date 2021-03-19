@@ -9,9 +9,10 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+#include <cmath>
+
 #include "CLogin.h"
 #include "CAcquireImage.h"
-//#include "CImageProcess.h"
 #include "CImageProcessing.h"
 #include "CInspectDlg.h"
 #include "CAnalysisDlg.h"
@@ -90,6 +91,8 @@ public:
 	float UpdateCurrentInspectPosition();
 	void ReStartPrepare();
 	void AutoStop();
+	void SwitchRoll();
+	void GenerateTableInfo();
 
 	long start_time;
 
@@ -107,6 +110,8 @@ private:
 	HICON m_hIcon;
 	HICON m_hOnlineIcon;
 	HICON m_hOfflineIcon;
+	HICON m_hCameraInIcon;
+	HICON m_hCameraOutIcon;
 	HICON m_hStartIcon;
 	HICON m_hStopIcon;
 	HICON m_hPauseIcon;
@@ -122,6 +127,7 @@ private:
 	float m_fRadiusMin;
 	float m_fRadiusMax;
 
+	bool m_bSwitchRoll;                             //  切卷
 
 	CEvent StopRefrush_Event;
 	CEvent RefrushThreadStopped_Event;
@@ -141,7 +147,7 @@ private:
 	void ReadFromRegedit();
 	void WriteToRegedit();
 	void SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information);
-	void SaveImages(int index, unsigned &numbers);
+	void SaveImages(int index, int batch, unsigned &numbers);
 
 public:
 	std::string m_strDeffect_Path;                             //工作路径
@@ -157,7 +163,7 @@ public:
 	//离线， 在线， 运行， 停止， 暂停
 	enum { SYSTEM_STATE_OFFLINE = 0, SYSTEM_STATE_ONLINE, SYSTEM_STATE_RUN, SYSTEM_STATE_STOP, SYSTEM_STATE_PAUSE };
 	int m_system_state;                                  //系统状态
-	//普通， 一级， 二级， 三级， 严重
+	//A级， B级， C级， D级
 	enum { RANK_COMMON = 0, RANK_GRADE1, RANK_GRADE2, RANK_GRADE3, RANK_SERIOUS };
 	int m_rank[5] = { 0 };
 	enum { SCREEN_UNLOCK = 0, SCREEN_LOCK };
@@ -171,8 +177,6 @@ public:
 	int m_nTotalDeffects = 0;
 	//int serious_def_num = 0;                              //严重瑕疵个数
 	int m_nSeriousDeffects = 0;
-	//float total_def_length = 0.0f;							  //瑕疵总米数
-	float m_fTotalDeffectsLength = 0.0f;
 	float m_width;
 
 protected:
@@ -235,4 +239,6 @@ protected:
 	afx_msg LRESULT OnUpdateControls(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateHistory(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateMainwnd(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnSwitchRoll(WPARAM wParam, LPARAM lParam);
+
 };

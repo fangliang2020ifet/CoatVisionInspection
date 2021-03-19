@@ -580,7 +580,6 @@ void CAcquireImage::AcqCallback4(SapXferCallbackInfo *pInfo)
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
-			pThis->m_arrayFrameCount[INDEX] += 1;
 		}
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;

@@ -24,6 +24,7 @@
 #define WM_UPDATE_CONTROLS (WM_USER + 3)
 #define WM_UPDATE_HISTORY  (WM_USER + 4)
 #define WM_UPDATE_MAINWND  (WM_USER + 5)
+#define WM_SWITCHROLL      (WM_USER + 6)
 
 #define STRINGLENGTH 64
 // 字节宽度

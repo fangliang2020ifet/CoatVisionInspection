@@ -226,7 +226,25 @@ void CHistoryDlg::RefrushImgWnd(std::string path, std::vector<std::string> vstri
 		cposition = position.c_str();
 		cradius = radius.c_str();
 		carea = area.c_str();
-		ckind = kind.c_str();
+		int nKind = std::stoi(kind);
+		switch (nKind)
+		{
+		case 0:
+			ckind.Format(_T("异物"));
+			break;
+		case 1:
+			ckind.Format(_T("凹凸"));
+			break;
+		case 2:
+			ckind.Format(_T("气泡"));
+			break;
+		case 3:
+			ckind.Format(_T("涂布"));
+			break;
+		case 4:
+			ckind.Format(_T("其它"));
+			break;
+		}
 		
 		CStatic *stext;
 		//判断图片名称是否有效

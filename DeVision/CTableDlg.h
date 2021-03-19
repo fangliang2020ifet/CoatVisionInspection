@@ -25,16 +25,17 @@ public:
 	HWND hMainWnd;                           //主窗口句柄	
 	int m_iSystemState;                      //系统状态
 	std::string m_DFT_img_path;
-	//std::wstring m_save_path = L"D:\\report\\";
-	std::wstring m_save_path = L"D:\\DetectRecords\\Reports\\";
-	std::wstring m_wstr_num = L"NO1";               //批号
-	std::wstring m_wstr_id = L"PET-1";                //型号
-	std::wstring m_wstr_width = L"1650";             //宽度
-	std::wstring m_wstr_user = L"张三";              //操作员
-	std::wstring m_wstr_speed = L"20";             //平均速度
-	int m_product_rank = 0;                //产品评级
-	int m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
-	int m_serious_num = 0;                 //严重缺陷数目
+	std::string m_save_path;
+	std::wstring m_wstr_batch;                 //批号
+	std::wstring m_wstr_name;                  //型号
+	std::wstring m_wstr_schedule;              //班次
+	std::wstring m_wstr_addition;              //备注
+	std::wstring m_wstr_width;              
+	std::wstring m_wstr_length;                //长度
+	std::wstring m_wstr_speed;                 //平均速度
+	int m_product_rank;                        //产品评级
+	int m_DFT_rank[5];                         //每种瑕疵类型的个数统计
+	int m_serious_num;                         //D级缺陷数目
 
 	void RefrushDistributeWnd();
 	void GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4);
@@ -54,9 +55,7 @@ public:
 	void BeginSaveTable();
 
 	CFont m_font;
-	//std::vector<DefectType> *m_pvDFT;
 	std::vector<DeffectInfo> *m_pvDFT;
-	//std::vector<DefectType> m_vecDFT;
 	std::vector<DeffectInfo> m_vecDFT;
 	float m_current_position;
 	float scale_x;
@@ -78,7 +77,6 @@ private:
 
 	std::wstring m_wstr_savetime;                        //保存时间
 	CWinThread *m_SaveTable;
-	static UINT SaveTableThread(LPVOID pParam);
 	static UINT SaveTableThreadDefault(LPVOID pParam);
 	HBITMAP m_hbitmap;
 	void GenerateReportName(std::wstring &wstrname);

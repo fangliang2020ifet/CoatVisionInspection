@@ -49,6 +49,10 @@
 #define IDD_DIALOG_REMOTE               187
 #define IDI_ICON_LOGINN                 189
 #define IDB_BITMAP_WAIT0                190
+#define IDI_ICON_CAMERA_IN              191
+#define IDI_ICON_CAMERA_OUT             192
+#define IDI_ICON_CHANGE                 193
+#define IDI_ICON_CHANGEX                194
 #define IDC_TAB_DIALOG                  1002
 #define IDC_STATIC_PICTURE              1004
 #define IDC_EDIT1                       1015
@@ -68,6 +72,7 @@
 #define IDC_EDIT35                      1024
 #define IDC_EDIT7                       1025
 #define IDC_EDIT_21                     1025
+#define IDC_EDIT_AREA_VALUE2            1025
 #define IDC_MFCBUTTON_START             1027
 #define IDC_MFCBUTTON_STOP              1028
 #define IDC_MFCBUTTON_PAUSE             1029
@@ -87,9 +92,11 @@
 #define IDC_EDIT11                      1044
 #define IDC_EDIT_SELECTWIDTH            1044
 #define IDC_EDIT_22                     1044
+#define IDC_EDIT_RADIUS_VALUE2          1044
 #define IDC_EDIT12                      1045
 #define IDC_EDIT_SELECTLONGTH           1045
 #define IDC_EDIT_32                     1045
+#define IDC_EDIT_RADIUS_VALUE3          1045
 #define IDC_EDIT13                      1046
 #define IDC_EDIT_WIDTH1                 1046
 #define IDC_EDIT_42                     1046
@@ -99,12 +106,15 @@
 #define IDC_EDIT15                      1048
 #define IDC_EDIT_WIDTH2                 1048
 #define IDC_EDIT_23                     1048
+#define IDC_EDIT_CONT_VALUE2            1048
 #define IDC_EDIT16                      1049
 #define IDC_EDIT_LONGTH2                1049
 #define IDC_EDIT_33                     1049
+#define IDC_EDIT_CONT_VALUE3            1049
 #define IDC_BUTTON1                     1050
 #define IDC_BUTTON_SELECT_DEFFECT_PATH  1050
 #define IDC_BUTTON_ANALYSIS_SAVE        1050
+#define IDC_BTN_INDEX_CHANGE            1050
 #define IDC_CHECK1                      1051
 #define IDC_CHECK2                      1052
 #define IDC_CHECK3                      1053
@@ -125,6 +135,7 @@
 #define IDC_BUTTON2                     1071
 #define IDC_BUTTON_SHOWALL              1071
 #define IDC_BUTTON_ADD_USER             1071
+#define IDCANCLE                        1071
 #define IDC_BUTTON3                     1072
 #define IDC_BUTTON4                     1073
 #define IDC_BUTTON5                     1074
@@ -183,6 +194,7 @@
 #define IDC_BUTTON_OPERATOR             1120
 #define IDC_BUTTON_OPERATOR_SAVE        1120
 #define IDC_STATIC_NUMBER               1121
+#define IDC_STATIC_EXAMPLE              1121
 #define IDC_STATIC_WIDTH                1122
 #define IDC_STATIC_ID                   1123
 #define IDC_STATIC_OPERATOR             1124
@@ -293,6 +305,7 @@
 #define IDC_BUTTON_CHANGEINFO           1226
 #define IDC_EDIT8                       1227
 #define IDC_EDIT_31                     1227
+#define IDC_EDIT_AREA_VALUE3            1227
 #define IDC_EDIT17                      1228
 #define IDC_EDIT_43                     1228
 #define IDC_EDIT18                      1229
@@ -344,7 +357,9 @@
 #define IDC_BUTTON_SETUP_DELETE         1262
 #define IDC_EDIT_SETUP_DELETENAME       1263
 #define IDC_EDIT_INFO_ID                1264
+#define IDC_EDIT_INFO_NO                1264
 #define IDC_EDIT_INFO_WIDTH             1265
+#define IDC_EDIT_NAME                   1265
 #define IDC_EDIT_INFO_BASE              1266
 #define IDC_EDIT_INFO_COATING           1267
 #define IDC_EDIT_INFO_OPERATOR          1268
@@ -369,12 +384,33 @@
 #define IDC_CHECK_PERCENT               1288
 #define IDC_STATIC_BARCHART             1289
 #define IDC_EDIT_11                     1290
+#define IDC_EDIT_AREA_VALUE1            1290
 #define IDC_EDIT_12                     1291
+#define IDC_EDIT_RADIUS_VALUE1          1291
 #define IDC_EDIT_13                     1292
+#define IDC_EDIT_CONT_VALUE1            1292
 #define IDC_EDIT_14                     1293
 #define IDC_EDIT_15                     1294
 #define IDC_EDIT_16                     1295
 #define IDC_COMBO_DFT_TYPE              1296
+#define IDC_RADIO_AREA                  1297
+#define IDC_RADIO_RADIUS                1298
+#define IDC_RADIO_CONTLENGTH            1299
+#define IDC_STATIC_AREA_VALUE1          1300
+#define IDC_STATIC_AREA_VALUE2          1301
+#define IDC_STATIC_AREA_VALUE3          1302
+#define IDC_STATIC_RADIUS_VALUE1        1303
+#define IDC_STATIC_RADIUS_VALUE2        1304
+#define IDC_STATIC_RADIUS_VALUE3        1305
+#define IDC_STATIC_CONT_VALUE1          1306
+#define IDC_STATIC_CONT_VALUE2          1307
+#define IDC_STATIC_CONT_VALUE3          1308
+#define IDC_STATIC_MATTER               1309
+#define IDC_STATIC_CONVEX               1310
+#define IDC_STATIC_BUBBLE               1311
+#define IDC_STATIC_COATTING             1312
+#define IDC_EDIT_NO_INDEX               1314
+#define IDC_EDIT_SCHEDULE               1316
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -427,9 +463,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        191
+#define _APS_NEXT_RESOURCE_VALUE        195
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1297
+#define _APS_NEXT_CONTROL_VALUE         1317
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
