@@ -192,6 +192,7 @@ void CProductInfo::LoadInifile()
 	*/
 }
 
+
 void CProductInfo::SaveAll()
 {
 	UpdateData(true);

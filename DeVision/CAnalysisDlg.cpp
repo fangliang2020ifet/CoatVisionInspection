@@ -31,6 +31,7 @@ CAnalysisDlg::CAnalysisDlg(CWnd* pParent /*=nullptr*/)
 
 CAnalysisDlg::~CAnalysisDlg()
 {
+
 }
 
 void CAnalysisDlg::DoDataExchange(CDataExchange* pDX)
@@ -52,6 +53,9 @@ BEGIN_MESSAGE_MAP(CAnalysisDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_TOOLTIPS, &CAnalysisDlg::OnBnClickedCheckTooltips)
 	ON_BN_CLICKED(IDC_CHECK_PERCENT, &CAnalysisDlg::OnBnClickedCheckPercent)
 	ON_BN_CLICKED(IDC_BUTTON_ANALYSIS_SAVE, &CAnalysisDlg::OnBnClickedButtonAnalysisSave)
+	ON_WM_PAINT()
+	ON_WM_SHOWWINDOW()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 // CAnalysisDlg 消息处理程序
@@ -64,6 +68,8 @@ BOOL CAnalysisDlg::OnInitDialog()
 	hMainWnd = AfxGetMainWnd()->m_hWnd;
 	if (hMainWnd == NULL)
 		return FALSE;
+
+	m_bThreadAlive = false;
 
 	m_strSavePath = "D:\\瑕疵检测数据记录\\3瑕疵柱状图记录\\";
 
@@ -84,6 +90,67 @@ BOOL CAnalysisDlg::OnInitDialog()
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
+
+
+void CAnalysisDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	// TODO: 在此处添加消息处理程序代码
+	m_bThreadAlive = false;
+
+}
+
+
+void CAnalysisDlg::OnPaint()
+{
+	CPaintDC dc(this); // device context for painting
+					   // TODO: 在此处添加消息处理程序代码
+					   // 不为绘图消息调用 CDialogEx::OnPaint()
+
+}
+
+
+void CAnalysisDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialogEx::OnShowWindow(bShow, nStatus);
+
+	// TODO: 在此处添加消息处理程序代码
+
+	// bShow = true 显示， bShow = false 隐藏
+	if (bShow == TRUE) {
+
+		m_pUpdateThread = AfxBeginThread(userUpdateBarChart, this);
+	}
+	else {
+
+		m_bThreadAlive = false;
+	}
+
+}
+
+
+UINT CAnalysisDlg::userUpdateBarChart(LPVOID pParam)
+{
+	CAnalysisDlg *pThis = (CAnalysisDlg *)pParam;
+	pThis->m_bThreadAlive = true;
+
+	CBarChart* pchart = &pThis->m_chart;
+	while (pThis->m_bThreadAlive)
+	{
+		pchart->RemoveAll();
+		pchart->AddBar(pThis->m_dDftNumber1, L"异物", RGB(255, 35, 15));
+		pchart->AddBar(pThis->m_dDftNumber2, L"凹凸点", RGB(25, 255, 35));
+		pchart->AddBar(pThis->m_dDftNumber3, L"气泡点", RGB(35, 55, 225));
+		pchart->AddBar(pThis->m_dDftNumber4, L"涂布", RGB(255, 255, 0));
+		pchart->Refresh();
+
+		Sleep(2373);
+	}
+
+	return 0;
+}
+
 
 void CAnalysisDlg::OnSize(UINT nType, int cx, int cy)
 {
@@ -108,10 +175,13 @@ void CAnalysisDlg::OnSize(UINT nType, int cx, int cy)
 void CAnalysisDlg::CreateCustomBarChart()
 {
 	CWnd *pwnd = GetDlgItem(IDC_STATIC_BARCHART);
-	CRect rcClient;
-	pwnd->GetClientRect(&rcClient);
+	CRect rect;
+	pwnd->GetClientRect(&rect);
+	//CRect rect;
+	//pwnd->GetWindowRect(&rect);
+	//ScreenToClient(&rect);
 
-	if (!m_chart.Create(CRect(10, 10, rcClient.Width() - 10, rcClient.Height() - 20), this, 0)){
+	if (!m_chart.Create(CRect(10, 10, rect.Width() - 10, rect.Height() - 20), this, 0)){
 		if (!m_chart.GetSafeHwnd())	{
 			CString cstr = L"无法创建柱状图";
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -132,21 +202,18 @@ void CAnalysisDlg::CreateCustomBarChart()
 	m_chart.AddBar(m_dDftNumber4, L"涂布", RGB(255, 255, 0));
 }
 
-void CAnalysisDlg::ClearAll()
-{
-	m_chart.RemoveAll();
-}
-
 void CAnalysisDlg::UpdateChartValue()
 {
-	ClearAll();
-
 	CWnd *pwnd = GetDlgItem(IDC_STATIC_BARCHART);
-	CRect rcClient;
-	pwnd->GetClientRect(&rcClient);
+	CRect rect;
+	pwnd->GetClientRect(&rect);
+
+	//CRect rect;
+	//pwnd->GetWindowRect(&rect);
+	//ScreenToClient(&rect);
 
 	if (!m_chart.GetSafeHwnd()){
-		m_chart.Create(CRect(10, 10, rcClient.Width() - 10, rcClient.Height() - 20), this, 0);
+		m_chart.Create(CRect(10, 10, rect.Width() - 10, rect.Height() - 20), this, 0);
 	}
 	else{
 		m_chart.Reset();
@@ -166,11 +233,20 @@ void CAnalysisDlg::UpdateChartValue()
 void CAnalysisDlg::OnBnClickedButtonReset()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	//m_dDftNumber1 = 55.0;
-	UpdateChartValue();
+	
+	//m_dDftNumber1 = 23.0;
+	//m_dDftNumber2 = 43.0;
+	//m_dDftNumber3 = 3.0;
+	//m_dDftNumber4 = 54.0;
 
-	//CString cstr = L"重置分析结果";
-	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	m_chart.RemoveAll();
+	m_chart.AddBar(m_dDftNumber1, L"异物", RGB(255, 35, 15));
+	m_chart.AddBar(m_dDftNumber2, L"凹凸点", RGB(25, 255, 35));
+	m_chart.AddBar(m_dDftNumber3, L"气泡点", RGB(35, 55, 225));
+	m_chart.AddBar(m_dDftNumber4, L"涂布", RGB(255, 255, 0));
+	m_chart.Refresh();
+
+
 }
 
 // 保存
@@ -301,4 +377,5 @@ void CAnalysisDlg::OnBnClickedCheckPercent()
 	m_chart.Refresh();
 
 }
+
 

@@ -774,20 +774,15 @@ void CDeVisionDlg::DelQueueFromSource()
 	}
 	LeaveCriticalSection(&m_csListDftDisplay);
 
-	//m_fTotalDeffectsLength = m_nTotalDeffects * 0.01f;
 	m_inspectDlg.UpdateDFTinformation(m_nTotalDeffects, m_nSeriousDeffects
 		, m_rank[0], m_rank[1], m_rank[2], m_rank[3]);
+
 	// 柱状图页面
 	m_analysisDlg.m_dDftNumber1 = (double)m_rank[0];
 	m_analysisDlg.m_dDftNumber2 = (double)m_rank[1];
 	m_analysisDlg.m_dDftNumber3 = (double)m_rank[2];
 	m_analysisDlg.m_dDftNumber4 = (double)m_rank[3];
-	if(m_CurSelTab == 1)
-		m_analysisDlg.UpdateChartValue();
 
-	// ......
-	if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
-		PostMessage(WM_UPDATE_HISTORY, 0, 0);
 }
 
 //划分当前薄膜的等级
@@ -913,6 +908,7 @@ void CDeVisionDlg::DrawPartial(int test)
 	MemBitmap.DeleteObject();
 	m_partical_picture.ReleaseDC(p_screenDC);
 }
+
 
 void CDeVisionDlg::InitialScaleFlag()
 {
@@ -1445,7 +1441,7 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 	::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
 	for (;;) {
-		//获取瑕疵信息数据
+		//获取瑕疵信息数据,由ImgProc至当前类
 		pDlg->DelQueueFromSource();
 
 		// 切卷
@@ -1454,7 +1450,7 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		}
 
 		//设置为 2s 刷新
-		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2000);
+		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2313);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
@@ -1464,9 +1460,6 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
 				pDlg->DrawPartial(5);
 				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_wnd1_range);
-				//pDlg->m_inspectDlg.UpdateDFTinformation(pDlg->total_number_def,
-				//	pDlg->serious_def_num,
-				//	pDlg->total_def_length);
 				//更新系统状态信息
 				pDlg->m_tableDlg.m_iSystemState = pDlg->m_system_state;
 				CString cwidth;
@@ -2113,8 +2106,8 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 
 		//m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
 		m_tableDlg.m_open_inprogram.EnableWindow(false);
-		m_historyDlg.m_btn_pre_page.EnableWindow(false);
-		m_historyDlg.m_btn_next_page.EnableWindow(false);
+		//m_historyDlg.m_btn_pre_page.EnableWindow(false);
+		//m_historyDlg.m_btn_next_page.EnableWindow(false);
 
 		m_ImgAcq.m_bSystemPause = FALSE;
 		if (m_nConnectedCameras > 0) {
@@ -2140,8 +2133,8 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
 		//m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
-		m_historyDlg.m_btn_pre_page.EnableWindow(true);
-		m_historyDlg.m_btn_next_page.EnableWindow(true);
+		//m_historyDlg.m_btn_pre_page.EnableWindow(true);
+		//m_historyDlg.m_btn_next_page.EnableWindow(true);
 
 		m_ImgAcq.m_bSystemPause = TRUE;
 		if (m_nConnectedCameras > 0) {
@@ -2201,7 +2194,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 //历史图像更新
 afx_msg LRESULT CDeVisionDlg::OnUpdateHistory(WPARAM wParam, LPARAM lParam)
 {
-	m_historyDlg.LoadHistoryImage();
+	//m_historyDlg.LoadHistoryImage();
 
 	return 0;
 }

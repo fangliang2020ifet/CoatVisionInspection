@@ -37,6 +37,7 @@ public:
 	int m_DFT_rank[5];                         //每种瑕疵类型的个数统计
 	int m_serious_num;                         //D级缺陷数目
 
+
 	void RefrushDistributeWnd();
 	void GetDetectResult(int rank0, int rank1, int rank2, int rank3, int rank4);
 	void DrawTable(CDC *mDC, CRect rect, float x, float y);
@@ -55,8 +56,8 @@ public:
 	void BeginSaveTable();
 
 	CFont m_font;
-	std::vector<DeffectInfo> *m_pvDFT;
-	std::vector<DeffectInfo> m_vecDFT;
+	std::vector<DeffectInfo> *m_pvDFT;         //  用于显示分布图
+	std::vector<DeffectInfo> m_vecDFT;         //  用于写入报表
 	float m_current_position;
 	float scale_x;
 	float scale_y;
@@ -74,6 +75,12 @@ private:
 
 	int m_selected_x = 0;
 	int m_selected_y = 0;
+	CDC m_memTablePaintDC;                             //  内存DC
+	CRect m_rectTableControl;
+	CWinThread *m_pDrawTableThread;
+	bool m_bTableThreadAlive;
+	static UINT userDrawTable(LPVOID pParam);
+
 
 	std::wstring m_wstr_savetime;                        //保存时间
 	CWinThread *m_SaveTable;
@@ -119,4 +126,7 @@ public:
 	afx_msg void OnBnClickedButtonOpenexcelpath();
 	afx_msg void OnDestroy();
 	afx_msg void OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 };

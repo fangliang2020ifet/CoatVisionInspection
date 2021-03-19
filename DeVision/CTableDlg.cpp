@@ -15,10 +15,14 @@
 #include <io.h>
 #include <fstream>
 
-
 using namespace ATL;
 
 // CTableDlg 对话框
+
+
+// 全局变量
+
+
 
 IMPLEMENT_DYNAMIC(CTableDlg, CDialogEx)
 
@@ -28,6 +32,11 @@ CTableDlg::CTableDlg(CWnd* pParent /*=nullptr*/)
 	m_pvDFT = NULL;
 	InitializeCriticalSection(&m_csvec);
 
+	m_bTableThreadAlive = false;
+	//CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
+	////pwnd->GetClientRect(&rect);
+	//pwnd->GetWindowRect(&m_rectTableControl);    //获取控件的屏幕坐标
+	//ScreenToClient(&m_rectTableControl);         //转换为对话框上的客户坐标
 
 	//初始化画笔
 	m_pen[0].CreatePen(PS_SOLID, 3, RGB(0, 0, 0));           //黑色实线，1像素宽---参数：样式、宽度、颜色
@@ -72,6 +81,9 @@ BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_OPENEXCELPATH, &CTableDlg::OnBnClickedButtonOpenexcelpath)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_DETAIL, &CTableDlg::OnNMDblclkListDetail)
+	ON_WM_SHOWWINDOW()
+	ON_WM_SIZE()
+	ON_WM_SIZING()
 END_MESSAGE_MAP()
 
 
@@ -124,18 +136,27 @@ void CTableDlg::OnDestroy()
 
 	// TODO: 在此处添加消息处理程序代码
 	m_vecDFT.clear();
+	m_bTableThreadAlive = false;
+
 }
+
 
 void CTableDlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 					   // TODO: 在此处添加消息处理程序代码
 					   // 不为绘图消息调用 CDialogEx::OnPaint()
-	CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
-	CBrush brush(red_color);
 
-	OnPaintClipboard(pwnd, brush);
+	int x = m_rectTableControl.TopLeft().x;
+	int y = m_rectTableControl.TopLeft().y;
+	int width = m_rectTableControl.Width();
+	int height = m_rectTableControl.Height();
+	//将内存中的图拷贝到屏幕上进行显示
+	dc.BitBlt(x, y, width, height, &m_memTablePaintDC, 0, 0, SRCCOPY);
+
+	//OnPaintClipboard(pwnd, brush);
 }
+
 
 void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 {
@@ -151,12 +172,6 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 		scale_y = wnd_height / m_current_position;
 	else
 		scale_y = 1;
-
-	//dc->SelectObject(&m_font);
-	//FillRect(*dc, &rect, CBrush(RGB(255, 255, 255)));     //填充白色
-	//DrawTable(dc, rect, 1650.0f, 10.0f);
-	//DrawAllFlag(dc, wnd_width, wnd_height);
-	//DrawSelectDFT(dc, m_selected_x, m_selected_y);
 
 	CBrush brush(RGB(255, 255, 255));
 	// 定义一个内存显示设备对象
@@ -191,6 +206,123 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	CDialogEx::OnPaintClipboard(pClipAppWnd, hPaintStruct);
 }
 
+
+void CTableDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	// TODO: 在此处添加消息处理程序代码
+
+		//根据窗口的大小自动调整 Tab页的大小
+	//if (isTabInitialized)
+	//	TabDlgResize();
+
+	//判断窗口是不是最小化了，因为窗口最小化之后 ，窗口的长和宽会变成0，当前一次变化的时就会出现除以0的错误操作
+	if (nType == SIZE_RESTORED || nType == SIZE_MAXIMIZED)
+	{
+		//CWnd *pwnd = GetDlgItem(IDC_STATIC_REPORT);
+		//pwnd->GetWindowRect(&m_rectTableControl);
+		//ScreenToClient(&m_rectTableControl);
+	}
+
+
+}
+
+
+void CTableDlg::OnSizing(UINT fwSide, LPRECT pRect)
+{
+	CDialogEx::OnSizing(fwSide, pRect);
+
+	// TODO: 在此处添加消息处理程序代码
+}
+
+
+void CTableDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialogEx::OnShowWindow(bShow, nStatus);
+
+	// TODO: 在此处添加消息处理程序代码
+	
+	// bShow = true 显示， bShow = false 隐藏
+	if (bShow == TRUE) {
+
+		m_pDrawTableThread = AfxBeginThread(userDrawTable, this);
+	}
+	else {
+
+		m_bTableThreadAlive = false;
+	}
+
+}
+
+
+UINT CTableDlg::userDrawTable(LPVOID pParam)
+{
+	CTableDlg *pThis = (CTableDlg *)pParam;
+	pThis->m_bTableThreadAlive = true;
+	//Sleep(200);     // 等待窗口初始化绘制完成
+
+	CWnd *pwnd = pThis->GetDlgItem(IDC_STATIC_REPORT);
+	CDC* dc = pwnd->GetDC();
+
+	CRect rect;
+	pwnd->GetClientRect(&rect);
+
+	CRect rect2;
+	pwnd->GetWindowRect(&rect2);
+	pThis->ScreenToClient(&rect2);
+	pThis->m_rectTableControl = rect2;
+
+	CBrush redBrush(pThis->red_color);
+	CBrush whiteBrush(RGB(255, 255, 255));
+
+	int wnd_width = rect.Width();
+	int wnd_height = rect.Height();
+
+	CDC* pMemDC = &pThis->m_memTablePaintDC;
+	CBitmap MemBitmap;
+	while (pThis->m_bTableThreadAlive)
+	{
+		// 计算缩放因子
+		pThis->scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
+		if (pThis->m_current_position != 0)
+			pThis->scale_y = wnd_height / pThis->m_current_position;
+		else
+			pThis->scale_y = 1;
+
+
+		MemBitmap.CreateCompatibleBitmap(dc, wnd_width, wnd_height);
+		pMemDC->CreateCompatibleDC(dc);
+		pMemDC->SelectObject(&MemBitmap);
+		pMemDC->SelectObject(&pThis->m_font);
+		pMemDC->FillRect(&rect, &whiteBrush);     //填充白色
+
+		pThis->DrawTable(pMemDC, rect, std::stof(pThis->m_wstr_width), 10.0f);
+		pThis->DrawAllFlag(pMemDC, wnd_width, wnd_height);
+		pThis->DrawSelectDFT(pMemDC, pThis->m_selected_x, pThis->m_selected_y);
+
+		pThis->InvalidateRect(&rect2);
+		pThis->UpdateWindow();          //  发送 WM_PAINT 消息
+
+		//将内存中的图拷贝到屏幕上进行显示
+		//dc->BitBlt(0, 0, wnd_width, wnd_height, pMemDC, 0, 0, SRCCOPY);
+
+		Sleep(500);
+
+		MemBitmap.DeleteObject();
+		pMemDC->DeleteDC();
+
+		//CString cstr = L"瑕疵分布图已刷新";
+		//::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	}
+
+	//绘图完成后的清理
+
+	return 0;
+}
+
+
 BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
@@ -198,6 +330,7 @@ BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 	//return CDialogEx::OnEraseBkgnd(pDC);
 	return TRUE;
 }
+
 
 void CTableDlg::RefrushDistributeWnd()
 {
@@ -219,6 +352,7 @@ void CTableDlg::GetDetectResult(int rank0, int rank1, int rank2, int rank3, int 
 	m_DFT_rank[4] = rank4;
 
 }
+
 
 void CTableDlg::InitialHistoryList()
 {
@@ -242,6 +376,7 @@ void CTableDlg::InitialHistoryList()
 	m_ListCtrlHis.InsertColumn(3, L"长度", LVCFMT_CENTER, 80);
 	m_ListCtrlHis.InsertColumn(4, L"操作员", LVCFMT_CENTER, 80);
 }
+
 
 void CTableDlg::InitialDetailList()
 {
@@ -301,6 +436,7 @@ void CTableDlg::DrawTable(CDC *mDC, CRect rect, float x, float y)
 	}
 }
 
+
 void CTableDlg::CreateFlag(CDC *mDC, int x, int y, int kind)
 {
 	switch (kind)
@@ -352,7 +488,7 @@ void CTableDlg::DrawAllFlag(CDC *mDC, int wnd_width, int wnd_height)
 				int y = (int)(wnd_height - dft.y * scale_y);
 				CreateFlag(mDC, x, y, dft.type);
 
-				AddToDetailList(i + 1, dft.type, dft.y, dft.radius, dft.rank);
+				//AddToDetailList(i + 1, dft.type, dft.y, dft.radius, dft.rank);
 			}
 		}
 	}
@@ -1783,11 +1919,22 @@ void CTableDlg::OnBnClickedBtnRefrush()
 
 	//清除列表
 	m_ListCtrlDetail.DeleteAllItems();
+	if (m_pvDFT == NULL)
+		return;
+	else {
+		if (!m_pvDFT->empty()) {
+			//DefectType dft;
+			DeffectInfo dft;
+			for (int i = 0; i < m_pvDFT->size(); i++) {
+				dft = m_pvDFT->at(i);
+				AddToDetailList(i + 1, dft.type, dft.y, dft.radius, dft.rank);
+			}
+		}
+	}
 
-	Invalidate();
-	UpdateWindow();
+	SaveDistributeImage();
 
-	CString cstr = L"瑕疵分布图已刷新";
+	CString cstr = L"瑕疵分布图已保存";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 }
 
@@ -2063,3 +2210,6 @@ void CTableDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
 	dcBmp.DeleteDC();                      //删除CreateCompatibleDC得到的图片DC  
 
 }
+
+
+

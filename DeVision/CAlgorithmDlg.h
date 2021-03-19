@@ -19,26 +19,33 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+
 	BOOL m_bSave_Parameter = FALSE;          //是否保存
 	int m_normal_distribution = 0;
 	int m_filter_size = 0;
 	float m_min_radius = 0.0f;
 	float m_max_radius = 0.0f;
 
-
 	int m_nRankMethod;
 	float m_fRankValue1;
 	float m_fRankValue2;
 	float m_fRankValue3;
 
+	LPCWSTR APPNAME = L"Algorithm";
+	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
+
+
+private:
+	void loadInitialParameters();
+	void saveParameters();
+
+	float GetSelectAreaValueMin();
+	float GetSelectAreaValueMax();
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	DECLARE_MESSAGE_MAP()
-
-private:
-	float GetSelectAreaValueMin();
-	float GetSelectAreaValueMax();
 
 public:
 	virtual BOOL OnInitDialog();

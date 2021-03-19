@@ -38,7 +38,6 @@ public:
 	double m_dDftNumber3;
 	double m_dDftNumber4;
 
-	void ClearAll();
 	void UpdateChartValue();
 
 protected:
@@ -51,6 +50,12 @@ protected:
 
 
 private:
+
+	CWinThread *m_pUpdateThread;
+	bool m_bThreadAlive;
+	static UINT userUpdateBarChart(LPVOID pParam);
+
+
 	//COpenGLControl m_oglWindow;
 	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
 	bool SaveBitmapToFile(HBITMAP hBitmap, const char* name);
@@ -65,4 +70,7 @@ private:
 	afx_msg void OnBnClickedCheckPercent();
 public:
 	afx_msg void OnBnClickedButtonAnalysisSave();
+	afx_msg void OnPaint();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnDestroy();
 };

@@ -45,11 +45,20 @@ protected:
 	CWnd *pwnd9;
 
 private:
+	std::vector<std::string> m_vImage_name;
+	bool m_bPagging;
+
+	CWinThread *m_pRefrushThread;
+	bool m_bThreadAlive;
+	static UINT autoRefrush(LPVOID pParam);
+
+
 	void RefrushImgWnd(std::string path, std::vector<std::string> vstring);
+	void RefrushHistoryWnd(int page_index);
 	void ReadDFTInfo(std::string name, std::string &kind, std::string &position, std::string &radius, std::string &area);
 	void ShowBitmap(CWnd *pWnd, CString BmpName);
+	void ShowBitmap(CWnd *pWnd, const char* BmpName);
 
-	std::vector<std::string> m_vImage_name;
 
 public:
 	afx_msg void OnBnClickedButtonPrePage();
@@ -69,4 +78,6 @@ public:
 	CButton m_btn_next_page;
 	afx_msg void OnPaint();
 	afx_msg void OnBnClickedButtonOpenhistorypath();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
