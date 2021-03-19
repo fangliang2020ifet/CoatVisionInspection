@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "DeVision.h"
+#include "DeVisionDlg.h"
 #include "CInspectDlg.h"
 #include "afxdialogex.h"
 
@@ -13,7 +14,13 @@ IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_INSPECT, pParent)
 {
-	for (int i = 0; i < 8; i++) { m_bDeffectDisplay[i] = TRUE; }
+	m_bSystemRunning = false;
+	m_bTableSaving = false;
+
+	for (int i = 0; i < 4; i++) { m_bDeffectDisplay[i] = TRUE; }
+
+	m_hChangeIcon = AfxGetApp()->LoadIcon(IDI_ICON_CHANGE);
+	m_hChangeXIcon = AfxGetApp()->LoadIcon(IDI_ICON_CHANGEX);
 
 }
 
@@ -32,11 +39,11 @@ void CInspectDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CAMERA_IMAGE4, m_ImageWnd[3]);
 	DDX_Control(pDX, IDC_LIST_RECORD, m_listLog);
 	DDX_Control(pDX, IDC_LIST_WARNNING, m_listWarning);
-	DDX_Control(pDX, IDC_BUTTON_CHANGEINFO, m_btn_changeinfo);
-	DDX_Control(pDX, IDC_EDIT_PRODUCT_NUMBER, m_eNumber);
-	DDX_Control(pDX, IDC_EDIT_PRODUCT_WIDTH, m_eWidth);
-	DDX_Control(pDX, IDC_EDIT_PRODUCT_MODEL, m_eModel);
-	DDX_Control(pDX, IDC_EDIT_OPERATOR, m_eOperator);
+	DDX_Control(pDX, IDC_BUTTON_CHANGEINFO, m_btnSwitchRoll);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_NUMBER, m_eBatch);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_WIDTH, m_eName);
+	DDX_Control(pDX, IDC_EDIT_PRODUCT_MODEL, m_eSchedule);
+	DDX_Control(pDX, IDC_EDIT_OPERATOR, m_eAddition);
 }
 
 
@@ -44,23 +51,16 @@ BEGIN_MESSAGE_MAP(CInspectDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_CTLCOLOR()
 	ON_WM_SIZE()
+	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON_CHANGEINFO, &CInspectDlg::OnBnClickedButtonInfoChange)
 	ON_BN_CLICKED(IDC_CHECK1, &CInspectDlg::OnBnClickedCheck1)
 	ON_BN_CLICKED(IDC_CHECK2, &CInspectDlg::OnBnClickedCheck2)
 	ON_BN_CLICKED(IDC_CHECK3, &CInspectDlg::OnBnClickedCheck3)
 	ON_BN_CLICKED(IDC_CHECK4, &CInspectDlg::OnBnClickedCheck4)
-	ON_BN_CLICKED(IDC_CHECK5, &CInspectDlg::OnBnClickedCheck5)
-	ON_BN_CLICKED(IDC_CHECK6, &CInspectDlg::OnBnClickedCheck6)
-	ON_BN_CLICKED(IDC_CHECK7, &CInspectDlg::OnBnClickedCheck7)
-	ON_BN_CLICKED(IDC_CHECK8, &CInspectDlg::OnBnClickedCheck8)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON1, &CInspectDlg::OnBnClickedMfccolorbutton1)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON2, &CInspectDlg::OnBnClickedMfccolorbutton2)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON3, &CInspectDlg::OnBnClickedMfccolorbutton3)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON4, &CInspectDlg::OnBnClickedMfccolorbutton4)
-	ON_BN_CLICKED(IDC_MFCCOLORBUTTON5, &CInspectDlg::OnBnClickedMfccolorbutton5)
-	ON_BN_CLICKED(IDC_MFCCOLORBUTTON6, &CInspectDlg::OnBnClickedMfccolorbutton6)
-	ON_BN_CLICKED(IDC_MFCCOLORBUTTON7, &CInspectDlg::OnBnClickedMfccolorbutton7)
-	ON_BN_CLICKED(IDC_MFCCOLORBUTTON8, &CInspectDlg::OnBnClickedMfccolorbutton8)
 END_MESSAGE_MAP()
 
 
@@ -75,9 +75,20 @@ BOOL CInspectDlg::OnInitDialog()
 		return FALSE;
 
 	m_font.CreatePointFont(200, _T("Times New Roman"));
-	GetDlgItem(IDC_STATIC_TOTAL_DFT_NUM)->SetWindowPos(0, 580, 25, 100, 30, SWP_SHOWWINDOW);
-	GetDlgItem(IDC_STATIC_GREAT_DFT_NUM)->SetWindowPos(0, 580, 70, 100, 30, SWP_SHOWWINDOW);
-	GetDlgItem(IDC_STATIC_DFT_LONGTH)->SetWindowPos(0, 580, 110, 100, 30, SWP_SHOWWINDOW);
+	GetDlgItem(IDC_STATIC_TOTAL_DFT_NUM)->SetWindowPos(0, 580, 40, 100, 30, SWP_SHOWWINDOW);
+	GetDlgItem(IDC_STATIC_GREAT_DFT_NUM)->SetWindowPos(0, 580, 100, 100, 30, SWP_SHOWWINDOW);
+
+	CString ctime = GetTimeStamp();
+	m_nBatchIndex = 1;
+	m_cstrBatch = ctime + L"_KA_0001";
+	m_cstrName = L"PET-1";
+	m_cstrSchedule = L"早班";
+	m_cstrAddition = L"";
+	SetBatchInfoControlItem();
+
+	m_btnSwitchRoll.SetIcon(m_hChangeIcon);
+	m_btnSwitchRoll.SetFont(&m_font);
+	m_btnSwitchRoll.SetWindowTextW(L"切卷");
 
 	CButton *pcheck =(CButton*)GetDlgItem(IDC_CHECK1);
 	pcheck->SetCheck(TRUE);
@@ -86,14 +97,6 @@ BOOL CInspectDlg::OnInitDialog()
 	pcheck = (CButton*)GetDlgItem(IDC_CHECK3);
 	pcheck->SetCheck(TRUE);
 	pcheck = (CButton*)GetDlgItem(IDC_CHECK4);
-	pcheck->SetCheck(TRUE);
-	pcheck = (CButton*)GetDlgItem(IDC_CHECK5);
-	pcheck->SetCheck(TRUE);
-	pcheck = (CButton*)GetDlgItem(IDC_CHECK6);
-	pcheck->SetCheck(TRUE);
-	pcheck = (CButton*)GetDlgItem(IDC_CHECK7);
-	pcheck->SetCheck(TRUE);
-	pcheck = (CButton*)GetDlgItem(IDC_CHECK8);
 	pcheck->SetCheck(TRUE);
 
 	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON1);
@@ -108,18 +111,7 @@ BOOL CInspectDlg::OnInitDialog()
 	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON4);
 	pcolorbtn->SetColor(RGB(255, 255, 0));
 	m_color4 = pcolorbtn->GetColor();
-	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON5);
-	pcolorbtn->SetColor(RGB(55, 35, 55));
-	m_color5 = pcolorbtn->GetColor();
-	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON6);
-	pcolorbtn->SetColor(RGB(255, 255, 255));
-	m_color6 = pcolorbtn->GetColor();
-	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON7);
-	pcolorbtn->SetColor(RGB(155, 35, 155));
-	m_color7 = pcolorbtn->GetColor();
-	pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
-	pcolorbtn->SetColor(RGB(155, 155, 85));
-	m_color8 = pcolorbtn->GetColor();
+	   	 
 
 	m_listLog.SetHorizontalExtent(1000);
 	CString clog = L"***********************操作记录***********************";
@@ -157,7 +149,22 @@ HBRUSH CInspectDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetTextColor(RGB(185, 55, 0)); //文字颜色  
 		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
 	}
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_DFT_LONGTH){
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_MATTER){
+		pDC->SetBkMode(TRANSPARENT);//设置背景透明
+		pDC->SetTextColor(RGB(155, 0, 128)); //文字颜色  
+		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
+	}
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_CONVEX) {
+		pDC->SetBkMode(TRANSPARENT);//设置背景透明
+		pDC->SetTextColor(RGB(155, 0, 128)); //文字颜色  
+		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
+	}
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_BUBBLE) {
+		pDC->SetBkMode(TRANSPARENT);//设置背景透明
+		pDC->SetTextColor(RGB(155, 0, 128)); //文字颜色  
+		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
+	}
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_COATTING) {
 		pDC->SetBkMode(TRANSPARENT);//设置背景透明
 		pDC->SetTextColor(RGB(155, 0, 128)); //文字颜色  
 		//pDC->SetBkColor(RGB(251, 247, 200));//背景色
@@ -188,7 +195,23 @@ void CInspectDlg::OnSize(UINT nType, int cx, int cy)
 	}
 }
 
-void CInspectDlg::UpdateDFTinformation(size_t total_num,int great_dft_num, float longth)
+//定时器
+void CInspectDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (nIDEvent == 1) {
+		// 前一个报表保存后才刷新控件内容
+		if (!m_bTableSaving){
+			SetBatchInfoControlItem();
+			KillTimer(1);
+		}
+	}
+
+	__super::OnTimer(nIDEvent);
+}
+
+
+void CInspectDlg::UpdateDFTinformation(size_t total_num, int great_dft_num, int num1, int num2, int num3, int num4)
 {
 	CString csttotal_dft_num;
 	csttotal_dft_num.Format(L"%d 个", total_num);
@@ -205,10 +228,22 @@ void CInspectDlg::UpdateDFTinformation(size_t total_num,int great_dft_num, float
 	GetDlgItem(IDC_STATIC_GREAT_DFT_NUM)->SetFont(&m_font);
 
 
-	CString cstlongth;
-	cstlongth.Format(L"%.2f 米", longth);
-	GetDlgItem(IDC_STATIC_DFT_LONGTH)->SetWindowText(cstlongth);
-	GetDlgItem(IDC_STATIC_DFT_LONGTH)->SetFont(&m_font);
+	CString cstnum;
+	cstnum.Format(L"%d 个", num1);
+	GetDlgItem(IDC_STATIC_MATTER)->SetWindowText(cstnum);
+	GetDlgItem(IDC_STATIC_MATTER)->SetFont(&m_font);
+
+	cstnum.Format(L"%d 个", num2);
+	GetDlgItem(IDC_STATIC_CONVEX)->SetWindowText(cstnum);
+	GetDlgItem(IDC_STATIC_CONVEX)->SetFont(&m_font);
+
+	cstnum.Format(L"%d 个", num3);
+	GetDlgItem(IDC_STATIC_BUBBLE)->SetWindowText(cstnum);
+	GetDlgItem(IDC_STATIC_BUBBLE)->SetFont(&m_font);
+
+	cstnum.Format(L"%d 个", num4);
+	GetDlgItem(IDC_STATIC_COATTING)->SetWindowText(cstnum);
+	GetDlgItem(IDC_STATIC_COATTING)->SetFont(&m_font);
 
 }
 
@@ -269,17 +304,48 @@ void CInspectDlg::RecordLogList(int test, CString cstr)
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
-//修改产品信息
+// 切卷
 void CInspectDlg::OnBnClickedButtonInfoChange()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	//if (AfxMessageBox(_T("确定切卷？"), MB_YESNO | MB_ICONWARNING) == IDNO)
+	//	return;
+
+	//    210316_123649_KA_0004   截取批号
+	CString cbatch;
+	m_eBatch.GetWindowTextW(cbatch);
+	std::string strbatch = (CW2A)cbatch.GetBuffer();
+	auto pos1 = strbatch.find_first_of("_");
+	std::string substrbatch = strbatch.substr(pos1 + 8);
+	auto pos2 = substrbatch.find_first_of("_");
+	std::string substrcode = substrbatch.substr(0, pos2);
+	//std::string substrindex = substrbatch.substr(pos2 + 1);
+	//int n_batch_index = std::stoi(substrindex);
+
 	CProductInfo productinfo;
+	// 显示下一卷的卷号信息, 序号自动递增
+	productinfo.m_nBatchIndex = m_nBatchIndex + 1;
+	productinfo.m_cstrBatchCode = substrcode.c_str();
+	productinfo.m_cstrName = m_cstrName;
+	productinfo.m_cstrSchedule = m_cstrSchedule;
+	productinfo.m_cstrAddition = m_cstrAddition;
 	productinfo.DoModal();
 	if (productinfo.m_bSave_Parameter) {
-		m_eNumber.SetWindowTextW(productinfo.m_ctrNUMBER);
-		m_eWidth.SetWindowTextW(productinfo.m_ctrWIDTH);
-		m_eModel.SetWindowTextW(productinfo.m_ctrID);
-		m_eOperator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+		m_cstrBatch = productinfo.m_cstrBatch;
+		m_nBatchIndex = productinfo.m_nBatchIndex;
+		m_cstrName = productinfo.m_cstrName;
+		m_cstrSchedule = productinfo.m_cstrSchedule;
+		m_cstrAddition = productinfo.m_cstrAddition;
+
+		if (m_bSystemRunning) {
+			m_bTableSaving = true;
+			//::SendMessage(hMainWnd, WM_SWITCHROLL, 0, 0);
+			::SendNotifyMessageW(hMainWnd, WM_SWITCHROLL, 0, 0);
+			SetTimer(1, 200, NULL);
+		}
+		else {
+			SetBatchInfoControlItem();
+		}
 	}
 }
 
@@ -350,74 +416,6 @@ void CInspectDlg::OnBnClickedCheck4()
 	}
 }
 
-
-void CInspectDlg::OnBnClickedCheck5()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CButton * check = (CButton*)GetDlgItem(IDC_CHECK5);
-	if (check->GetCheck()) {
-		m_bDeffectDisplay[4] = TRUE;
-		CString cstr = L"5_1";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-	else {
-		m_bDeffectDisplay[4] = FALSE;
-		CString cstr = L"5_0";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-}
-
-
-void CInspectDlg::OnBnClickedCheck6()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CButton * check = (CButton*)GetDlgItem(IDC_CHECK6);
-	if (check->GetCheck()) {
-		m_bDeffectDisplay[5] = TRUE;
-		CString cstr = L"6_1";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-	else {
-		m_bDeffectDisplay[5] = FALSE;
-		CString cstr = L"6_0";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-}
-
-
-void CInspectDlg::OnBnClickedCheck7()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CButton * check = (CButton*)GetDlgItem(IDC_CHECK7);
-	if (check->GetCheck()) {
-		m_bDeffectDisplay[6] = TRUE;
-		CString cstr = L"7_1";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-	else {
-		m_bDeffectDisplay[6] = FALSE;
-		CString cstr = L"7_0";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-}
-
-
-void CInspectDlg::OnBnClickedCheck8()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CButton * check = (CButton*)GetDlgItem(IDC_CHECK8);
-	if (check->GetCheck()) {
-		m_bDeffectDisplay[7] = TRUE;
-		CString cstr = L"8_1";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-	else {
-		m_bDeffectDisplay[7] = FALSE;
-		CString cstr = L"8_0";
-		::SendNotifyMessageW(hMainWnd, WM_UPDATE_MAINWND, (WPARAM)&cstr, 0);
-	}
-}
-
 //修改颜色
 void CInspectDlg::OnBnClickedMfccolorbutton1()
 {
@@ -455,38 +453,59 @@ void CInspectDlg::OnBnClickedMfccolorbutton4()
 	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
 }
 
-void CInspectDlg::OnBnClickedMfccolorbutton5()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON5);
-	m_color5 = pcolorbtn->GetColor();
 
-	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
+CString CInspectDlg::GetTimeStamp()
+{
+	//获取日期
+	std::wstringstream date;
+	SYSTEMTIME sysTime;
+	::GetLocalTime(&sysTime);
+	date << sysTime.wYear << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wMonth << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wDay << L"_" << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wHour << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wMinute << std::setw(2) << std::setfill(L'0')
+		<< sysTime.wSecond;
+	const std::wstring wdate = date.str();
+	const wchar_t* wname = wdate.c_str();
+	_bstr_t name(wname);
+	std::string str_time = name;
+	std::string str_subtime = str_time.substr(2);
+	CString time = (CA2W)str_subtime.c_str();
+
+	return time;
 }
 
-void CInspectDlg::OnBnClickedMfccolorbutton6()
+//  重新开始前需要刷新 control information
+void CInspectDlg::ResetBatchInformation()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON6);
-	m_color6 = pcolorbtn->GetColor();
+	CString ctime = GetTimeStamp();
+	CString cindex;
+	cindex.Format(_T("%.4d"), m_nBatchIndex);
 
-	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
+	std::string strbatch = (CW2A)m_cstrBatch.GetBuffer();
+	auto pos1 = strbatch.find_first_of("_");
+	std::string substrbatch = strbatch.substr(pos1 + 8);
+	auto pos2 = substrbatch.find_first_of("_");
+	std::string substrcode = substrbatch.substr(0, pos2);
+	CString ccode = (CA2W)substrcode.c_str();
+
+	m_cstrBatch = ctime + L"_" + ccode + L"_" + cindex;
+
+	SetBatchInfoControlItem();
+
+	UpdateData(false);
+	return;
 }
 
-void CInspectDlg::OnBnClickedMfccolorbutton7()
+
+void CInspectDlg::SetBatchInfoControlItem()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON7);
-	m_color7 = pcolorbtn->GetColor();
+	//等待报表保存完成，修改卷信息的显示
+	m_eBatch.SetWindowTextW(m_cstrBatch);
+	m_eName.SetWindowTextW(m_cstrName);
+	m_eSchedule.SetWindowTextW(m_cstrSchedule);
+	m_eAddition.SetWindowTextW(m_cstrAddition);
 
-	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
-}
-
-void CInspectDlg::OnBnClickedMfccolorbutton8()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CMFCColorButton *pcolorbtn = (CMFCColorButton*)GetDlgItem(IDC_MFCCOLORBUTTON8);
-	m_color8 = pcolorbtn->GetColor();
-
-	::SendNotifyMessageW(hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
+	UpdateData(false);
 }

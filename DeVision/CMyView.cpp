@@ -11,13 +11,12 @@ IMPLEMENT_DYNCREATE(CMyView, CScrollView)
 
 CMyView::CMyView()
 {
-	//m_acolor[0] = RGB(255, 35, 15);
-	//m_acolor[1] = RGB(25, 255, 35);
-	//m_acolor[2] = RGB(35, 55, 225);
-	//m_acolor[3] = RGB(255, 255, 0);
-	//m_acolor[4] = RGB(225, 35, 225);
+	m_acolor[0] = RGB(255, 35, 15);
+	m_acolor[1] = RGB(25, 255, 35);
+	m_acolor[2] = RGB(35, 55, 225);
+	m_acolor[3] = RGB(255, 255, 0);
 
-	for (INT i = 0; i < 8; i++) {m_bFlagShow[i] = true;}
+	for (INT i = 0; i < 4; i++) {m_bFlagShow[i] = true;}
 
 }
 
@@ -166,13 +165,6 @@ void CMyView::CreateFlag(CDC &mDC, int x, int y, int kind)
 		}
 		break;
 	}
-	case 4: {
-		if (m_bFlagShow[4]) {
-			mDC.SetBkColor(m_acolor[4]);
-			mDC.TextOutW(x, y, _T("E"));
-		}
-		break;
-	}
 	default: {
 		mDC.SetBkColor(RGB(0, 0, 0));
 		break;
@@ -207,5 +199,4 @@ void CMyView::Redraw()
 	m_display_range = 0.0f;
 	m_previous_position = 0.0f;
 	m_pvecDFT->clear();
-
 }

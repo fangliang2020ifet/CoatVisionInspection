@@ -19,24 +19,35 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+
 	BOOL m_bSave_Parameter = FALSE;          //是否保存
 	int m_normal_distribution = 0;
 	int m_filter_size = 0;
 	float m_min_radius = 0.0f;
 	float m_max_radius = 0.0f;
 
+	int m_nRankMethod;
+	float m_fRankValue1;
+	float m_fRankValue2;
+	float m_fRankValue3;
+
+	LPCWSTR APPNAME = L"Algorithm";
+	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
+
+
+private:
+	void loadInitialParameters();
+	void saveParameters();
+
+	float GetSelectAreaValueMin();
+	float GetSelectAreaValueMax();
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	DECLARE_MESSAGE_MAP()
 
-private:
-	float GetSelectAreaValueMin();
-	float GetSelectAreaValueMax();
-
 public:
-
-
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	virtual void OnOK();
@@ -45,4 +56,16 @@ public:
 	CComboBox m_combo_select_threshold;
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonReset();
+	afx_msg void OnBnClickedRadioArea();
+	afx_msg void OnBnClickedRadioRadius();
+	afx_msg void OnBnClickedRadioContlength();
+	afx_msg void OnEnKillfocusEditAreaValue1();
+	afx_msg void OnEnKillfocusEditAreaValue2();
+	afx_msg void OnEnKillfocusEditAreaValue3();
+	afx_msg void OnEnKillfocusEditRadiusValue1();
+	afx_msg void OnEnKillfocusEditRadiusValue2();
+	afx_msg void OnEnKillfocusEditRadiusValue3();
+	afx_msg void OnEnKillfocusEditContValue1();
+	afx_msg void OnEnKillfocusEditContValue2();
+	afx_msg void OnEnKillfocusEditContValue3();
 };

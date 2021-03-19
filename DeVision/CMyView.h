@@ -34,8 +34,8 @@ public:
 
 	//std::vector<DefectType> m_vDefect;
 	std::vector<DeffectInfo> *m_pvecDFT;
-	COLORREF m_acolor[5];
-	bool m_bFlagShow[8];
+	COLORREF m_acolor[4];
+	bool m_bFlagShow[4];
 
 private:
 	float scale_x = 0.0f;

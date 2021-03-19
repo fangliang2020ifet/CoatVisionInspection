@@ -165,13 +165,13 @@
     <ClInclude Include="ImportHalconCpp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="COpenGLControl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="CAcquireImage.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CImageProcessing.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BarChart.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -245,13 +245,13 @@
     <ClCompile Include="CRemote.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="COpenGLControl.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="CAcquireImage.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CImageProcessing.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BarChart.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -334,6 +334,18 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\bitmap3.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\camera_in.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\camera_out.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\change.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\changeX.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

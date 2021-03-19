@@ -5,6 +5,10 @@
 #include "CAcquireImage.h"
 
 
+
+#define CAMERA_LINK_SERVER_NAME_PREFIX "CameraLink_"
+
+
 CAcquireImage::CAcquireImage()
 {
 	m_bSystemPause = FALSE;
@@ -21,6 +25,17 @@ CAcquireImage::CAcquireImage()
 	}
 	m_pWndHandle = NULL;
 
+	if (FREE_RUN) {
+		char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun.ccf";
+		m_ccfFileName = new char[MAX_PATH]();
+		memcpy(m_ccfFileName, Filename, sizeof(Filename));
+	}
+	else {
+		char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External.ccf";
+		m_ccfFileName = new char[MAX_PATH]();
+		memcpy(m_ccfFileName, Filename, sizeof(Filename));
+	}
+
 }
 
 
@@ -32,7 +47,7 @@ CAcquireImage::CAcquireImage(const CAcquireImage &acq)
 
 CAcquireImage::~CAcquireImage()
 {
-	for (int index = 0; index < (int)m_vAcquireServerName.size(); index++) {
+	for (int index = 0; index < m_nCameraNum; index++) {
 		if (m_Xfer[index] && *m_Xfer[index]) m_Xfer[index]->Destroy();
 		if (m_View[index] && *m_View[index]) m_View[index]->Destroy();
 		if (m_Buffer[index] && *m_Buffer[index]) m_Buffer[index]->Destroy();
@@ -47,6 +62,8 @@ CAcquireImage::~CAcquireImage()
 		if (m_AcqDevice[index]) delete m_AcqDevice[index];
 		if (m_Acq[index]) delete m_Acq[index];
 	}
+
+	delete m_ccfFileName;
 }
 
 
@@ -59,40 +76,6 @@ BOOL CAcquireImage::InitialThisClass()
 	return TRUE;
 }
 
-//自动搜索采集设备
-int CAcquireImage::ScanAcqDevice()
-{
-	//for (int i = 0; i < GetServerCount(); i++) {
-	//	char name[128];
-	//	GetServerName(i, name, sizeof(name));
-	//	int acq_num = GetResourceCount(i, ResourceAcq);
-	//	int acq_dev_num = GetResourceCount(i, ResourceAcqDevice);
-	//	int temp = 0;
-	//
-	//}
-
-	for (int i = 0; i < GetServerCount(); i++){
-		if (GetResourceCount(i, ResourceAcq) > 0 && GetResourceCount(i, ResourceAcqDevice) == 0) {
-			char name[128];
-			if (GetServerName(i, name, sizeof(name))) {
-				if (strstr(name, "Xtium-CL_MX4_") != NULL) {
-					m_vAcquireServerName.push_back(CString(name));
-				}
-			}
-		}
-		if (GetResourceCount(i, ResourceAcq) == 0 && GetResourceCount(i, ResourceAcqDevice) == 1) {
-			char name[128];
-			if (GetServerName(i, name, sizeof(name))) {
-				if (strstr(name, "CameraLink_") != NULL) {
-					m_vAcquireDeviceServerName.push_back(CString(name));
-				}
-			}
-		}
-	}
-
-	return (int)m_vAcquireServerName.size();
-}
-
 //图像采集系统初始化
 BOOL CAcquireImage::CameraSystemInitial()
 {
@@ -101,48 +84,112 @@ BOOL CAcquireImage::CameraSystemInitial()
 	CString cstrlog;
 	int acquire_num = 0;
 	if (!m_camera_system_initialled) {
-		acquire_num = ScanAcqDevice();
-		if (acquire_num == 0) {
-			cstrlog.Format(_T("未发现采集设备，请检查线路和电源连接: %d"), GetLastError());
-			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
-			return FALSE;
-		}
-		else {
-			acquire_num = InitialAcqDevices();
+		std::vector<std::string> vServerName;
+		std::vector<std::string> vDeviceName;
+		if (AutoScanServers(vServerName, vDeviceName)) {
+			acquire_num = InitialAcqServerAndDevice(vServerName, vDeviceName);
 			if (acquire_num == 0) {
 				cstrlog.Format(_T("图像采集系统初始化失败: %d"), GetLastError());
 				::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
 				return FALSE;
 			}
+			else {
+				m_camera_system_initialled = TRUE;
+				cstrlog.Format(_T("图像采集系统初始化成功: 数量 %d"), acquire_num);
+				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+			}
+		}
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+//自动搜索采集设备
+BOOL CAcquireImage::AutoScanServers(std::vector<std::string> &vServerName
+	, std::vector<std::string> &vDeviceName)
+{
+	//////// Ask questions to user to select acquisition board/device and config file ////////
+	CString cstrlog;
+
+	// Get total number of boards in the system
+	int serverCount = SapManager::GetServerCount();
+	if (serverCount == 0){
+		cstrlog.Format(_T("未发现采集设备，请检查相机线路和电源连接: %d"), GetLastError());
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+		return FALSE;
+	}
+
+	// Scan the boards to find those that support acquisition
+	BOOL serverFound = FALSE;
+	BOOL cameraFound = FALSE;
+
+	for (int serverIndex = 0; serverIndex < serverCount; serverIndex++){
+		// ResourceAcq 表示：采集卡的连接
+		if (SapManager::GetResourceCount(serverIndex, SapManager::ResourceAcq) != 0){
+			char serverName[CORSERVER_MAX_STRLEN];
+			SapManager::GetServerName(serverIndex, serverName, sizeof(serverName));
+			vServerName.push_back(std::string(serverName));
+			//printf("%d: %s\n", serverIndex, serverName);
+			serverFound = TRUE;
+			CStringA nameA = serverName;			
+			cstrlog.Format(_T("连接采集卡:"));
+			cstrlog = cstrlog + (CA2W)nameA;
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+		}
+		//ResourceAcqDevice 表示：相机的连接
+		else if (SapManager::GetResourceCount(serverIndex, SapManager::ResourceAcqDevice) != 0){
+			char serverName[CORSERVER_MAX_STRLEN];
+			SapManager::GetServerName(serverIndex, serverName, sizeof(serverName));
+			if (strstr(serverName, CAMERA_LINK_SERVER_NAME_PREFIX) > 0) {
+				vDeviceName.push_back(std::string(serverName));
+				CStringA nameA = serverName;
+				cstrlog.Format(_T("连接相机:"));
+				cstrlog = cstrlog + (CA2W)nameA;
+				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+				continue;
+			}
+			//printf("%d: %s\n", serverIndex, serverName);
+			cameraFound = TRUE;
 		}
 	}
-	m_camera_system_initialled = TRUE;
-	cstrlog.Format(_T("图像采集系统初始化成功: 数量 %d"), acquire_num);
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+
+	// At least one acquisition server must be available
+	if (!serverFound && !cameraFound){
+		cstrlog.Format(_T("无匹配的采集设备: %d"), GetLastError());
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+		return FALSE;
+	}
+
+	// Scan all the acquisition devices on that server and show menu to user
+	// 获取Server支持的Resources，本相机CameraLink Full Mono默认为 AcqDeviceIndex = 0
+
+	// List all files in the config directory
+	// 获取采集卡配置文件，ccf文件
 	return TRUE;
 }
 
 //初始化采集卡
-int CAcquireImage::InitialAcqDevices()
+int CAcquireImage::InitialAcqServerAndDevice(std::vector<std::string> vServerName
+	, std::vector<std::string> vDeviceName)
 {
 	int initial_num = 0;
-	for(int index = 0; index < (int)m_vAcquireServerName.size(); index++){
-		CString cstrAcquireServerName = m_vAcquireServerName.at(index);
-		CString cstrAcquireDeviceServerName = m_vAcquireDeviceServerName.at(index);
+	if (vServerName.empty() || vDeviceName.empty()) {
+		return 0;
+	}
 
-		CString filename;
-		if (!FREE_RUN) filename.Format(L"system\\T_LA_CM_08K08A_00_R_External_Trigger_Board%d.ccf", index + 1);
-		else filename.Format(L"system\\T_LA_CM_08K08A_00_R_FreeRun_%d.ccf", index + 1);		
-
-		SapLocation locAcquireServer((CW2A)cstrAcquireServerName.GetBuffer(), 0);
-		m_Acq[index] = new SapAcquisition(locAcquireServer, (CW2A)filename.GetBuffer());
+	for (int index = 0; index < (int)vServerName.size(); index++) {			   		 
+		// Loc(serverName, ResourceIndex)    resourceIndex = 0
+		SapLocation locServer(vServerName.at(index).c_str(), 0);
+		m_Acq[index] = new SapAcquisition(locServer, m_ccfFileName);
 		m_Buffer[index] = new SapBufferWithTrash(2, m_Acq[index]);
 		m_Xfer[index] = new SapAcqToBuf(m_Acq[index], m_Buffer[index], m_Callback[index], this);
 		m_View[index] = new SapView(m_Buffer[index]);
 
-		SapLocation locAcquireDeviceServer((CW2A)cstrAcquireDeviceServerName.GetBuffer(), 0);
-		m_AcqDevice[index] = new SapAcqDevice(locAcquireDeviceServer, FALSE);
-		m_Feature[index] = new SapFeature(locAcquireDeviceServer);
+		// LocDevice(deviceName, DeviceIndex)  deviceIndex = 0  
+		SapLocation locDevice(vDeviceName.at(index).c_str(), 0);
+		m_AcqDevice[index] = new SapAcqDevice(locDevice, FALSE);
+		m_Feature[index] = new SapFeature(locDevice);
 
 		//  m_ImageWnd 需要和控件绑定
 		m_pImageWnd[index]->AttachSapView(m_View[index]);
@@ -154,16 +201,18 @@ int CAcquireImage::InitialAcqDevices()
 		if (m_View[index] && !*m_View[index]) m_View[index]->Create();
 		if (m_Xfer[index] && !*m_Xfer[index]) m_Xfer[index]->Create();
 
+		//  设置相机参数
 		if (!FREE_RUN) 	m_AcqDevice[index]->SetFeatureValue("TriggerMode", "On");//触发模式打开		
 		else {
 			m_AcqDevice[index]->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
 			m_AcqDevice[index]->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定触发频率
 		}
 
+		//  设置显示窗口属性
 		m_pImageWnd[index]->AttachEventHandler(m_pWndHandle);
 		m_pImageWnd[index]->CenterImage(true);
 		m_pImageWnd[index]->Reset();
-		
+
 		initial_num += 1;
 	}
 	m_nCameraNum = initial_num;
@@ -294,7 +343,7 @@ BOOL CAcquireImage::SetHardwareFilter()
 //开始连续采集
 BOOL CAcquireImage::Grab()
 {
-	for (int index = 0; index < (int)m_vAcquireServerName.size(); index++) {
+	for (int index = 0; index < m_nCameraNum; index++) {
 		if (!m_Xfer[index]->Grab()) {
 			CString cstrlog;
 			cstrlog.Format(L"设备 %d 采集失败：Grab Error %d", index + 1, GetLastError());
@@ -308,7 +357,7 @@ BOOL CAcquireImage::Grab()
 //采集一帧
 BOOL CAcquireImage::Snap()
 {
-	for (int index = 0; index < (int)m_vAcquireServerName.size(); index++) {
+	for (int index = 0; index < m_nCameraNum; index++) {
 		if (!m_Xfer[index]->Snap()) {
 			CString cstrlog;
 			cstrlog.Format(L"设备 %d 采集失败：Snap Error %d", index + 1, GetLastError());
@@ -322,8 +371,8 @@ BOOL CAcquireImage::Snap()
 //停止采集
 BOOL CAcquireImage::Freeze()
 {
-	for (int index = 0; index < (int)m_vAcquireServerName.size(); index++) {
-		if (m_Xfer[index]->Freeze()) {
+	for (int index = 0; index < m_nCameraNum; index++) {
+		if (!m_Xfer[index]->Freeze()) {
 			if (CAbortDlg(AfxGetApp()->m_pMainWnd, m_Xfer[index]).DoModal() != IDOK)
 				m_Xfer[index]->Abort();
 			return FALSE;
@@ -347,7 +396,7 @@ void CAcquireImage::ResetAcquire()
 //降低采集卡触发速率
 void CAcquireImage::DropAcquireSpeed(int k)
 {
-	for (int index = 0; index < (int)m_vAcquireServerName.size(); index++) {
+	for (int index = 0; index < m_nCameraNum; index++) {
 		if (m_Acq[index]->SetParameter(CORACQ_PRM_SHAFT_ENCODER_DROP, k, TRUE)) {
 			CString cstrlog;
 			cstrlog.Format(L"设备 %d 已降低采集频率: %d", index + 1, k);
@@ -366,7 +415,7 @@ float CAcquireImage::CalculateEncoderSpeed()
 
 	float speed = 0.0f;
 	SapXferFrameRateInfo* pStats;
-	if (!m_vAcquireServerName.empty()) {
+	if (m_nCameraNum > 0) {
 		pStats = m_Xfer[0]->GetFrameRateStatistics();
 		if (pStats->IsLiveFrameRateAvailable() && !pStats->IsLiveFrameRateStalled())
 			//      8192 * 60 / 1000      0.05
@@ -446,6 +495,11 @@ void CAcquireImage::AcqCallback1(SapXferCallbackInfo *pInfo)
 	if (pInfo->IsTrash())
 		pThis->m_arrayTrashCount[INDEX] += 1;
 	else {
+		//CString cstrlog;
+		//cstrlog.Format(_T("1# camera get buffer"));
+		//::SendNotifyMessageW(pThis->hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+
+
 		if (pThis->SHOW_BUFFER) pThis->m_View[INDEX]->Show();
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
@@ -526,7 +580,6 @@ void CAcquireImage::AcqCallback4(SapXferCallbackInfo *pInfo)
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
-			pThis->m_arrayFrameCount[INDEX] += 1;
 		}
 		if (buffer_index == 0)      pThis->m_arrayBufferIndex[INDEX] = 1;
 		else if (buffer_index == 1) pThis->m_arrayBufferIndex[INDEX] = 0;

@@ -2,13 +2,12 @@
 
 #include <string>
 #include <vector>
-#include <list>
 #include <memory>
-#include <numeric>
 #include "SapClassBasic.h"
 #include "SapClassGui.h"
 #include "ImportHalconCpp.h"
 #include "CImageProcessing.h"
+
 
 
 class CAcquireImage :	public SapManager
@@ -25,11 +24,11 @@ public:
 	UINT64 m_arrayFrameCount[4] = { 0,0,0,0 };
 
 	BOOL m_bSystemPause;
-	int m_nCameraNum;
-	BOOL FREE_RUN = FALSE;                            //相机内部触发模式
+	int m_nCameraNum = 0;
+	BOOL FREE_RUN = TRUE;                            //相机内部触发模式
 	BOOL SLOW_DOWN = FALSE;
 	BOOL SHOW_BUFFER = TRUE;                          //图像显示
-	int SCANE_RATE = 10000;
+	int SCANE_RATE = 10000;                           // 10 ms
 	float m_k_speed = 0.0f;                           //编码器速度较正系数
 	BOOL m_camera_system_initialled;
 	CImageExWnd  *m_pImageWnd[4];                     //图像显示窗口
@@ -46,8 +45,7 @@ public:
 	void ResetAcquire();
 
 private:
-	std::vector<CString> m_vAcquireServerName;
-	std::vector<CString> m_vAcquireDeviceServerName;
+	char *m_ccfFileName = nullptr;
 	SapAcquisition *m_Acq[4];
 	SapAcqDevice   *m_AcqDevice[4];
 	SapBuffer      *m_Buffer[4];
@@ -55,7 +53,6 @@ private:
 	SapTransfer    *m_Xfer[4];
 	SapView        *m_View[4];
 	SapXferCallback m_Callback[4] = { AcqCallback1, AcqCallback2, AcqCallback3, AcqCallback4 };
-
 	std::list<HObject> m_listImage1;
 	std::list<HObject> m_listImage2;
 	std::list<HObject> m_listImage3;
@@ -66,9 +63,14 @@ private:
 	static void AcqCallback2(SapXferCallbackInfo *pInfo);
 	static void AcqCallback3(SapXferCallbackInfo *pInfo);
 	static void AcqCallback4(SapXferCallbackInfo *pInfo);
-
-	int ScanAcqDevice();
-	int InitialAcqDevices();
+	BOOL AutoScanServers(std::vector<std::string> &vServerName, std::vector<std::string> &vDeviceName);
+	int InitialAcqServerAndDevice(std::vector<std::string> vServerName, std::vector<std::string> vDeviceName);
+	enum ServerCategory
+	{
+		ServerAll,
+		ServerAcq,
+		ServerAcqDevice
+	};
 	BOOL WriteCoefficientsToBuffer(SapBuffer& buffer);
 	BOOL SetHardwareFilter();
 	HObject CopyHobject(HObject ho_image);
