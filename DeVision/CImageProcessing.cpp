@@ -11,6 +11,9 @@
 #include <ctime>
 
 
+CMutex mutex;
+
+
 CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSize, float RadiusMin, float RadiusMax)
 	: m_threadnum(ThreadNum), m_k_normal_distribution(Distribution), 
 	m_median_filter_size(FilterSize), m_fMin_Radius(RadiusMin), m_fMax_Radius(RadiusMax)
@@ -491,7 +494,9 @@ BOOL CImageProcessing::GenerateReferenceImage(HImage &hi_average, HImage &hi_dev
 {
 	HImage result, tempimg;
 	if (m_listAcquiredImage.size() >= 4) {
+		//for(int index=0;index<5;index++)
 		m_listAcquiredImage.pop_front();
+
 		for (int i = 0; i < 3; i++) {
 			if (i == 0) {
 				result = m_listAcquiredImage.front();
@@ -1675,6 +1680,8 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
+	CSingleLock singlelock(&mutex);
+
 	int index = 0;
 	pImgProc->m_bThreadAlive[index] = TRUE;
 	for (;;) {
@@ -1698,16 +1705,24 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList1);
-			if (pImgProc->mtx.try_lock()) {
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
 				pImgProc->m_unImageIndex += 1;
-				pImgProc->mtx.unlock();
 			}
-			else
-				continue;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList1);
+			singlelock.Unlock();   //  解锁
+
+			//EnterCriticalSection(&pImgProc->m_csDefImgList1);
+			//if (pImgProc->mtx.try_lock()) {
+			//	hi_acquire = pImgProc->m_listAcquiredImage.front();
+			//	pImgProc->m_listAcquiredImage.pop_front();
+			//	pImgProc->m_unImageIndex += 1;
+			//	pImgProc->mtx.unlock();
+			//}
+			//else
+			//	continue;
+			//LeaveCriticalSection(&pImgProc->m_csDefImgList1);
 
 			//瑕疵检测算法
 			pImgProc->StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
@@ -1757,6 +1772,8 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
+	CSingleLock singlelock(&mutex);
+
 	int index = 1;
 	pImgProc->m_bThreadAlive[index] = TRUE;
 	for (;;) {
@@ -1780,16 +1797,25 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList2);
-			if (pImgProc->mtx.try_lock()) {
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
 				pImgProc->m_unImageIndex += 1;
-				pImgProc->mtx.unlock();
 			}
-			else
-				continue;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList2);
+			singlelock.Unlock();   //  解锁
+
+
+			//EnterCriticalSection(&pImgProc->m_csDefImgList2);
+			//if (pImgProc->mtx.try_lock()) {
+			//	hi_acquire = pImgProc->m_listAcquiredImage.front();
+			//	pImgProc->m_listAcquiredImage.pop_front();
+			//	pImgProc->m_unImageIndex += 1;
+			//	pImgProc->mtx.unlock();
+			//}
+			//else
+			//	continue;
+			//LeaveCriticalSection(&pImgProc->m_csDefImgList2);
 
 			//瑕疵检测算法
 			pImgProc->StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
@@ -1831,6 +1857,8 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
+	CSingleLock singlelock(&mutex);
+
 	int index = 2;
 	pImgProc->m_bThreadAlive[index] = TRUE;
 	for (;;) {
@@ -1854,16 +1882,25 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList3);
-			if (pImgProc->mtx.try_lock()) {
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
 				pImgProc->m_unImageIndex += 1;
-				pImgProc->mtx.unlock();
 			}
-			else
-				continue;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList3);
+			singlelock.Unlock();   //  解锁
+
+
+			//EnterCriticalSection(&pImgProc->m_csDefImgList3);
+			//if (pImgProc->mtx.try_lock()) {
+			//	hi_acquire = pImgProc->m_listAcquiredImage.front();
+			//	pImgProc->m_listAcquiredImage.pop_front();
+			//	pImgProc->m_unImageIndex += 1;
+			//	pImgProc->mtx.unlock();
+			//}
+			//else
+			//	continue;
+			//LeaveCriticalSection(&pImgProc->m_csDefImgList3);
 
 			//瑕疵检测算法
 			pImgProc->StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
@@ -1903,6 +1940,8 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
+	CSingleLock singlelock(&mutex);
+
 	int index = 3;
 	pImgProc->m_bThreadAlive[index] = TRUE;
 	for (;;) {
@@ -1926,16 +1965,25 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList4);
-			if (pImgProc->mtx.try_lock()) {
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
 				pImgProc->m_unImageIndex += 1;
-				pImgProc->mtx.unlock();
 			}
-			else
-				continue;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList4);
+			singlelock.Unlock();   //  解锁
+
+
+			//EnterCriticalSection(&pImgProc->m_csDefImgList4);
+			//if (pImgProc->mtx.try_lock()) {
+			//	hi_acquire = pImgProc->m_listAcquiredImage.front();
+			//	pImgProc->m_listAcquiredImage.pop_front();
+			//	pImgProc->m_unImageIndex += 1;
+			//	pImgProc->mtx.unlock();
+			//}
+			//else
+			//	continue;
+			//LeaveCriticalSection(&pImgProc->m_csDefImgList4);
 
 			//瑕疵检测算法
 			pImgProc->StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
@@ -1975,6 +2023,8 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
+	CSingleLock singlelock(&mutex);
+
 	int index = 4;
 	pImgProc->m_bThreadAlive[index] = TRUE;
 	for (;;) {
@@ -1998,16 +2048,26 @@ UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			EnterCriticalSection(&pImgProc->m_csDefImgList5);
-			if (pImgProc->mtx.try_lock()) {
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
 				pImgProc->m_unImageIndex += 1;
-				pImgProc->mtx.unlock();
 			}
-			else
-				continue;
-			LeaveCriticalSection(&pImgProc->m_csDefImgList5);
+			singlelock.Unlock();   //  解锁
+
+
+
+			//EnterCriticalSection(&pImgProc->m_csDefImgList5);
+			//if (pImgProc->mtx.try_lock()) {
+			//	hi_acquire = pImgProc->m_listAcquiredImage.front();
+			//	pImgProc->m_listAcquiredImage.pop_front();
+			//	pImgProc->m_unImageIndex += 1;
+			//	pImgProc->mtx.unlock();
+			//}
+			//else
+			//	continue;
+			//LeaveCriticalSection(&pImgProc->m_csDefImgList5);
 
 			//瑕疵检测算法
 			pImgProc->StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
