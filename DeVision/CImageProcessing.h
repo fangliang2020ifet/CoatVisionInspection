@@ -154,6 +154,9 @@ private:
 	CRITICAL_SECTION m_csDefImgList4;
 	CRITICAL_SECTION m_csDefImgList5;
 	std::mutex mtx;
+	//CMutex m_mtxLock;
+
+
 
 	void HalconInitAOP();
 	BOOL LoadDefaultRefAndDevImage(std::string path);
