@@ -72,7 +72,6 @@ public:
 	CEvent CalculateThread_5_StoppedEvent;
 
 	BOOL SYSTEM_PAUSE;
-	BOOL TEST_MODEL;                            //测试模式
 	BOOL SAVE_REFERENCE_IMAGE;                  //是否保存生成的参考图像
 	BOOL m_referenceImage_OK;                   //参考图像是否已生成
 	int m_threadnum;                            //线程数量
@@ -154,7 +153,7 @@ private:
 	CRITICAL_SECTION m_csDefImgList4;
 	CRITICAL_SECTION m_csDefImgList5;
 	std::mutex mtx;
-	//CMutex m_mtxLock;
+	CMutex mutex;
 
 
 

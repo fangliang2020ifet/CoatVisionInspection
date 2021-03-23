@@ -32,9 +32,15 @@
 #define IMAGE_WIDTH 8192
 #define IMAGE_HEIGHT 8192
 // 纵向的精度, 单位： mm
-#define VERTICAL_PRECISION 0.035f
+#define VERTICAL_PRECISION 0.05f
 // 横向的精度，单位： mm
 #define HORIZON_PRECISION 0.05f
+
+// 本地图片测试
+#define TESTMODEL 1
+// 相机软件触发
+#define FREERUN 1
+
 
 class CDeVisionApp : public CWinApp
 {

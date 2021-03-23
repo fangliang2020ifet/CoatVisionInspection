@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<l>dev_update_off()</l>
+<c></c>
+<c></c>
+<l>read_image (Image, 'E:/DeVisionProject/A分类样本/svm_classification/6.bmp')</l>
+<l>get_image_pointer1 (Image, Pointer, Type, Width, Height)</l>
+<l>dev_close_window ()</l>
+<l>dev_open_window (0, 0, 2 * Width, 2 * Height, 'black', WindowHandle)</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<c></c>
+<l>NumImages := 28</l>
+<l>for index := 1 to NumImages by 1</l>
+<l>    read_image (Image, 'E:/DeVisionProject/A分类样本/测试集/' + index + '.bmp')</l>
+<l>    get_image_size (Image, Width, Height)</l>
+<l>    median_image (Image, ImageMedian, 'square', 1, 'mirrored')</l>
+<c>    *计算左侧10列像素的平均值</c>
+<l>    gen_rectangle1 (Rectangle, 0, 0, Height, 10)</l>
+<l>    intensity (Rectangle, ImageMedian, Mean, Deviation)    </l>
+<l>    threshold (Image, Region, 0, 255)</l>
+<l>    gen_image_const (ImageAverage, 'byte', Width, Height)</l>
+<l>    gen_image_const (ImageDeviation, 'byte', Width, Height)</l>
+<c>    *计算标准差</c>
+<l>    tuple_sqrt (Deviation, Sqrt)</l>
+<l>    overpaint_region (ImageAverage, Region, Mean, 'fill')</l>
+<l>    overpaint_region (ImageDeviation, Region, min([ 5 * Sqrt,255]), 'fill')</l>
+<c></c>
+<c>    *得到瑕疵区域</c>
+<l>    sub_image (ImageMedian, ImageAverage, ImageSub1, 1, 0)</l>
+<l>    sub_image (ImageAverage, ImageMedian, ImageSub2, 1, 0)</l>
+<l>    add_image (ImageSub1, ImageSub2, ImageResult, 0.5, 0)</l>
+<l>    sub_image (ImageResult, ImageDeviation, ImageOut, 1, 0)</l>
+<c>    *通过改变阈值修改所选区域</c>
+<l>    threshold (ImageOut, RegionDft, 1, 255)   </l>
+<l>    dilation_circle (RegionDft, RegionDilation, 2.5)</l>
+<l>    erosion_circle (RegionDilation, RegionErosion, 2.5) </l>
+<l>    connection (RegionErosion, ConnectedRegions)</l>
+<l>    select_shape (ConnectedRegions, SelectedRegions, 'area', 'and', 3, 65536)  </l>
+<l>    union1 (SelectedRegions, RegionUnion)</l>
+<c>    </c>
+<l>    area_center (RegionUnion, Area, Row, Column)</l>
+<l>    get_grayval (Image, Row, Column, Grayval)</l>
+<c>    </c>
+<c>    *计算区域特征值  </c>
+<l>    calculate_features (SelectedRegions, Features)</l>
+<c></c>
+<l>    dev_display(Image)</l>
+<l>    dev_display(RegionUnion)</l>
+<l>    stop()</l>
+<l>endfor</l>
+<c></c>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="calculate_features">
+<interface>
+<io>
+<par name="Region" base_type="iconic" dimension="0"/>
+</io>
+<oc>
+<par name="Features" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>region_features (Region, 'area', Area)</l>
+<l>region_features (Region, 'width', WidthValue)</l>
+<l>region_features (Region, 'height', HeightValue)</l>
+<l>region_features (Region, 'inner_radius', InnerRadius)</l>
+<l>region_features (Region, 'contlength', ContLength)</l>
+<l>region_features (Region, 'holes_num', HolesNum)</l>
+<l>region_features (Region, 'roundness', Roundness)</l>
+<l>region_features (Region, 'bulkiness', Bulkiness)</l>
+<l>moments_region_central_invar (Region, PSI1, PSI2, PSI3, PSI4)</l>
+<c></c>
+<l>Features := real([Area, WidthValue, HeightValue, InnerRadius, ContLength, HolesNum, Roundness, Bulkiness, PSI1, PSI2, PSI3, PSI4])</l>
+<l>return ()</l>
+</body>
+<docu id="calculate_features">
+<parameters>
+<parameter id="Features"/>
+<parameter id="Region"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>

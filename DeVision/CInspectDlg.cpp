@@ -494,7 +494,7 @@ void CInspectDlg::ResetBatchInformation()
 
 	SetBatchInfoControlItem();
 
-	UpdateData(false);
+	//UpdateData(false);
 	return;
 }
 
@@ -507,5 +507,5 @@ void CInspectDlg::SetBatchInfoControlItem()
 	m_eSchedule.SetWindowTextW(m_cstrSchedule);
 	m_eAddition.SetWindowTextW(m_cstrAddition);
 
-	UpdateData(false);
+	//UpdateData(false);
 }

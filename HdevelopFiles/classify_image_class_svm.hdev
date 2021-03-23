@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<c>* This example program shows how to segment an RGB image with a SVM</c>
+<c>* classifier.  The classifier is trained with four different colors.</c>
+<l>dev_update_off ()</l>
+<l>dev_close_window ()</l>
+<l>dev_open_window (0, 0, 735, 485, 'black', WindowHandle)</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<l>dev_set_draw ('margin')</l>
+<l>dev_set_colored (6)</l>
+<l>dev_set_line_width (3)</l>
+<l>read_image (Image, 'patras')</l>
+<l>dev_display (Image)</l>
+<l>Color := ['indian red','cornflower blue','white','black','yellow']</l>
+<c>* Create regions that contain the training samples of the four classes</c>
+<l>gen_rectangle1 (Sea, 10, 10, 120, 270)</l>
+<l>gen_rectangle2 (Deck, [170,400], [350,375], [-0.56,-0.75], [64,104], [26,11])</l>
+<l>union1 (Deck, Deck)</l>
+<l>gen_rectangle1 (Walls, 355, 623, 420, 702)</l>
+<l>gen_rectangle2 (Chimney, 286, 623, -0.56, 64, 33)</l>
+<l>concat_obj (Sea, Deck, Classes)</l>
+<l>concat_obj (Classes, Walls, Classes)</l>
+<l>concat_obj (Classes, Chimney, Classes)</l>
+<l>dev_set_color (Color[0])</l>
+<l>dev_display (Deck)</l>
+<l>dev_set_color (Color[1])</l>
+<l>dev_display (Sea)</l>
+<l>dev_set_color (Color[2])</l>
+<l>dev_display (Walls)</l>
+<l>dev_set_color (Color[3])</l>
+<l>dev_display (Chimney)</l>
+<l>Message := 'Training regions for the color classifier'</l>
+<l>disp_message (WindowHandle, Message, 'window', 12, 12, 'black', 'true')</l>
+<l>disp_continue_message (WindowHandle, 'black', 'true')</l>
+<l>stop ()</l>
+<c>* Create the classifier and add the samples</c>
+<l>create_class_svm (3, 'rbf', 0.1, 0.0005, 4, 'one-versus-all', 'normalization', 3, SVMHandle)</l>
+<l>add_samples_image_class_svm (Image, Classes, SVMHandle)</l>
+<l>dev_display (Image)</l>
+<l>Message := 'Training ...'</l>
+<l>disp_message (WindowHandle, Message, 'window', 12, 12, 'black', 'true')</l>
+<c>* Train the classifier</c>
+<l>train_class_svm (SVMHandle, 0.001, 'default')</l>
+<l>Message := Message + ' ready.'</l>
+<l>Message[1] := 'Segment image using the classifier ...'</l>
+<l>disp_message (WindowHandle, Message, 'window', 12, 12, 'black', 'true')</l>
+<c>* Segment (classify) the image</c>
+<l>classify_image_class_svm (Image, ClassRegions, SVMHandle)</l>
+<l>region_to_mean (ClassRegions, Image, ImageClass)</l>
+<l>dev_display (ImageClass)</l>
+<l>Message[1] := Message[1] + ' ready.'</l>
+<l>disp_message (WindowHandle, Message, 'window', 12, 12, 'black', 'true')</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

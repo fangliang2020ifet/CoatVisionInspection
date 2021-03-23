@@ -25,7 +25,6 @@ public:
 
 	BOOL m_bSystemPause;
 	int m_nCameraNum = 0;
-	BOOL FREE_RUN = TRUE;                            //相机内部触发模式
 	BOOL SLOW_DOWN = FALSE;
 	BOOL SHOW_BUFFER = TRUE;                          //图像显示
 	int SCANE_RATE = 10000;                           // 10 ms

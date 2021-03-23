@@ -213,6 +213,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	// 报表页面初始化
 	pView->m_pvecDFT = &m_vecDftDisplay;
 	m_tableDlg.m_pvDFT = &m_vecDftDisplay;
+	m_tableDlg.m_pfCurPos = &m_fCurrentPosition;
 
 	//主界面信息刷新定时器
 	SetTimer(1, 1000, 0);
@@ -340,14 +341,6 @@ void CDeVisionDlg::LoadRegConfig()
 		m_nFIlterSize = 1;
 		m_fRadiusMin = 0.05f;
 		m_fRadiusMax = 50.0f;
-		//m_cProduct_Number = "20200101";
-		//m_inspectDlg.m_eNumber.SetWindowTextW(m_cProduct_Number);
-		//m_cProduct_Model = "PET01";
-		//m_inspectDlg.m_eModel.SetWindowTextW(m_cProduct_Model);
-		//m_cProduct_Width = "1650";
-		//m_inspectDlg.m_eWidth.SetWindowTextW(m_cProduct_Width);
-		//m_cOperator = "UserA";
-		//m_inspectDlg.m_eOperator.SetWindowTextW(m_cOperator);
 	}
 	else {
 		ReadFromRegedit();
@@ -369,15 +362,6 @@ void CDeVisionDlg::ReadFromRegedit()
 	m_nFIlterSize = AfxGetApp()->GetProfileIntW(L"Algorithm Parameter", L"filter size", 0);
 	m_fRadiusMin = ((float)AfxGetApp()->GetProfileIntW(L"Algorithm Parameter", L"min radius", 0)) / 100.0f;
 	m_fRadiusMax = ((float)AfxGetApp()->GetProfileIntW(L"Algorithm Parameter", L"max radius", 0)) / 100.0f;
-
-	//m_cProduct_Number = AfxGetApp()->GetProfileStringW(L"User Information", L"产品批次号", _T(""));
-	//m_inspectDlg.m_eNumber.SetWindowTextW(m_cProduct_Number);
-	//m_cProduct_Model = AfxGetApp()->GetProfileStringW(L"User Information", L"产品型号", _T(""));
-	//m_inspectDlg.m_eModel.SetWindowTextW(m_cProduct_Model);
-	//m_cProduct_Width = AfxGetApp()->GetProfileStringW(L"User Information", L"薄膜宽度", _T(""));
-	//m_inspectDlg.m_eWidth.SetWindowTextW(m_cProduct_Width);
-	//m_cOperator = AfxGetApp()->GetProfileStringW(L"User Information", L"操作员", _T(""));
-	//m_inspectDlg.m_eOperator.SetWindowTextW(m_cOperator);
 }
 
 //写入注册表
@@ -398,17 +382,6 @@ void CDeVisionDlg::WriteToRegedit()
 	//由float 保存为 int， 只保留两位小数
 	AfxGetApp()->WriteProfileInt(L"Algorithm Parameter", L"min radius", (int)(m_fRadiusMin * 100));
 	AfxGetApp()->WriteProfileInt(L"Algorithm Parameter", L"max radius", (int)(m_fRadiusMax * 100));
-
-	//用户信息
-	//CStringW wtext;
-	//m_inspectDlg.m_eNumber.GetWindowTextW(wtext);
-	//AfxGetApp()->WriteProfileStringW(L"User Information", L"产品批次号", wtext);
-	//m_inspectDlg.m_eModel.GetWindowTextW(wtext);
-	//AfxGetApp()->WriteProfileStringW(L"User Information", L"产品型号", wtext);
-	//m_inspectDlg.m_eWidth.GetWindowTextW(wtext);
-	//AfxGetApp()->WriteProfileStringW(L"User Information", L"薄膜宽度", wtext);
-	//m_inspectDlg.m_eOperator.GetWindowTextW(wtext);
-	//AfxGetApp()->WriteProfileStringW(L"User Information", L"操作员", wtext);
 }
 
 //当用户拖动最小化窗口时系统调用此函数取得光标
@@ -446,32 +419,19 @@ HBRUSH CDeVisionDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 //定时器回调函数
 void CDeVisionDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	float fwidth;
-	if (!m_cProduct_Width.IsEmpty())
-		fwidth = std::stof(m_cProduct_Width.GetBuffer());
-	else fwidth = 1650.0f;
+	if (nIDEvent == 1) {
+		//更新当前位置
+		m_fCurrentPosition = UpdateCurrentInspectPosition();
 
-	switch (nIDEvent)
-	{
-	case 1: {
+		//更新状态栏
 		UpdateSysStatus();
-		m_tableDlg.m_current_position = UpdateCurrentInspectPosition();
-		m_tableDlg.m_wstr_width = std::to_wstring(fwidth);
-		//更新刻度
-		UpdateScaleValue(fwidth, m_fCurrentPosition);
-		//控件闪烁控制
-		if (m_bFlicker)  m_bFlicker = FALSE;
-		else m_bFlicker = TRUE;
 
-		break;
-	}
-	case 2:
-		//更新历史图像，选中历史页面
-		//if (m_CurSelTab == 3 && m_system_state != SYSTEM_STATE_OFFLINE && m_historyDlg.m_pages == 0)
-		//	m_historyDlg.LoadHistoryImage();
-		break;
-	default:
-		break;
+		//更新刻度
+		float fwidth = 1650.0f;
+		UpdateScaleValue(fwidth, m_fCurrentPosition);
+		
+		//控件闪烁控制
+		m_bFlicker = !m_bFlicker;
 	}
 
 	CDialog::OnTimer(nIDEvent);
@@ -481,16 +441,16 @@ float CDeVisionDlg::UpdateCurrentInspectPosition()
 {
 	float pos = 0.0f;
 	UINT64 image_position = 0;
-	if (m_bTestModel) {
-		if (m_pImgProc[0] != NULL) {
-			image_position = m_pImgProc[0]->m_nTotalListNumber;
-		}
+
+#ifdef TESTMODEL
+	if (m_pImgProc[0] != NULL) {
+		image_position = m_pImgProc[0]->m_nTotalListNumber;
 	}
-	else
-		image_position = m_ImgAcq.m_arrayFrameCount[0];
+#else
+	image_position = m_ImgAcq.m_arrayFrameCount[0];
+#endif
 
 	pos = image_position * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f;
-	m_fCurrentPosition = pos;
 
 	return pos;
 }
@@ -576,6 +536,7 @@ void CDeVisionDlg::InitialTabDlg()
 	pDialog[3]->ShowWindow(SW_HIDE);
 	m_CurSelTab = 0;
 }
+
 
 void CDeVisionDlg::TabDlgResize()
 {
@@ -1030,8 +991,10 @@ void CDeVisionDlg::UpdateSysStatus()
 			m_StatusBar.SetPaneText(3, cst_current_pos, 1);
 		}
 
-		if (!m_bTestModel)
-			m_speed = m_ImgAcq.CalculateEncoderSpeed();
+#ifndef TESTMODEL
+		m_speed = m_ImgAcq.CalculateEncoderSpeed();
+#endif
+
 		if (m_speed > 0) {
 			CString cstr_speed;
 			cstr_speed.Format(L"当前速度：%.2f 米/分钟", m_speed);
@@ -1040,12 +1003,15 @@ void CDeVisionDlg::UpdateSysStatus()
 			   		 
 		//总处理数量
 		UINT64 frame_count = 0;
-		if (m_bTestModel) {
-			if (m_pImgProc[0] != NULL) 
-				frame_count = m_pImgProc[0]->m_nTotalListNumber;			
-		}
-		else
-			frame_count = m_ImgAcq.m_arrayFrameCount[0];            //  1#相机采集的图像总数
+
+#ifdef TESTMODEL
+		if (m_pImgProc[0] != NULL)
+			frame_count = m_pImgProc[0]->m_nTotalListNumber;
+#else
+		//  1#相机采集的图像总数
+		frame_count = m_ImgAcq.m_arrayFrameCount[0];         
+#endif
+
 		UINT64 frame_processed = 0;
 		if (m_pImgProc[0] != NULL)
 			frame_processed = m_pImgProc[0]->m_unImageIndex;        //  多个线程合计处理的总数
@@ -1249,10 +1215,10 @@ void CDeVisionDlg::AutoStop()
 	CWaitCursor wait;
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
-		if (!m_bTestModel) {
-			if (!m_ImgAcq.Freeze()) return;
-		}
-
+#ifndef TESTMODEL
+		if (!m_ImgAcq.Freeze())
+			return;
+#endif
 		//等待列表中的图像都处理完成, 之后结束处理线程
 		StopRefrush_Event.SetEvent();
 
@@ -1295,10 +1261,10 @@ void CDeVisionDlg::SaveImages(int index, int batch, unsigned &numbers)
 {
 	int dft_img_num = (int)m_pImgProc[index]->m_listDftImg.size();
 	int imagenums = 0;
-	if (dft_img_num > batch)
-		imagenums = batch;
-	else
+	if (dft_img_num < batch)
 		imagenums = dft_img_num;
+	else
+		imagenums = batch;
 
 	HObject img;
 	HTuple  name;
@@ -1395,8 +1361,6 @@ void CDeVisionDlg::SwitchRoll()
 // 获取报表信息
 void CDeVisionDlg::GenerateTableInfo()
 {
-	UpdateData(true);
-
 	//报表保存路径
 	std::string table_path = m_strTable_Path + "\\";
 	m_tableDlg.m_save_path = table_path.c_str();
@@ -1477,11 +1441,15 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 			wndLoad.UpdateWindow();
 			HWND hwnd = wndLoad.GetSafeHwnd();
 			::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
+			// 等待所有相机的处理线程都结束
 			int nIndex = WaitForMultipleObjects(pDlg->m_nConnectedCameras, *pDlg->m_phFinishProcessEvent, TRUE, INFINITE);
-			if (WAIT_OBJECT_0 + 3 <= nIndex <= WAIT_OBJECT_0 + 2) {
+			// 等待所有事件发生
+			int count = pDlg->m_nConnectedCameras - 1;
+			if (WAIT_OBJECT_0 + count <= nIndex <= WAIT_OBJECT_0 + count - 1) {
 				for (int index = 0; index < pDlg->m_nConnectedCameras; index++) {
-					pDlg->SaveImages(index, 20, save_index[index]);
+					auto size = pDlg->m_pImgProc[index]->m_listDftImg.size();
+					pDlg->SaveImages(index, (int)size, save_index[index]);
+					//pDlg->SaveImages(index, 20, save_index[index]);
 				}
 				//保存检测记录
 				EnterCriticalSection(&pDlg->m_csListDftDisplay);
@@ -1490,12 +1458,12 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 				LeaveCriticalSection(&pDlg->m_csListDftDisplay);
 			}
 
+			// 等待报表保存
 			WaitForSingleObject(pDlg->m_tableDlg.TableSaved_Event, INFINITE);
 			pDlg->m_system_state = SYSTEM_STATE_STOP;
 
 			//关闭等待界面
 			wndLoad.DestroyWindow();
-
 			CString cstr = L"检测数据保存成功";
 			::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 			::SendMessage(pDlg->hMainWnd, WM_UPDATE_CONTROLS, 0, 0);
@@ -1568,9 +1536,10 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 		//开始运行前的准备
 		ReStartPrepare();
 		//启动图像采集
-		if (!m_bTestModel) {
-			if (!m_ImgAcq.Grab()) return;
-		}
+#ifndef TESTMODEL
+		if (!m_ImgAcq.Grab())
+			return;
+#endif
 		bool state = false;
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			state = m_pImgProc[index]->BeginProcess();
@@ -1618,14 +1587,17 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 	CWaitCursor wait;
 
 	if (m_system_state == SYSTEM_STATE_RUN || m_system_state == SYSTEM_STATE_PAUSE) {
-		if(!m_bTestModel)
-			m_ImgAcq.Freeze();
+#ifndef TESTMODEL
+		m_ImgAcq.Freeze();
+#endif
+
 		for (int index = 0; index < m_nConnectedCameras; index++) {
-			if (m_bTestModel) {
-				m_pImgProc[index]->StopManageThread();
-			}
-			else
-				m_pImgProc[index]->StopCalculateThreads();
+
+#ifdef TESTMODEL
+			m_pImgProc[index]->StopManageThread();
+#else
+			m_pImgProc[index]->StopCalculateThreads();
+#endif
 		}
 
 		//等待列表中的图像都处理完成, 之后结束处理线程
@@ -1664,29 +1636,29 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 	CWaitCursor wait;
 	bool state;
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
-		if (!m_bTestModel) {
-			//采集系统初始化
-			state = m_ImgAcq.CameraSystemInitial();
-			if (!state) {
-				cstrlog.Format(_T("图像采集系统初始化：失败，%d"), GetLastError());
-				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
-				return;
-			}
-			else {
-				cstrlog.Format(_T("图像采集系统初始化：成功"));
-				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
-			}
-			m_nConnectedCameras = m_ImgAcq.m_nCameraNum;
+
+#ifndef TESTMODEL
+		//采集系统初始化
+		state = m_ImgAcq.CameraSystemInitial();
+		if (!state) {
+			cstrlog.Format(_T("图像采集系统初始化：失败，%d"), GetLastError());
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+			return;
 		}
-		else
-			m_nConnectedCameras = 4;
+		else {
+			cstrlog.Format(_T("图像采集系统初始化：成功"));
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+		}
+		m_nConnectedCameras = m_ImgAcq.m_nCameraNum;
+#else
+		m_nConnectedCameras = 4;
+#endif
 
 		//启动图像处理线程
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			m_pImgProc[index] = new CImageProcessing(m_nThreadNumbers, m_nNormalDistribution,
 				m_nFIlterSize, m_fRadiusMin, m_fRadiusMax);
 			m_ImgAcq.m_pProcessing[index] = m_pImgProc[index];
-			m_pImgProc[index]->TEST_MODEL = m_bTestModel;
 			m_pImgProc[index]->m_threadnum = m_nThreadNumbers;
 			m_pImgProc[index]->SAVE_REFERENCE_IMAGE = m_bSaveRefImg;
 			m_phFinishProcessEvent[index] = &m_pImgProc[index]->m_hFinishedProcess;
@@ -1780,16 +1752,16 @@ void CDeVisionDlg::OnSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
-	//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-		}
+#ifdef TESTMODEL
+		//登录窗口
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
 
 	CSetupDlg setup;
 	setup.m_wnd1_range = m_wnd1_range;
@@ -1839,16 +1811,16 @@ void CDeVisionDlg::OnCameraSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
+#ifdef TESTMODEL
 		//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-		}
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
 
 	CCameraDlg cameraDlg;
 	m_pCamera = &cameraDlg;
@@ -1860,16 +1832,16 @@ void CDeVisionDlg::OnLedSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
+#ifdef TESTMODEL
 		//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-		}
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
 
 	CCameraDlg camera;
 	camera.DoModal();
@@ -1880,16 +1852,16 @@ void CDeVisionDlg::OnTrigger()
 {
 	// TODO: 在此添加命令处理程序代码
 
+#ifdef TESTMODEL
 		//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-		}
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
 
 	CCameraDlg camera;
 	camera.DoModal();
@@ -1907,25 +1879,37 @@ void CDeVisionDlg::OnRemote()
 void CDeVisionDlg::OnProduct()
 {
 	// TODO: 在此添加命令处理程序代码
-	CProductInfo productinfo;
-	productinfo.DoModal();
-	if (productinfo.m_bSave_Parameter) {
-		//m_inspectDlg.m_eNumber.SetWindowTextW(productinfo.m_ctrNUMBER);
-		//m_inspectDlg.m_eWidth.SetWindowTextW(productinfo.m_ctrWIDTH);
-		//m_inspectDlg.m_eModel.SetWindowTextW(productinfo.m_ctrID);
-		//m_inspectDlg.m_eOperator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+
+#ifdef TESTMODEL
+	//登录窗口
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
+
+	//CProductInfo productinfo;
+	//productinfo.DoModal();
+	//if (productinfo.m_bSave_Parameter) {
+	//	//m_inspectDlg.m_eNumber.SetWindowTextW(productinfo.m_ctrNUMBER);
+	//	//m_inspectDlg.m_eWidth.SetWindowTextW(productinfo.m_ctrWIDTH);
+	//	//m_inspectDlg.m_eModel.SetWindowTextW(productinfo.m_ctrID);
+	//	//m_inspectDlg.m_eOperator.SetWindowTextW(productinfo.m_ctrOPERATOR);
+	//}
 }
 
 //瑕疵检测：瑕疵趋势信息
 void CDeVisionDlg::OnDeffectTrader()
 {
 	// TODO: 在此添加命令处理程序代码
-	if (m_CurSelTab != 1) {
-		m_tab.SetCurSel(1);
-		pDialog[m_CurSelTab]->ShowWindow(SW_HIDE);
-		pDialog[1]->ShowWindow(SW_SHOW);
-	}
+	//if (m_CurSelTab != 1) {
+	//	m_tab.SetCurSel(1);
+	//	pDialog[m_CurSelTab]->ShowWindow(SW_HIDE);
+	//	pDialog[1]->ShowWindow(SW_SHOW);
+	//}
 }
 
 //瑕疵检测：瑕疵检测算法
@@ -1933,16 +1917,16 @@ void CDeVisionDlg::OnDefectAnalysis()
 {
 	// TODO: 在此添加命令处理程序代码
 
+#ifdef TESTMODEL
 		//登录窗口
-	if (!m_bTestModel) {
-		CLogin loginDlg;
-		loginDlg.DoModal();
-		if (!loginDlg.ACCEPTED)
-			return;
-		else {
-			m_logo_name = loginDlg.m_logo_name;
-		}
+	CLogin loginDlg;
+	loginDlg.DoModal();
+	if (!loginDlg.ACCEPTED)
+		return;
+	else {
+		m_logo_name = loginDlg.m_logo_name;
 	}
+#endif
 
 	CAlgorithmDlg algorithmDlg;
 	if (m_pImgProc[0] != NULL) {
@@ -2104,11 +2088,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
-		//m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
 		m_tableDlg.m_open_inprogram.EnableWindow(false);
-		//m_historyDlg.m_btn_pre_page.EnableWindow(false);
-		//m_historyDlg.m_btn_next_page.EnableWindow(false);
-
 		m_ImgAcq.m_bSystemPause = FALSE;
 		if (m_nConnectedCameras > 0) {
 			for (int index = 0; index < m_nConnectedCameras; index++) {
@@ -2126,15 +2106,9 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 	case SYSTEM_STATE_PAUSE:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
-		//if (m_ImgProc.m_total_list_size == 0)
-		//	GetDlgItem(IDC_MFCBUTTON_STOP)->EnableWindow(true);
 		GetDlgItem(IDC_MFCBUTTON_PAUSE)->EnableWindow(false);
 		GetDlgItem(IDC_MFCBUTTON_ONLINE)->EnableWindow(false);
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
-
-		//m_inspectDlg.m_btn_changeinfo.EnableWindow(false);
-		//m_historyDlg.m_btn_pre_page.EnableWindow(true);
-		//m_historyDlg.m_btn_next_page.EnableWindow(true);
 
 		m_ImgAcq.m_bSystemPause = TRUE;
 		if (m_nConnectedCameras > 0) {

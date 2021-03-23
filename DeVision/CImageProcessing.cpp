@@ -11,7 +11,6 @@
 #include <ctime>
 
 
-CMutex mutex;
 
 
 CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSize, float RadiusMin, float RadiusMax)
@@ -19,7 +18,6 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 	m_median_filter_size(FilterSize), m_fMin_Radius(RadiusMin), m_fMax_Radius(RadiusMax)
 {
 	SYSTEM_PAUSE = FALSE;
-	TEST_MODEL = FALSE;
 	SAVE_REFERENCE_IMAGE = FALSE;
 	m_referenceImage_OK = FALSE;
 	m_strPath = "D:\\瑕疵检测数据记录\\2瑕疵图像记录\\";
@@ -175,8 +173,8 @@ BOOL CImageProcessing::BeginProcess()
 		}
 	}
 
-	StopManage_Event.ResetEvent();
 	ResetEvent(m_hFinishedProcess);
+	StopManage_Event.ResetEvent();
 	//CalculateThread_1_StoppedEvent.ResetEvent();
 	CalculateThread_2_StoppedEvent.ResetEvent();
 	CalculateThread_3_StoppedEvent.ResetEvent();
@@ -1321,8 +1319,10 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std:
 		ho_Image = ho_ImagePart;
 	}
 
-	if(TEST_MODEL)
-		AddNoise(ho_Image);
+
+#ifdef TESTMODEL
+	AddNoise(ho_Image);
+#endif
 
 	ho_ImageAverage = m_hi_average;
 	ho_ImageDeviation = m_hi_deviation;
@@ -1616,23 +1616,23 @@ void CImageProcessing::AddNoise(HObject hoImg)
 UINT CImageProcessing::ManageThread(LPVOID pParam)
 {
 	CImageProcessing *pThis = (CImageProcessing *)pParam;
-	TCHAR path[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, path);
-	CString curpath = path;
-	std::string model_filename = "\\system\\Model.svm";
-	pThis->m_modelFileName = curpath + (CA2W)model_filename.c_str();
+	//TCHAR path[MAX_PATH];
+	//GetCurrentDirectory(MAX_PATH, path);
+	//CString curpath = path;
+	std::string model_filename = ".\\system\\Model.svm";
+	//pThis->m_modelFileName = curpath + (CA2W)model_filename.c_str();
+	pThis->m_modelFileName = (CA2W)model_filename.c_str();
 
 	pThis->m_nTotalListNumber = 0;
 	bool bresult = false;
 	while (1) {
 		Sleep(200);
-		if (!pThis->TEST_MODEL)
-			bresult = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
-		else {
-			//CStringA strpath = (CW2A)curpath;
-			std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\reference_image.png";
-			bresult = pThis->GetRefImgWithoutBouder(imgname.c_str());
-		}			
+#ifdef TESTMODEL
+		std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\reference_image.png";
+		bresult = pThis->GetRefImgWithoutBouder(imgname.c_str());
+#else
+		bresult = pThis->GenerateReferenceImage(pThis->m_hi_average, pThis->m_hi_deviation);
+#endif					
 		if (bresult) {
 			if (pThis->SAVE_REFERENCE_IMAGE) {
 				//std::string filename = "D:\\DetectRecords\\ReferenceImage.png";
@@ -1649,29 +1649,28 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 			continue;
 	}
 
-	if (pThis->TEST_MODEL) {
-		//CStringA strpath = (CW2A)curpath;
-		std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\test_image.png";
-		pThis->LoadSingleImage(imgname.c_str());
-		DWORD dwStop = 0;
-		for (;;) {
-			dwStop = WaitForSingleObject(pThis->StopManage_Event, 1000);
-			switch (dwStop)
-			{
-			case WAIT_TIMEOUT: {
-				if (pThis->TEST_MODEL && !pThis->SYSTEM_PAUSE) {
-					pThis->LoadImageToQueue();
-					pThis->m_nTotalListNumber += pThis->m_threadnum;
-				}
-				break;
+#ifdef TESTMODEL
+	std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\test_image.png";
+	pThis->LoadSingleImage(imgname.c_str());
+	DWORD dwStop = 0;
+	for (;;) {
+		dwStop = WaitForSingleObject(pThis->StopManage_Event, 1637);
+		switch (dwStop)
+		{
+		case WAIT_TIMEOUT: {
+			if (!pThis->SYSTEM_PAUSE) {
+				pThis->LoadImageToQueue();
+				pThis->m_nTotalListNumber += pThis->m_threadnum;
 			}
-			case WAIT_FAILED:
-				return -1;
-			case WAIT_OBJECT_0: 
-				return 0;
-			}
-		}		
+			break;
+		}
+		case WAIT_FAILED:
+			return -1;
+		case WAIT_OBJECT_0:
+			return 0;
+		}
 	}
+#endif
 
 	return 0;
 }
@@ -1680,7 +1679,7 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
-	CSingleLock singlelock(&mutex);
+	CSingleLock singlelock(&pImgProc->mutex);
 
 	int index = 0;
 	pImgProc->m_bThreadAlive[index] = TRUE;
@@ -1699,13 +1698,13 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 	pImgProc->InitialClassify((CW2A)pImgProc->m_modelFileName.GetBuffer(), hv_SVMHandle);
 	while (pImgProc->m_bThreadAlive[index]){
 		if (pImgProc->m_listAcquiredImage.empty()) {
-			Sleep(200);
+			Sleep(10);
 			continue;
 		}
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1772,7 +1771,7 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
-	CSingleLock singlelock(&mutex);
+	CSingleLock singlelock(&pImgProc->mutex);
 
 	int index = 1;
 	pImgProc->m_bThreadAlive[index] = TRUE;
@@ -1791,13 +1790,13 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 	pImgProc->InitialClassify((CW2A)pImgProc->m_modelFileName.GetBuffer(), hv_SVMHandle);
 	while (pImgProc->m_bThreadAlive[index]) {
 		if (pImgProc->m_listAcquiredImage.empty()) {
-			Sleep(200);
+			Sleep(10);
 			continue;
 		}
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1857,7 +1856,7 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
-	CSingleLock singlelock(&mutex);
+	CSingleLock singlelock(&pImgProc->mutex);
 
 	int index = 2;
 	pImgProc->m_bThreadAlive[index] = TRUE;
@@ -1876,13 +1875,13 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 	pImgProc->InitialClassify((CW2A)pImgProc->m_modelFileName.GetBuffer(), hv_SVMHandle);
 	while (pImgProc->m_bThreadAlive[index]) {
 		if (pImgProc->m_listAcquiredImage.empty()) {
-			Sleep(200);
+			Sleep(10);
 			continue;
 		}
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1940,7 +1939,7 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
-	CSingleLock singlelock(&mutex);
+	CSingleLock singlelock(&pImgProc->mutex);
 
 	int index = 3;
 	pImgProc->m_bThreadAlive[index] = TRUE;
@@ -1959,13 +1958,13 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 	pImgProc->InitialClassify((CW2A)pImgProc->m_modelFileName.GetBuffer(), hv_SVMHandle);
 	while (pImgProc->m_bThreadAlive[index]) {
 		if (pImgProc->m_listAcquiredImage.empty()) {
-			Sleep(200);
+			Sleep(10);
 			continue;
 		}
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -2023,7 +2022,7 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 {
 	CImageProcessing *pImgProc = (CImageProcessing *)pParam;
-	CSingleLock singlelock(&mutex);
+	CSingleLock singlelock(&pImgProc->mutex);
 
 	int index = 4;
 	pImgProc->m_bThreadAlive[index] = TRUE;
@@ -2042,13 +2041,13 @@ UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 	pImgProc->InitialClassify((CW2A)pImgProc->m_modelFileName.GetBuffer(), hv_SVMHandle);
 	while (pImgProc->m_bThreadAlive[index]) {
 		if (pImgProc->m_listAcquiredImage.empty()) {
-			Sleep(200);
+			Sleep(10);
 			continue;
 		}
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();

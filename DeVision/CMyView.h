@@ -32,7 +32,6 @@ public:
 	int wnd_scroll_scale_size;                     //窗口滚动范围
 	unsigned m_unDisplayRangeIndex;
 
-	//std::vector<DefectType> m_vDefect;
 	std::vector<DeffectInfo> *m_pvecDFT;
 	COLORREF m_acolor[4];
 	bool m_bFlagShow[4];

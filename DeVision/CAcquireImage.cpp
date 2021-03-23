@@ -25,16 +25,15 @@ CAcquireImage::CAcquireImage()
 	}
 	m_pWndHandle = NULL;
 
-	if (FREE_RUN) {
-		char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun.ccf";
-		m_ccfFileName = new char[MAX_PATH]();
-		memcpy(m_ccfFileName, Filename, sizeof(Filename));
-	}
-	else {
-		char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External.ccf";
-		m_ccfFileName = new char[MAX_PATH]();
-		memcpy(m_ccfFileName, Filename, sizeof(Filename));
-	}
+#ifdef FREERUN
+	char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_FreeRun.ccf";
+	m_ccfFileName = new char[MAX_PATH]();
+	memcpy(m_ccfFileName, Filename, sizeof(Filename));
+#else
+	char Filename[MAX_PATH] = "system\\T_LA_CM_08K08A_00_R_External.ccf";
+	m_ccfFileName = new char[MAX_PATH]();
+	memcpy(m_ccfFileName, Filename, sizeof(Filename));
+#endif
 
 }
 
@@ -201,12 +200,12 @@ int CAcquireImage::InitialAcqServerAndDevice(std::vector<std::string> vServerNam
 		if (m_View[index] && !*m_View[index]) m_View[index]->Create();
 		if (m_Xfer[index] && !*m_Xfer[index]) m_Xfer[index]->Create();
 
-		//  设置相机参数
-		if (!FREE_RUN) 	m_AcqDevice[index]->SetFeatureValue("TriggerMode", "On");//触发模式打开		
-		else {
-			m_AcqDevice[index]->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
-			m_AcqDevice[index]->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定触发频率
-		}
+#ifdef FREERUN
+		m_AcqDevice[index]->SetFeatureValue("TriggerMode", "Off");//触发模式关闭
+		m_AcqDevice[index]->SetFeatureValue("AcquisitionLineRate", SCANE_RATE);//设定触发频率
+#else
+		m_AcqDevice[index]->SetFeatureValue("TriggerMode", "On");//触发模式打开		
+#endif
 
 		//  设置显示窗口属性
 		m_pImageWnd[index]->AttachEventHandler(m_pWndHandle);

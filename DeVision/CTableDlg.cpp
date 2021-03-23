@@ -98,7 +98,6 @@ BOOL CTableDlg::OnInitDialog()
 		return FALSE;
 
 	m_font.CreatePointFont(80, _T("Times New Roman"));
-	m_current_position = 0.0f;
 
 	InitialHistoryList();
 
@@ -117,14 +116,14 @@ BOOL CTableDlg::OnInitDialog()
 	m_save_path = "D:\\瑕疵检测数据记录\\1检测报表记录\\";
 	m_wstr_batch = L"NO1";               //批号
 	m_wstr_name = L"PET-1";                //型号
-	m_wstr_width = L"1650";             //宽度
+	m_wstr_width = L"1650.0f";             //宽度
 	m_wstr_schedule = L"白班";              //操作员
 	m_wstr_addition = L"无";
 	m_wstr_speed = L"20";             //平均速度
 	m_product_rank = 0;                //产品评级
 	m_DFT_rank[5] = { 0 };             //每种瑕疵类型的个数统计
 	m_serious_num = 0;                 //严重缺陷数目
-
+	m_pfCurPos = nullptr;
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -168,8 +167,8 @@ void CTableDlg::OnPaintClipboard(CWnd* pClipAppWnd, HGLOBAL hPaintStruct)
 	int wnd_height = rect.Height();
 
 	scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
-	if (m_current_position != 0)
-		scale_y = wnd_height / m_current_position;
+	if (*m_pfCurPos != 0)
+		scale_y = wnd_height / *m_pfCurPos;
 	else
 		scale_y = 1;
 
@@ -285,8 +284,8 @@ UINT CTableDlg::userDrawTable(LPVOID pParam)
 	{
 		// 计算缩放因子
 		pThis->scale_x = wnd_width / (IMAGE_WIDTH * 4 * HORIZON_PRECISION);
-		if (pThis->m_current_position != 0)
-			pThis->scale_y = wnd_height / pThis->m_current_position;
+		if (*pThis->m_pfCurPos != 0)
+			pThis->scale_y = wnd_height / *pThis->m_pfCurPos;
 		else
 			pThis->scale_y = 1;
 
@@ -418,7 +417,7 @@ void CTableDlg::DrawTable(CDC *mDC, CRect rect, float x, float y)
 
 		//添加标注
 		CString ykey;
-		ykey.Format(_T("%.1f"), (11 - i) * (m_current_position / 11.0f));
+		ykey.Format(_T("%.1f"), (11 - i) * (*m_pfCurPos / 11.0f));
 		mDC->TextOutW(0, i*high_size - 18, ykey);
 	}
 	

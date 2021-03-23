@@ -36,6 +36,7 @@ public:
 	int m_product_rank;                        //产品评级
 	int m_DFT_rank[5];                         //每种瑕疵类型的个数统计
 	int m_serious_num;                         //D级缺陷数目
+	float *m_pfCurPos;
 
 
 	void RefrushDistributeWnd();
@@ -58,7 +59,6 @@ public:
 	CFont m_font;
 	std::vector<DeffectInfo> *m_pvDFT;         //  用于显示分布图
 	std::vector<DeffectInfo> m_vecDFT;         //  用于写入报表
-	float m_current_position;
 	float scale_x;
 	float scale_y;
 

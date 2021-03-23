@@ -119,7 +119,7 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	//GetDlgItem(IDC_STATIC_CONT_VALUE3)->SetWindowText(L"50.0");
 
 	loadInitialParameters();
-	CButton* radio;
+	//CButton* radio;
 	//switch (m_nRankMethod)
 	//{
 	//case 0:

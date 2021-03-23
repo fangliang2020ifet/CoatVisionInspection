@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.0.1">
+<procedure name="main">
+<interface/>
+<body>
+<l>dev_update_off ()</l>
+<l>dev_close_window ()</l>
+<l>read_image (Image, 'E:/DeVisionProject/样图20210310/reference_image.png')</l>
+<l>get_image_size (Image, Width, Height)</l>
+<l>dev_open_window (0, 0, 0.06 * Width, 0.06 * Height, 'black', WindowHandle)</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<l>dev_set_draw ('margin')</l>
+<l>dev_set_line_width (3)</l>
+<l>dev_set_color ('red')</l>
+<c></c>
+<l>threshold (Image, Region1, 0, 255)</l>
+<l>intensity (Region1, Image, MeanTotal, DeviationTotal)</l>
+<c>*根据图像亮度判断光源是否开启</c>
+<l>if(MeanTotal &lt; 32)    </l>
+<l>    return()</l>
+<l>endif</l>
+<c></c>
+<c>*自动去除边界：减去平均像素值</c>
+<l>cut_border(Image, ImageCut, RegionCut, CutStatue)</l>
+<l>if(CutStatue == 0)</l>
+<l>    Image := Image</l>
+<l>else</l>
+<l>    Image := ImageCut    </l>
+<l>endif</l>
+<c></c>
+<l>median_image (Image, ImageMedian, 'square', 3, 'mirrored')</l>
+<c>*生成参考图像</c>
+<l>get_image_size (Image, Width, Height)</l>
+<l>gen_image_const (ImageAverage, 'byte', Width, Height)</l>
+<l>gen_image_const (ImageDeviation, 'byte', Width, Height)</l>
+<l>for column := 0 to Width - 1 by 1    </l>
+<l>    gen_rectangle1 (Rectangle, 0, column, Height, column + 1)</l>
+<l>    intensity (Rectangle, ImageMedian, Mean, Deviation)</l>
+<c>    *标准差</c>
+<l>    tuple_sqrt (Deviation, Sqrt)</l>
+<l>    overpaint_region (ImageAverage, Rectangle, Mean, 'fill')</l>
+<l>    overpaint_region (ImageDeviation, Rectangle, min([ 5 * Sqrt,255]), 'fill')   </l>
+<l>endfor</l>
+<l>*stop()</l>
+<c></c>
+<l>read_image (Image1, 'E:/DeVisionProject/样图20210310/test_image.png')</l>
+<l>if(CutStatue == 0)</l>
+<l>    Image1 := Image1</l>
+<l>else</l>
+<l>    reduce_domain (Image1, RegionCut, ImageReduced)</l>
+<l>    crop_domain (ImageReduced, ImagePart)</l>
+<l>    Image1 := ImagePart</l>
+<l>endif</l>
+<l>dev_display(Image1)</l>
+<c></c>
+<c>*测试：手动AOP优化</c>
+<l>set_system ('parallelize_operators', 'true')</l>
+<l>get_system ('parallelize_operators', AOP)</l>
+<l>optimize_aop ('median_image', 'byte', 'no_file', ['file_mode','model','parameters'], ['nil','mlp','false'])</l>
+<l>optimize_aop ('sub_image', 'byte', 'no_file', ['file_mode','model','parameters'], ['nil','mlp','false'])</l>
+<l>optimize_aop ('add_image', 'byte', 'no_file', ['file_mode','model','parameters'], ['nil','mlp','false'])</l>
+<l>optimize_aop ('threshold', 'byte', 'no_file', ['file_mode','model','parameters'], ['nil','mlp','false'])</l>
+<c></c>
+<l>count_seconds (Seconds1)</l>
+<l>for turn := 1 to 30 by 1</l>
+<l>    median_image (Image1, ImageMedian1, 'square', 3, 'mirrored')</l>
+<l>    sub_image (ImageMedian1, ImageAverage, ImageSub1, 1, 0)</l>
+<l>    sub_image (ImageAverage, ImageMedian1, ImageSub2, 1, 0)</l>
+<l>    add_image (ImageSub1, ImageSub2, ImageResult, 0.5, 0)</l>
+<l>    sub_image (ImageResult, ImageDeviation, ImageOut, 1, 0)</l>
+<c>    *通过阈值控制检出精度</c>
+<l>    threshold (ImageOut, Region, 1, 255)</l>
+<c>    *膨胀腐蚀减少所选区域数量</c>
+<l>    dilation_circle (Region, RegionDilation, 64)</l>
+<l>    erosion_circle (RegionDilation, RegionErosion, 64)    </l>
+<l>    connection (RegionErosion, ConnectedRegions)</l>
+<l>    select_shape (ConnectedRegions, SelectedRegions, 'area', 'and', 5, 65536)    </l>
+<l>    count_obj (SelectedRegions, Number)    </l>
+<l>    *select_obj (SelectedRegions, ObjectSelected, 1)</l>
+<l>    dev_display(SelectedRegions)</l>
+<l>    stop()</l>
+<l>endfor</l>
+<l>count_seconds (Seconds2)</l>
+<l>ResultMessage := Seconds2 - Seconds1</l>
+<l>Color := 'forest green'</l>
+<l>disp_message (WindowHandle, ResultMessage, 'window', 12, 12, Color, 'true')</l>
+<c></c>
+<l>stop()</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="cut_border">
+<interface>
+<io>
+<par name="InputImage" base_type="iconic" dimension="0"/>
+</io>
+<oo>
+<par name="OutputImage" base_type="iconic" dimension="0"/>
+<par name="CutRegion" base_type="iconic" dimension="0"/>
+</oo>
+<oc>
+<par name="Statue" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>get_image_size (InputImage, Width, Height)</l>
+<l>threshold (InputImage, Region, 0, 255)</l>
+<l>intensity (Region, InputImage, Mean, Deviation)</l>
+<l>gen_image_const (ImageMean, 'byte', Width, Height)</l>
+<l>overpaint_region (ImageMean, Region, Mean, 'fill')</l>
+<c>*被减图像    减去的图像</c>
+<l>sub_image (ImageMean, InputImage, ImageSub, 1, 8)</l>
+<l>threshold (ImageSub, Region1, 1, 255)</l>
+<l>connection (Region1, ConnectedRegions)</l>
+<l>select_shape (ConnectedRegions, SelectedRegions, 'height', 'and', Height, 99999)</l>
+<l>region_features (SelectedRegions, 'width', Value)</l>
+<l>if(Value == Width)</l>
+<l>    Statue := 0</l>
+<l>    return()   </l>
+<l>endif</l>
+<c></c>
+<l>region_features (SelectedRegions, 'column1', TopLeft)</l>
+<l>border := 100</l>
+<c>*判断是左侧去边还是右侧</c>
+<l>if( TopLeft &gt; 0)</l>
+<l>    Statue := 1</l>
+<l>    move_region (SelectedRegions, RegionMoved, 0, border)</l>
+<l>else</l>
+<l>    Statue := 2</l>
+<l>    move_region (SelectedRegions, RegionMoved, 0, -border)</l>
+<l>endif</l>
+<c></c>
+<c>*将区域拟合成矩形</c>
+<l>smallest_rectangle1 (RegionMoved, Row11, Column11, Row21, Column21)</l>
+<l>gen_rectangle1 (CutRegion, Row11, Column11, Row21, Column21)</l>
+<l>reduce_domain (InputImage, CutRegion, ImageReduced)</l>
+<l>crop_domain (ImageReduced, OutputImage)</l>
+<c></c>
+<l>return ()</l>
+</body>
+<docu id="cut_border">
+<library lang="zh_CN">fang</library>
+<parameters>
+<parameter id="CutRegion">
+<sem_type>region</sem_type>
+</parameter>
+<parameter id="InputImage">
+<sem_type>image</sem_type>
+<type_list>
+<item>byte</item>
+</type_list>
+</parameter>
+<parameter id="OutputImage">
+<sem_type>image</sem_type>
+<type_list>
+<item>byte</item>
+</type_list>
+</parameter>
+<parameter id="Statue">
+<default_type>integer</default_type>
+<sem_type>integer</sem_type>
+<type_list>
+<item>integer</item>
+</type_list>
+<value_max>0</value_max>
+</parameter>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
