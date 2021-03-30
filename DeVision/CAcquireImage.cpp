@@ -13,8 +13,9 @@ CAcquireImage::CAcquireImage()
 {
 	m_bSystemPause = FALSE;
 	m_nCameraNum = 0;
-	m_camera_system_initialled = FALSE;
+	m_bIsInitialized = FALSE;
 	for (int i = 0; i < 4; i++) { 
+		m_pProcessing[i] = NULL;
 		m_pImageWnd[i] = NULL;
 		m_Acq[i] = NULL;
 		m_AcqDevice[i] = NULL;
@@ -82,7 +83,7 @@ BOOL CAcquireImage::CameraSystemInitial()
 
 	CString cstrlog;
 	int acquire_num = 0;
-	if (!m_camera_system_initialled) {
+	if (!m_bIsInitialized) {
 		std::vector<std::string> vServerName;
 		std::vector<std::string> vDeviceName;
 		if (AutoScanServers(vServerName, vDeviceName)) {
@@ -93,7 +94,7 @@ BOOL CAcquireImage::CameraSystemInitial()
 				return FALSE;
 			}
 			else {
-				m_camera_system_initialled = TRUE;
+				m_bIsInitialized = TRUE;
 				cstrlog.Format(_T("图像采集系统初始化成功: 数量 %d"), acquire_num);
 				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
 			}
@@ -103,6 +104,40 @@ BOOL CAcquireImage::CameraSystemInitial()
 	else
 		return FALSE;
 }
+
+bool CAcquireImage::CameraSystemInitial(int newest)
+{
+	if (m_bIsInitialized)
+		return true;
+
+	bool state = false;
+
+	InitialThisClass();
+
+	CString cstrlog;
+	std::vector<std::string> vServerName;
+	std::vector<std::string> vDeviceName;
+	if (AutoScanServers(vServerName, vDeviceName)) {
+		int acquire_num = 0;
+		acquire_num = InitialAcqServerAndDevice(vServerName, vDeviceName);
+		if (acquire_num == 0) {
+			state = false;
+			cstrlog.Format(_T("图像采集系统初始化失败: %d"), GetLastError());
+			::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+		}
+		else {
+			state = true;
+			cstrlog.Format(_T("图像采集系统初始化成功: 数量 %d"), acquire_num);
+			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+		}
+	}
+	else
+		state = false;
+
+	m_bIsInitialized = state;
+	return state;
+}
+
 
 //自动搜索采集设备
 BOOL CAcquireImage::AutoScanServers(std::vector<std::string> &vServerName
@@ -503,7 +538,7 @@ void CAcquireImage::AcqCallback1(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			if (pThis->m_pProcessing[INDEX] != NULL) {
+			if (ho_image.IsInitialized() && pThis->m_pProcessing[INDEX] != NULL) {
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}			
@@ -527,7 +562,7 @@ void CAcquireImage::AcqCallback2(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			if (pThis->m_pProcessing[INDEX] != NULL) {
+			if (ho_image.IsInitialized() && pThis->m_pProcessing[INDEX] != NULL) {
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
@@ -551,7 +586,7 @@ void CAcquireImage::AcqCallback3(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			if (pThis->m_pProcessing[INDEX] != NULL) {
+			if (ho_image.IsInitialized() && pThis->m_pProcessing[INDEX] != NULL) {
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}
@@ -575,7 +610,7 @@ void CAcquireImage::AcqCallback4(SapXferCallbackInfo *pInfo)
 		if (!pThis->m_bSystemPause) {
 			HImage ho_image;
 			pThis->GenerateHImage(pThis->m_Buffer[INDEX], buffer_index, ho_image);
-			if (pThis->m_pProcessing[INDEX] != NULL) {
+			if (ho_image.IsInitialized() && pThis->m_pProcessing[INDEX] != NULL) {
 				pThis->m_pProcessing[INDEX]->m_listAcquiredImage.push_back(ho_image);
 				pThis->m_arrayFrameCount[INDEX] += 1;
 			}

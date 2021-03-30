@@ -14,7 +14,15 @@ IMPLEMENT_DYNAMIC(CSetupDlg, CDialogEx)
 CSetupDlg::CSetupDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_SETUP, pParent)
 {
-	ACCEPTED = FALSE;
+	ACCEPTED = false;
+	m_bSave_Parameter = false;
+	m_wnd1_range = 0.0f;
+	m_wnd2_range = 0.0f;
+	m_k_speed = 0.0f;
+	m_threadnum = 0;
+	m_bSaveRefImg = false;
+	m_strDeffect_Path = "";
+	m_strTable_Path = "";
 }
 
 CSetupDlg::~CSetupDlg()
@@ -38,11 +46,15 @@ BEGIN_MESSAGE_MAP(CSetupDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SELECT_DEFFECT_PATH, &CSetupDlg::OnBnClickedButtonSelectDeffectPath)
 	ON_BN_CLICKED(IDC_BUTTON_TABLE_PATH, &CSetupDlg::OnBnClickedButtonTablePath)
 	ON_BN_CLICKED(IDC_BUTTON_SYSTEM_RESET, &CSetupDlg::OnBnClickedButtonSystemReset)
+	ON_EN_KILLFOCUS(IDC_EDIT_WND1_RANGE, &CSetupDlg::OnEnKillfocusEditWnd1Range)
+	ON_EN_KILLFOCUS(IDC_EDIT_WND2_RANGE, &CSetupDlg::OnEnKillfocusEditWnd2Range)
+	ON_EN_KILLFOCUS(IDC_EDIT_K_SPEED, &CSetupDlg::OnEnKillfocusEditKSpeed)
+	ON_CBN_SELCHANGE(IDC_COMBO_THREADNUM, &CSetupDlg::OnCbnSelchangeComboThreadnum)
+	ON_BN_CLICKED(IDC_CHECK_SAVE_REF, &CSetupDlg::OnBnClickedCheckSaveRef)
 END_MESSAGE_MAP()
 
 
 // CSetupDlg 消息处理程序
-
 
 BOOL CSetupDlg::OnInitDialog()
 {
@@ -53,22 +65,18 @@ BOOL CSetupDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
+	loadInitialParameters();
+
 	CString ctext1, ctext2, ctext3;
 	ctext1.Format(_T("%.2f"), m_wnd1_range);
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
-	pedit->SetWindowTextW(ctext1);
-
+	GetDlgItem(IDC_EDIT_WND1_RANGE)->SetWindowTextW(ctext1);
 	ctext2.Format(_T("%.2f"), m_wnd2_range);
-	pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
-	pedit->SetWindowTextW(ctext2);
-
+	GetDlgItem(IDC_EDIT_WND2_RANGE)->SetWindowTextW(ctext2);
 	ctext3.Format(_T("%.2f"), m_k_speed);
-	pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
-	pedit->SetWindowTextW(ctext3);
+	GetDlgItem(IDC_EDIT_K_SPEED)->SetWindowTextW(ctext3);
 
 	CString cthread;
-	for (int i = 1; i < 6; i++)
-	{
+	for (int i = 1; i < 6; i++){
 		cthread.Format(_T("并行处理线程数  %d"), 6 - i);
 		m_combo_threadnum.InsertString(0, cthread);
 	}
@@ -98,49 +106,7 @@ void CSetupDlg::OnClose()
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
 		m_bSave_Parameter = TRUE;
-		if (m_wnd1_range != GetWnd1DisplayRange()) {
-			m_wnd1_range = GetWnd1DisplayRange();
-			CString cstr;
-			cstr.Format(_T("修改视窗 1 的显示范围：%.2f"), m_wnd1_range);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
-		if (m_wnd2_range != GetWnd2DisplayRange()) {
-			m_wnd2_range = GetWnd2DisplayRange();
-			CString cstr2;
-			cstr2.Format(_T("修改视窗 2 的显示范围：%.2f"), m_wnd2_range);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
-		}
-
-		if (m_k_speed != GetKSpeed()) {
-			m_k_speed = GetKSpeed();
-			CString cstr2;
-			cstr2.Format(_T("修改速度修正系数为：%.2f"), m_k_speed);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr2, NULL);
-		}
-
-		if (m_threadnum != GetThreadNumber()) {
-			m_threadnum = GetThreadNumber();
-			CString cstr3;
-			cstr3.Format(_T("修改图像处理线程数为：%d"), m_threadnum);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr3, NULL);
-		}
-
-		BOOL save = m_save_reference_image.GetCheck();
-		if (m_bSaveRefImg != save) {
-			m_bSaveRefImg = save;
-			CString cstr4;
-			if (m_bSaveRefImg) {
-				cstr4.Format(_T("保存参考图像设置为： YES"));
-				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr4, NULL);
-			}
-			else {
-				cstr4.Format(_T("保存参考图像设置为： NO"));
-				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr4, NULL);
-			}
-		}
-
-
+		saveParameters();
 	}
 	else m_bSave_Parameter = FALSE;
 
@@ -161,56 +127,72 @@ void CSetupDlg::OnOK()
 }
 
 
-float CSetupDlg::GetWnd1DisplayRange()
+void CSetupDlg::loadInitialParameters()
 {
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
-	float range;
-	CString str_edit;
-	pedit->GetWindowTextW(str_edit);
-	range = (float)_ttof(str_edit);
+	LPWSTR ReturnedString = new wchar_t[STRINGLENGTH];
+	CString ckeyname, cvalue;
+	std::string strvalue;
 
-	return range;
+	GetPrivateProfileStringW(APPNAME, L"DisplayWindow1", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_wnd1_range = std::stof(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"DisplayWindow2", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_wnd2_range = std::stof(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"SpeedK", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_k_speed = std::stof(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"ThreadNumber", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_threadnum = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"SaveImage", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_bSaveRefImg = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"ImagePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strDeffect_Path = (CW2A)ReturnedString;
+
+	GetPrivateProfileStringW(APPNAME, L"TablePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strTable_Path = (CW2A)ReturnedString;
+
+	delete[] ReturnedString;
 }
 
-float CSetupDlg::GetWnd2DisplayRange()
+
+void CSetupDlg::saveParameters()
 {
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND2_RANGE);
-	float range;
-	CString str_edit;
-	pedit->GetWindowTextW(str_edit);
-	range = (float)_ttof(str_edit);
+	UpdateData(true);
+	CString cstrparam, ckeyname;
 
-	return range;
-}
+	cstrparam.Format(_T("%.2f"), m_wnd1_range);
+	WritePrivateProfileStringW(APPNAME, L"DisplayWindow1", cstrparam, FILEPATH);
 
-float CSetupDlg::GetKSpeed()
-{
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
-	float range;
-	CString str_edit;
-	pedit->GetWindowTextW(str_edit);
-	range = (float)_ttof(str_edit);
+	cstrparam.Format(_T("%.2f"), m_wnd2_range);
+	WritePrivateProfileStringW(APPNAME, L"DisplayWindow2", cstrparam, FILEPATH);
 
-	return range;
+	cstrparam.Format(_T("%.2f"), m_k_speed);
+	WritePrivateProfileStringW(APPNAME, L"SpeedK", cstrparam, FILEPATH);
 
-}
+	cstrparam.Format(_T("%d"), m_threadnum);
+	WritePrivateProfileStringW(APPNAME, L"ThreadNumber", cstrparam, FILEPATH);
 
-int CSetupDlg::GetThreadNumber()
-{
-	//CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_THREADNUM);
-	//int range;
-	//CString str_edit;
-	//pedit->GetWindowTextW(str_edit);
-	//std::string str = (CW2A)str_edit;	
-	//range = std::stoi(str);
+	cstrparam.Format(_T("%d"), m_bSaveRefImg);
+	WritePrivateProfileStringW(APPNAME, L"SaveImage", cstrparam, FILEPATH);
 
-	int range;
-	range = m_combo_threadnum.GetCurSel() + 1;
+	cstrparam = (CA2W)m_strDeffect_Path.c_str();
+	WritePrivateProfileStringW(APPNAME, L"ImagePath", cstrparam, FILEPATH);
 
-	return range;
+	cstrparam = (CA2W)m_strTable_Path.c_str();
+	WritePrivateProfileStringW(APPNAME, L"TablePath", cstrparam, FILEPATH);
 
 }
 
+
+// 链接数据库
 BOOL CSetupDlg::ConnectAccess()
 {
 	//首先确认安装的office是否是64位版本，之后安装AccessDatabaseEngine_english_X64.exe，第三步在odbc 64中建立 系统dsn
@@ -583,7 +565,7 @@ void CSetupDlg::OnBnClickedButtonTablePath()
 void CSetupDlg::OnBnClickedButtonSystemReset()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_wnd1_range = 100.0f;
+	m_wnd1_range = 50.0f;
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_WND1_RANGE);
 	CString ctext;
 	ctext.Format(_T("%.2f"), m_wnd1_range);
@@ -594,25 +576,94 @@ void CSetupDlg::OnBnClickedButtonSystemReset()
 	ctext.Format(_T("%.2f"), m_wnd2_range);
 	pedit->SetWindowTextW(ctext);
 
-	m_k_speed = 491.52f;
+	m_k_speed = 764.0f;
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_K_SPEED);
 	ctext.Format(_T("%.2f"), m_k_speed);
 	pedit->SetWindowTextW(ctext);
 
-	m_threadnum = 1;
-	m_combo_threadnum.SetCurSel(0);
+	m_threadnum = 3;
+	m_combo_threadnum.SetCurSel(2);
 
 	m_bSaveRefImg = FALSE;
 	m_save_reference_image.SetCheck(0);
 
-	m_strDeffect_Path = "D:\\history";
+	m_strDeffect_Path = "D:\\瑕疵检测数据记录\\2瑕疵图像记录";
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_DEFFECT_PATH);
 	CString deffect_path(m_strDeffect_Path.c_str());
 	pedit->SetWindowTextW(deffect_path);
 
-	m_strTable_Path = "D:\\report";
+	m_strTable_Path = "D:\\瑕疵检测数据记录\\1检测报表记录";
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_TABLE_PATH);
 	CString table_path(m_strTable_Path.c_str());
 	pedit->SetWindowTextW(table_path);
+
+}
+
+
+void CSetupDlg::OnEnKillfocusEditWnd1Range()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	CString text;
+	GetDlgItem(IDC_EDIT_WND1_RANGE)->GetWindowTextW(text);
+	float value = (float)_ttof(text);
+	if (value > 0)
+		m_wnd1_range = value;
+
+	UpdateData(false);
+
+}
+
+
+void CSetupDlg::OnEnKillfocusEditWnd2Range()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	CString text;
+	GetDlgItem(IDC_EDIT_WND2_RANGE)->GetWindowTextW(text);
+	float value = (float)_ttof(text);
+	if (value > 0)
+		m_wnd2_range = value;
+
+	UpdateData(false);
+
+}
+
+
+void CSetupDlg::OnEnKillfocusEditKSpeed()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	CString text;
+	GetDlgItem(IDC_EDIT_K_SPEED)->GetWindowTextW(text);
+	float value = (float)_ttof(text);
+	if (value > 0)
+		m_k_speed = value;
+
+	UpdateData(false);
+
+}
+
+
+void CSetupDlg::OnCbnSelchangeComboThreadnum()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+
+	m_threadnum = m_combo_threadnum.GetCurSel() + 1;
+	UpdateData(false);
+
+}
+
+
+void CSetupDlg::OnBnClickedCheckSaveRef()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	int state = m_save_reference_image.GetCheck();
+	if (state == 0)
+		m_bSaveRefImg = false;
+	else if (state == 1)
+		m_bSaveRefImg = true;
 
 }

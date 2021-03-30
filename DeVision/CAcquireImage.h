@@ -8,8 +8,6 @@
 #include "ImportHalconCpp.h"
 #include "CImageProcessing.h"
 
-
-
 class CAcquireImage :	public SapManager
 {
 
@@ -29,11 +27,12 @@ public:
 	BOOL SHOW_BUFFER = TRUE;                          //图像显示
 	int SCANE_RATE = 10000;                           // 10 ms
 	float m_k_speed = 0.0f;                           //编码器速度较正系数
-	BOOL m_camera_system_initialled;
+	BOOL m_bIsInitialized;
 	CImageExWnd  *m_pImageWnd[4];                     //图像显示窗口
 	CImageExWndEventHandler *m_pWndHandle;
 	BOOL InitialThisClass();
 	BOOL CameraSystemInitial();
+	bool CameraSystemInitial(int newest);
 	BOOL Grab();
 	BOOL Snap();
 	BOOL Freeze();

@@ -1,5 +1,4 @@
 
-
 #include "stdafx.h"
 #include "DeVision.h"
 #include "CImageProcessing.h"
@@ -11,15 +10,10 @@
 #include <ctime>
 
 
-
-
-CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSize, float RadiusMin, float RadiusMax)
-	: m_threadnum(ThreadNum), m_k_normal_distribution(Distribution), 
-	m_median_filter_size(FilterSize), m_fMin_Radius(RadiusMin), m_fMax_Radius(RadiusMax)
+CImageProcessing::CImageProcessing()
 {
-	SYSTEM_PAUSE = FALSE;
+	m_pnSystemState = nullptr;
 	SAVE_REFERENCE_IMAGE = FALSE;
-	m_referenceImage_OK = FALSE;
 	m_strPath = "D:\\瑕疵检测数据记录\\2瑕疵图像记录\\";
 	m_nTotalListNumber = 0;
 	m_unImageIndex = 0;
@@ -33,11 +27,6 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 	m_nCutBorderStatue = 0;
 
 	InitializeCriticalSection(&m_csCalculateThread);
-	InitializeCriticalSection(&m_csDefImgList1);
-	InitializeCriticalSection(&m_csDefImgList2);
-	InitializeCriticalSection(&m_csDefImgList3);
-	InitializeCriticalSection(&m_csDefImgList4);
-	InitializeCriticalSection(&m_csDefImgList5);
 
 	InitialImageProcess();
 }
@@ -45,11 +34,6 @@ CImageProcessing::CImageProcessing(int ThreadNum, int Distribution, int FilterSi
 CImageProcessing::~CImageProcessing()
 {
 	DeleteCriticalSection(&m_csCalculateThread);
-	DeleteCriticalSection(&m_csDefImgList1);
-	DeleteCriticalSection(&m_csDefImgList2);
-	DeleteCriticalSection(&m_csDefImgList3);
-	DeleteCriticalSection(&m_csDefImgList4);
-	DeleteCriticalSection(&m_csDefImgList5);
 
 	try	{
 		m_listAcquiredImage.clear();
@@ -68,63 +52,12 @@ void CImageProcessing::ClearThisClass()
 	m_listDftImg.clear();
 }
 
-
-void CImageProcessing::HalconInitAOP()
+int CImageProcessing::getSystemState()
 {
-	HTuple hv_AOP, hv_method;
-	//   nil     threshold     linear     mlp  
-	hv_method = "mlp";
-
-	//测试：手动AOP优化
-	HalconCpp::SetSystem("parallelize_operators", "true");
-	HalconCpp::GetSystem("parallelize_operators", &hv_AOP);
-	HalconCpp::OptimizeAop("median_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
-		((HTuple("nil").Append(hv_method)).Append("false")));
-	HalconCpp::OptimizeAop("sub_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
-		((HTuple("nil").Append(hv_method)).Append("false")));
-	HalconCpp::OptimizeAop("add_image", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
-		((HTuple("nil").Append(hv_method)).Append("false")));
-	HalconCpp::OptimizeAop("threshold", "byte", "no_file", ((HTuple("file_mode").Append("model")).Append("parameters")),
-		((HTuple("nil").Append(hv_method)).Append("false")));
-}
-
-void CImageProcessing::HalconOpenGPU(HTuple &hv_DeviceHandle)
-{
-	//测试3:GPU加速，支持GPU加速的算子Halcon19.11有82个
-	//GPU加速是先从CPU中将数据拷贝到GPU上处理，处理完成后再将数据从GPU拷贝到CPU上。从CPU到GPU再从GPU到CPU是要花费时间的。
-	//GPU加速一定会比正常的AOP运算速度快吗?不一定!结果取决于显卡的好坏.
-	HTuple  hv_DeviceIdentifiers, hv_i, hv_Nmae;
-
-	//dev_update_off();
-
-
-	HalconCpp::QueryAvailableComputeDevices(&hv_DeviceIdentifiers);
-	hv_DeviceHandle = 0;
-	{
-		HTuple end_val34 = (hv_DeviceIdentifiers.TupleLength()) - 1;
-		HTuple step_val34 = 1;
-		for (hv_i = 0; hv_i.Continue(end_val34, step_val34); hv_i += step_val34)
-		{
-			HalconCpp::GetComputeDeviceInfo(HTuple(hv_DeviceIdentifiers[hv_i]), "name", &hv_Nmae);
-			//     GeForce GTX 1050 Ti      Intel(R) HD Graphics 630 
-			if (0 != (hv_Nmae == HTuple("GeForce GTX 1050 Ti")))
-			{
-				HalconCpp::OpenComputeDevice(HTuple(hv_DeviceIdentifiers[hv_i]), &hv_DeviceHandle);
-				break;
-			}
-		}
-	}
-
-	if (0 != (hv_DeviceHandle != 0))
-	{
-		HalconCpp::SetComputeDeviceParam(hv_DeviceHandle, "asynchronous_execution", "false");
-		HalconCpp::InitComputeDevice(hv_DeviceHandle, "median_image");
-		//init_compute_device (DeviceHandle, 'sub_image')
-		//init_compute_device (DeviceHandle, 'add_image')
-		HalconCpp::ActivateComputeDevice(hv_DeviceHandle);
-	}
-
-	//HalconCpp::DeactivateComputeDevice(hv_DeviceHandle);
+	if (m_pnSystemState != nullptr)
+		return *m_pnSystemState;
+	else
+		return 0;
 }
 
 void CImageProcessing::InitialImageProcess()
@@ -138,10 +71,12 @@ void CImageProcessing::InitialImageProcess()
 	return;
 }
 
+// CWinThread 线程
 BOOL CImageProcessing::BeginProcess()
 {
 	// Halcon 速度优化
-	HalconInitAOP();
+	//HalconInitAOP();
+	//Sleep(300);
 
 	bool state;
 	std::string str_path;
@@ -160,6 +95,15 @@ BOOL CImageProcessing::BeginProcess()
 		return FALSE;
 	}
 
+#ifdef TESTMODEL
+	state = acquireImageThread = AfxBeginThread(run, this);
+	if (!state) {
+		cstrlog.Format(_T("图像加载线程创建失败"));
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+		return FALSE;
+	}
+#endif
+
 	for (int index = 0; index < m_threadnum; index++) {
 		state = m_CalculateThread[index] = AfxBeginThread(m_threadCallBack[index], this);
 		if (state) {
@@ -174,12 +118,52 @@ BOOL CImageProcessing::BeginProcess()
 	}
 
 	ResetEvent(m_hFinishedProcess);
-	StopManage_Event.ResetEvent();
+	//StopManage_Event.ResetEvent();
 	//CalculateThread_1_StoppedEvent.ResetEvent();
 	CalculateThread_2_StoppedEvent.ResetEvent();
 	CalculateThread_3_StoppedEvent.ResetEvent();
 	CalculateThread_4_StoppedEvent.ResetEvent();
-	CalculateThread_5_StoppedEvent.ResetEvent();	
+	CalculateThread_5_StoppedEvent.ResetEvent();
+
+	return TRUE;
+}
+
+// std 线程
+BOOL CImageProcessing::BeginProcess(int std)
+{
+	// Halcon 速度优化
+	//HalconInitAOP();
+	//Sleep(300);
+
+	std::string str_path;
+	if (!GetSavePath(str_path)) {
+		cstrlog.Format(_T("保存目录不存在"));
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstrlog, NULL);
+		return FALSE;
+	}
+
+	//创建管理线程
+	m_unImageIndex = 0;
+	if (thdManageThread != NULL)
+		thdManageThread = NULL;
+	if(!thdManageThread)
+		thdManageThread = new std::thread(&CImageProcessing::stdManageThread, this);
+
+#ifdef TESTMODEL
+	if (thdAcquireImageThread != NULL)
+		thdAcquireImageThread = NULL;
+	if (!thdAcquireImageThread)
+		thdAcquireImageThread = new std::thread(&CImageProcessing::stdRunLoad, this);
+#endif
+
+	for (int index = 0; index < m_threadnum; index++) {
+		if (thdCalculateThread[index] != NULL)
+			thdCalculateThread[index] = NULL;
+		if (!thdCalculateThread[index])
+			thdCalculateThread[index] = new std::thread(&CImageProcessing::stdImageCalculate, this, index);
+	}
+
+	ResetEvent(m_hFinishedProcess);
 
 	return TRUE;
 }
@@ -187,18 +171,25 @@ BOOL CImageProcessing::BeginProcess()
 void CImageProcessing::StopManageThread()
 {
 	// 线程停止
-	StopManage_Event.SetEvent();
+	//StopManage_Event.SetEvent();
+
+#ifdef TESTMODEL
+	bstop_add = false;
+	run_add = false;
+#endif
 
 	StopCalculateThreads();
 }
 
 void CImageProcessing::StopCalculateThreads()
 {
-	for (int index = 0; index < m_threadnum; index++)
+	for (int index = 0; index < m_threadnum; index++) {
 		m_bThreadAlive[index] = FALSE;
+		run_calculate[index] = false;
+	}
 
-	if (hv_GPU_Handle.Length() > 0)
-		HalconCpp::DeactivateComputeDevice(hv_GPU_Handle);
+	//if (hv_GPU_Handle.Length() > 0)
+	//	HalconCpp::DeactivateComputeDevice(hv_GPU_Handle);
 
 	m_listAcquiredImage.clear();
 }
@@ -211,10 +202,20 @@ void CImageProcessing::RestartProcess()
 BOOL CImageProcessing::IsThreadsAlive()
 {
 	for (int index = 0; index < m_threadnum; index++) {
-		if (m_bThreadAlive[index] = TRUE)
+		if (m_bThreadAlive[index] == TRUE)
 			return TRUE;
 	}
 	return FALSE;
+}
+
+BOOL CImageProcessing::IsThreadsAlive(int std)
+{
+	for (int index = 0; index < m_threadnum; index++) {
+		if (run_calculate[index] == true)
+			return true;
+	}
+
+	return false;
 }
 
 BOOL CImageProcessing::IsFileExist(const std::string &filename)
@@ -867,37 +868,6 @@ unsigned short int CImageProcessing::RankDivide(float area, float radius, float 
 }
 
 //分类算法，分类器    SVM
-unsigned short int CImageProcessing::ImageClassification(float radius)
-{
-	unsigned short int kind = 0;
-	//HObject ho_region;
-	//HalconCpp::AutoThreshold(ho_img, &ho_region, 3);
-
-	//HTuple hv_RowCircle, hv_ColumnCircle, hv_Radius;
-	//HalconCpp::SmallestCircle(ho_img, &hv_RowCircle, &hv_ColumnCircle, &hv_Radius);
-	//float radius = (float)hv_Radius.D();
-
-	if (0 <= radius && radius < 16)
-		kind = 0;
-	else if (16 <= radius && radius < 32)
-		kind = 1;
-	else if (32 <= radius && radius < 48)
-		kind = 2;
-	else if (48 <= radius && radius < 64)
-		kind = 3;
-	else if (64 <= radius && radius < 80)
-		kind = 4;
-	else if (80 <= radius && radius < 96)
-		kind = 5;
-	else if (96 <= radius && radius < 112)
-		kind = 6;
-	else if (112 <= radius && radius <= 128)
-		kind = 7;
-
-	return kind;
-}
-
-
 void CImageProcessing::InitialClassify(const char * svm_file_name, HTuple &hv_SVMHandle)
 {
 	//m_hvClass.Clear();
@@ -914,6 +884,9 @@ void CImageProcessing::InitialClassify(const char * svm_file_name, HTuple &hv_SV
 
 int CImageProcessing::ClassifyRegionsWithSVM(HTuple hv_SVMHandle, HObject img)
 {
+	if (!img.IsInitialized())
+		return 4;
+
 	HObject ho_ImageMedian, ho_Region, ho_ImageAverage, ho_ImageDeviation;
 	HObject ho_ImageSub1, ho_ImageSub2, ho_ImageResult, ho_ImageOut;
 	HObject ho_RegionDft, ho_RegionDilation, ho_RegionErosion, ho_ConnectedRegions;
@@ -949,6 +922,10 @@ int CImageProcessing::ClassifyRegionsWithSVM(HTuple hv_SVMHandle, HObject img)
 	HalconCpp::ErosionCircle(ho_RegionDilation, &ho_RegionErosion, 2.5);
 	HalconCpp::Connection(ho_RegionErosion, &ho_ConnectedRegions);
 	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and", 3, 65536);
+	HTuple hv_num;
+	HalconCpp::CountObj(ho_SelectedRegions, &hv_num);
+	if (hv_num.TupleInt() == 0)
+		return 4;
 	HalconCpp::Union1(ho_SelectedRegions, &ho_RegionUnion);
 
 	//计算特征值: 15 个
@@ -1320,9 +1297,9 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std:
 	}
 
 
-#ifdef TESTMODEL
-	AddNoise(ho_Image);
-#endif
+//#ifdef TESTMODEL
+//	AddNoise(ho_Image);
+//#endif
 
 	ho_ImageAverage = m_hi_average;
 	ho_ImageDeviation = m_hi_deviation;
@@ -1583,7 +1560,7 @@ void CImageProcessing::SplitAndMeasureDeffect(HObject selectArea)
 }
 
 // add noise
-void CImageProcessing::AddNoise(HObject hoImg)
+void CImageProcessing::AddNoise(HObject &hoImg)
 {
 	HTuple  hv_Width, hv_Height, hv_minvalue, hv_maxvalue;
 	HTuple  hv_Number, hv_index, hv_value;
@@ -1611,6 +1588,39 @@ void CImageProcessing::AddNoise(HObject hoImg)
 		OverpaintRegion(hoImg, ho_ObjectSelected, hv_value, "fill");
 	}
 }
+
+
+void CImageProcessing::AddNoise(HObject imgIn, HObject &imgOut)
+{
+	HTuple  hv_Width, hv_Height, hv_minvalue, hv_maxvalue;
+	HTuple  hv_Number, hv_index, hv_value;
+	HObject ho_Regions, ho_ObjectSelected;
+
+	HObject hoImg;
+	HalconCpp::CopyImage(imgIn, &hoImg);
+	GetImageSize(hoImg, &hv_Width, &hv_Height);
+
+	unsigned seed = (unsigned)std::time(0);
+	std::srand(seed);
+	int noiseNum = std::rand() % 2;
+	if (noiseNum == 0) {
+		imgOut = imgIn;
+		return;
+	}
+	GenRandomRegions(&ho_Regions, "ellipse", 1, 32, 1, 32, -0.7854, 0.7854, noiseNum, hv_Width, hv_Height);
+	CountObj(ho_Regions, &hv_Number);
+
+	hv_minvalue = 0;
+	hv_maxvalue = 255;
+	for (hv_index = 1; hv_index.Continue(hv_Number, 1); hv_index += 1) {
+		SelectObj(ho_Regions, &ho_ObjectSelected, hv_index);
+		// 填充随机像素值
+		hv_value = hv_minvalue + (HTuple::TupleRand(1)*(hv_maxvalue - hv_minvalue));
+		OverpaintRegion(hoImg, ho_ObjectSelected, hv_value, "fill");
+	}
+	imgOut = hoImg;
+}
+
 
 //管理线程
 UINT CImageProcessing::ManageThread(LPVOID pParam)
@@ -1649,28 +1659,41 @@ UINT CImageProcessing::ManageThread(LPVOID pParam)
 			continue;
 	}
 
-#ifdef TESTMODEL
+	return 0;
+}
+
+// 测试模式读取图像
+UINT CImageProcessing::run(LPVOID pParam)
+{
+	CImageProcessing *pThis = (CImageProcessing*)pParam;
+	pThis->bstop_add = true;
+	//CSingleLock singlelock(&pThis->mutex);
+
 	std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\test_image.png";
-	pThis->LoadSingleImage(imgname.c_str());
-	DWORD dwStop = 0;
-	for (;;) {
-		dwStop = WaitForSingleObject(pThis->StopManage_Event, 1637);
-		switch (dwStop)
-		{
-		case WAIT_TIMEOUT: {
-			if (!pThis->SYSTEM_PAUSE) {
-				pThis->LoadImageToQueue();
-				pThis->m_nTotalListNumber += pThis->m_threadnum;
-			}
-			break;
+	HTuple hv_image_name = (HTuple)((CA2W)imgname.c_str());
+	HObject test_img;
+	HalconCpp::ReadImage(&test_img, hv_image_name);
+	while (pThis->bstop_add) {
+		if (*pThis->m_pnSystemState == 4) {
+			Sleep(500);
+			continue;
 		}
-		case WAIT_FAILED:
-			return -1;
-		case WAIT_OBJECT_0:
-			return 0;
+
+		if (pThis->m_listAcquiredImage.size() < 1) {
+			HObject noise_img;
+			pThis->AddNoise(test_img, noise_img);
+			//singlelock.Lock();
+			//if (singlelock.IsLocked()) {
+			//	pThis->m_listAcquiredImage.push_back(noise_img);
+			//	pThis->m_nTotalListNumber += 1;
+			//}
+			//singlelock.Unlock();
+
+			pThis->m_listAcquiredImage.push_back(noise_img);
+			pThis->m_nTotalListNumber += 1;
 		}
+		Sleep(733);
 	}
-#endif
 
 	return 0;
 }
@@ -1704,7 +1727,7 @@ UINT CImageProcessing::ImageCalculate1(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1796,7 +1819,7 @@ UINT CImageProcessing::ImageCalculate2(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1881,7 +1904,7 @@ UINT CImageProcessing::ImageCalculate3(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -1964,7 +1987,7 @@ UINT CImageProcessing::ImageCalculate4(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -2047,7 +2070,7 @@ UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 		else {
 			std::vector<DeffectInfo> vec_dft_info;
 			std::vector<HalconCpp::HObject> vec_dft_img;
-			singlelock.Lock(1000);     //  没被调用就上锁自己用，已被调用就等着
+			singlelock.Lock();     //  没被调用就上锁自己用，已被调用就等着
 			if (singlelock.IsLocked()) {
 				hi_acquire = pImgProc->m_listAcquiredImage.front();
 				pImgProc->m_listAcquiredImage.pop_front();
@@ -2088,4 +2111,145 @@ UINT CImageProcessing::ImageCalculate5(LPVOID pParam)
 	pImgProc->CalculateThread_5_StoppedEvent.SetEvent();
 
 	return 0;
+}
+
+// STD
+void CImageProcessing::stdManageThread()
+{
+	std::string model_filename = ".\\system\\Model.svm";
+	m_modelFileName = (CA2W)model_filename.c_str();
+	m_nTotalListNumber = 0;
+	bool bresult = false;
+	while (1) {
+		if (ImgListMutex.try_lock()) {
+			bresult = GenerateReferenceImage(m_hi_average, m_hi_deviation);
+			ImgListMutex.unlock();
+		}
+		else
+			Sleep(200);
+			
+		if (bresult) {
+			if (SAVE_REFERENCE_IMAGE) {
+				//std::string filename = "D:\\DetectRecords\\ReferenceImage.png";
+				//SaveReferenceImage(filename.c_str());
+				CString cstr = L"参考图像已保存";
+				::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			}
+			m_unImageIndex += 4;
+
+			CString cstr = L"检测算法初始化完成";
+			::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+			::SendMessage(hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
+			break;
+		}
+	}
+}
+
+void CImageProcessing::stdImageCalculate(int index)
+{
+	run_calculate[index] = true;
+	for (;;) {
+		if (CheckReferenceImageAvilable())
+			break;
+		else {
+			Sleep(200);
+			continue;
+		}
+	}
+
+	HImage hi_average = m_hi_average;
+	HImage hi_deviation = m_hi_deviation;
+	HImage hi_acquire;
+	HTuple hv_SVMHandle;
+	InitialClassify((CW2A)m_modelFileName.GetBuffer(), hv_SVMHandle);
+	if (hv_SVMHandle.Length() == 0) {
+		CString cstr;
+		cstr.Format(_T("分类器初始化失败:thread = %d, size = %d"), index + 1);
+		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+		return;
+	}
+
+	while (run_calculate[index]) {
+		// lock()阻塞式   try_lock 非阻塞式
+		ImgListMutex.lock();
+		// 如果图像队列为空则重新循环
+		if (m_listAcquiredImage.empty()) {
+			ImgListMutex.unlock();
+			Sleep(50);
+			continue;
+		}
+		int list_size = (int)m_listAcquiredImage.size();
+		hi_acquire.Clear();
+		hi_acquire = m_listAcquiredImage.front();
+		m_listAcquiredImage.pop_front();
+		m_unImageIndex += 1;
+		ImgListMutex.unlock();  // 解锁
+
+		std::vector<DeffectInfo> vec_dft_info;
+		std::vector<HalconCpp::HObject> vec_dft_img;
+		//瑕疵检测算法
+		if (!hi_acquire.IsInitialized()) {
+			CString cstr;
+			cstr.Format(_T("图像未被初始化:thread = %d, size = %d"), index + 1, list_size);
+			::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+			continue;
+		}
+		StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
+
+		//瑕疵信息和图像存入队列
+		DeffectInfo tempInfo;
+		HObject ho_tempImg;
+		WriteDFTInfo.lock();
+		for (int i = 0; i < (int)vec_dft_info.size(); i++) {
+			tempInfo = vec_dft_info.at(i);
+			tempInfo.image_index = (unsigned)m_unImageIndex;
+			m_listDftInfo.push_back(tempInfo);
+			ho_tempImg = vec_dft_img.at(i);
+			m_listDftImg.push_back(ho_tempImg);
+		}
+		WriteDFTInfo.unlock();
+	}
+		   
+	run_calculate[index] = false;
+	//通过第一个线程判断所有计算线程均已结束
+	if (index == 0) {
+		for (;;) {
+			if (IsThreadsAlive(100))
+				Sleep(133);
+			else {
+				SetEvent(m_hFinishedProcess);
+				CString cstr = L"计算线程已结束";
+				::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+				::SendMessage(hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
+				break;
+			}
+		}
+	}
+}
+
+void CImageProcessing::stdRunLoad()
+{
+	run_add = true;
+	std::string imgname = "D:\\瑕疵检测数据记录\\test_image\\test_image.png";
+	HTuple hv_image_name = (HTuple)((CA2W)imgname.c_str());
+	HObject test_img;
+	HObject noise_img;
+	HalconCpp::ReadImage(&test_img, hv_image_name);
+
+	while (run_add) {
+		// 系统暂停
+		if (getSystemState() == 4) {
+			Sleep(500);
+			continue;
+		}
+
+		noise_img.Clear();
+		AddNoise(test_img, noise_img);
+		ImgListMutex.lock();
+		m_listAcquiredImage.push_back(noise_img);
+		m_nTotalListNumber += 1;
+		ImgListMutex.unlock();
+		Sleep(433);
+	}
+	run_add = false;
 }

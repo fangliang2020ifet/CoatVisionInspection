@@ -47,6 +47,10 @@ BEGIN_MESSAGE_MAP(CAlgorithmDlg, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_EDIT_CONT_VALUE1, &CAlgorithmDlg::OnEnKillfocusEditContValue1)
 	ON_EN_KILLFOCUS(IDC_EDIT_CONT_VALUE2, &CAlgorithmDlg::OnEnKillfocusEditContValue2)
 	ON_EN_KILLFOCUS(IDC_EDIT_CONT_VALUE3, &CAlgorithmDlg::OnEnKillfocusEditContValue3)
+	ON_EN_KILLFOCUS(IDC_EDIT_SELECT_AREA_MIN, &CAlgorithmDlg::OnEnKillfocusEditSelectAreaMin)
+	ON_EN_KILLFOCUS(IDC_EDIT_SELECT_AREA_MAX, &CAlgorithmDlg::OnEnKillfocusEditSelectAreaMax)
+	ON_CBN_SELCHANGE(IDC_COMBO_GLOBAL_THRESHOLD, &CAlgorithmDlg::OnCbnSelchangeComboGlobalThreshold)
+	ON_CBN_SELCHANGE(IDC_COMBO_SELECT_THRESHOLD, &CAlgorithmDlg::OnCbnSelchangeComboSelectThreshold)
 END_MESSAGE_MAP()
 
 // CAlgorithmDlg 消息处理程序
@@ -60,24 +64,13 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	if (hMainWnd == NULL)
 		return FALSE;
 
-	m_combo_global_threshold.AddString(L"3");
-	m_combo_global_threshold.AddString(L"4");
-	m_combo_global_threshold.AddString(L"5");
-	m_combo_global_threshold.AddString(L"6");
-	m_combo_global_threshold.AddString(L"7");
-	m_combo_global_threshold.AddString(L"8");
-	m_combo_global_threshold.AddString(L"9");
-	m_combo_global_threshold.AddString(L"10");
-	m_combo_global_threshold.AddString(L"11");
-	m_combo_global_threshold.AddString(L"12");
-	m_combo_global_threshold.AddString(L"13");
-	m_combo_global_threshold.AddString(L"14");
-	m_combo_global_threshold.AddString(L"15");
-	m_combo_global_threshold.AddString(L"16");
-	m_combo_global_threshold.AddString(L"17");
-	m_combo_global_threshold.AddString(L"18");
-	m_combo_global_threshold.AddString(L"19");
-	m_combo_global_threshold.AddString(L"20");
+	loadInitialParameters();
+
+	CString ctext;
+	for (int i = 0; i < 18; i++) {
+		ctext.Format(_T("%d"), i + 3);
+		m_combo_global_threshold.AddString(ctext);
+	}
 	m_combo_global_threshold.SetCurSel(m_normal_distribution - 3);
 
 	m_combo_select_threshold.AddString(L"3");
@@ -89,73 +82,32 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	m_combo_select_threshold.AddString(L"15");
 	m_combo_select_threshold.SetCurSel(m_filter_size - 1);
 
-	CString cstr;
-	cstr.Format(_T("%.2f"), m_min_radius);
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
-	pedit->SetWindowTextW(cstr);
+	ctext.Format(_T("%.2f"), m_min_radius);
+	GetDlgItem(IDC_EDIT_SELECT_AREA_MIN)->SetWindowText(ctext);
+	ctext.Format(_T("%.2f"), m_max_radius);
+	GetDlgItem(IDC_EDIT_SELECT_AREA_MAX)->SetWindowText(ctext);
 
-	cstr.Format(_T("%.2f"), m_max_radius);
-	pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
-	pedit->SetWindowTextW(cstr);
-
-	//GetDlgItem(IDC_EDIT_AREA_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_EDIT_AREA_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_EDIT_AREA_VALUE3)->SetWindowText(L"50.0");
-	//GetDlgItem(IDC_EDIT_RADIUS_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_EDIT_RADIUS_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_EDIT_RADIUS_VALUE3)->SetWindowText(L"50.0");
-	//GetDlgItem(IDC_EDIT_CONT_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_EDIT_CONT_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_EDIT_CONT_VALUE3)->SetWindowText(L"50.0");
-
-	//GetDlgItem(IDC_STATIC_AREA_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_STATIC_AREA_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_STATIC_AREA_VALUE3)->SetWindowText(L"50.0");
-	//GetDlgItem(IDC_STATIC_RADIUS_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_STATIC_RADIUS_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_STATIC_RADIUS_VALUE3)->SetWindowText(L"50.0");
-	//GetDlgItem(IDC_STATIC_CONT_VALUE1)->SetWindowText(L"10.0");
-	//GetDlgItem(IDC_STATIC_CONT_VALUE2)->SetWindowText(L"20.0");
-	//GetDlgItem(IDC_STATIC_CONT_VALUE3)->SetWindowText(L"50.0");
-
-	loadInitialParameters();
-	//CButton* radio;
-	//switch (m_nRankMethod)
-	//{
-	//case 0:
-	//	radio = (CButton*)GetDlgItem(IDC_RADIO_AREA);
-	//	radio->SetCheck(1);
-	//	break;
-	//case 1:
-	//	radio = (CButton*)GetDlgItem(IDC_RADIO_RADIUS);
-	//	radio->SetCheck(1);
-	//	break;
-	//case 2:
-	//	radio = (CButton*)GetDlgItem(IDC_RADIO_CONTLENGTH);
-	//	radio->SetCheck(1);
-	//	break;
-	//}
-	cstr.Format(_T("%.2f"), m_fRankValue1);
-	GetDlgItem(IDC_EDIT_AREA_VALUE1)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_RADIUS_VALUE1)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_CONT_VALUE1)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_AREA_VALUE1)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_RADIUS_VALUE1)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_CONT_VALUE1)->SetWindowText(cstr);
-	cstr.Format(_T("%.2f"), m_fRankValue2);
-	GetDlgItem(IDC_EDIT_AREA_VALUE2)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_RADIUS_VALUE2)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_CONT_VALUE2)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_AREA_VALUE2)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_RADIUS_VALUE2)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_CONT_VALUE2)->SetWindowText(cstr);
-	cstr.Format(_T("%.2f"), m_fRankValue3);
-	GetDlgItem(IDC_EDIT_AREA_VALUE3)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_RADIUS_VALUE3)->SetWindowText(cstr);
-	GetDlgItem(IDC_EDIT_CONT_VALUE3)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_AREA_VALUE3)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_RADIUS_VALUE3)->SetWindowText(cstr);
-	GetDlgItem(IDC_STATIC_CONT_VALUE3)->SetWindowText(cstr);
+	ctext.Format(_T("%.2f"), m_fRankValue1);
+	GetDlgItem(IDC_EDIT_AREA_VALUE1)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_RADIUS_VALUE1)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_CONT_VALUE1)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_AREA_VALUE1)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_RADIUS_VALUE1)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_CONT_VALUE1)->SetWindowText(ctext);
+	ctext.Format(_T("%.2f"), m_fRankValue2);
+	GetDlgItem(IDC_EDIT_AREA_VALUE2)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_RADIUS_VALUE2)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_CONT_VALUE2)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_AREA_VALUE2)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_RADIUS_VALUE2)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_CONT_VALUE2)->SetWindowText(ctext);
+	ctext.Format(_T("%.2f"), m_fRankValue3);
+	GetDlgItem(IDC_EDIT_AREA_VALUE3)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_RADIUS_VALUE3)->SetWindowText(ctext);
+	GetDlgItem(IDC_EDIT_CONT_VALUE3)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_AREA_VALUE3)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_RADIUS_VALUE3)->SetWindowText(ctext);
+	GetDlgItem(IDC_STATIC_CONT_VALUE3)->SetWindowText(ctext);
 
 	UpdateData(false);
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -188,39 +140,6 @@ void CAlgorithmDlg::OnClose()
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (AfxMessageBox(_T("是否保存？"), MB_YESNO | MB_ICONWARNING) == IDYES) {
 		m_bSave_Parameter = TRUE;
-
-		int index_normal_distribution = m_combo_global_threshold.GetCurSel() + 3;
-		if (m_normal_distribution != index_normal_distribution) {
-			m_normal_distribution = index_normal_distribution;
-			CString cstr;
-			cstr.Format(_T("设置检测算法概率密度为： %d"), m_normal_distribution);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
-		int index_filter_size = m_combo_select_threshold.GetCurSel() + 1;
-		if (m_filter_size != index_filter_size) {
-			m_filter_size = index_filter_size;
-			CString cstr;
-			cstr.Format(_T("设置检测算法图像滤波器大小为： %d"), 2 * m_filter_size + 1);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
-		float value_selectarea_min = GetSelectAreaValueMin();
-		if (m_min_radius != value_selectarea_min) {
-			m_min_radius = value_selectarea_min;
-			CString cstr;
-			cstr.Format(_T("设置最小检测半径： %.2f 毫米"), m_min_radius);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
-		float value_selectarea_max = GetSelectAreaValueMax();
-		if (m_max_radius != value_selectarea_max) {
-			m_max_radius = value_selectarea_max;
-			CString cstr;
-			cstr.Format(_T("设置最大检测半径： %.2f 毫米"), m_max_radius);
-			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-		}
-
 		saveParameters();
 	}
 	else m_bSave_Parameter = FALSE;
@@ -234,6 +153,22 @@ void CAlgorithmDlg::loadInitialParameters()
 	CString ckeyname, cvalue;
 
 	std::string strvalue;
+	GetPrivateProfileStringW(APPNAME, L"NormalDistribution", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_normal_distribution = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"FilterSize", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_filter_size = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"RadiusMin", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_min_radius = std::stof(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"RadiusMax", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_max_radius = std::stof(strvalue);
+
 	GetPrivateProfileStringW(APPNAME, L"RankMethod", L"", ReturnedString, STRINGLENGTH, FILEPATH);
 	strvalue = (CW2A)ReturnedString;
 	m_nRankMethod = std::stoi(strvalue);
@@ -260,6 +195,18 @@ void CAlgorithmDlg::saveParameters()
 	UpdateData(true);
 	CString cstrparam, ckeyname;
 
+	cstrparam.Format(_T("%d"), m_normal_distribution);
+	WritePrivateProfileStringW(APPNAME, L"NormalDistribution", cstrparam, FILEPATH);
+	
+	cstrparam.Format(_T("%d"), m_filter_size);
+	WritePrivateProfileStringW(APPNAME, L"FilterSize", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_min_radius);
+	WritePrivateProfileStringW(APPNAME, L"RadiusMin", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_max_radius);
+	WritePrivateProfileStringW(APPNAME, L"RadiusMax", cstrparam, FILEPATH);
+
 	cstrparam.Format(_T("%d"), m_nRankMethod);
 	WritePrivateProfileStringW(APPNAME, L"RankMethod", cstrparam, FILEPATH);
 
@@ -271,31 +218,55 @@ void CAlgorithmDlg::saveParameters()
 
 	cstrparam.Format(_T("%.2f"), m_fRankValue3);
 	WritePrivateProfileStringW(APPNAME, L"RankValue3", cstrparam, FILEPATH);
+}
 
+
+void CAlgorithmDlg::OnCbnSelchangeComboGlobalThreshold()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+
+	m_normal_distribution = m_combo_global_threshold.GetCurSel() + 3;
+	UpdateData(false);
+}
+
+
+void CAlgorithmDlg::OnCbnSelchangeComboSelectThreshold()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+
+	m_filter_size = m_combo_select_threshold.GetCurSel() + 1;
+	UpdateData(false);
 
 }
 
 
-float CAlgorithmDlg::GetSelectAreaValueMin()
+void CAlgorithmDlg::OnEnKillfocusEditSelectAreaMin()
 {
-	float range;
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
-	CString str_edit;
-	pedit->GetWindowTextW(str_edit);
-	std::string str = (CW2A)str_edit;
-	range = std::stof(str);
-	return range;
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	CString text;
+	GetDlgItem(IDC_EDIT_SELECT_AREA_MIN)->GetWindowTextW(text);
+	float value = (float)_ttof(text);
+	if (value > 0)
+		m_min_radius = value;
+
+	UpdateData(false);
 }
 
-float CAlgorithmDlg::GetSelectAreaValueMax()
+
+void CAlgorithmDlg::OnEnKillfocusEditSelectAreaMax()
 {
-	float range;
-	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
-	CString str_edit;
-	pedit->GetWindowTextW(str_edit);
-	std::string str = (CW2A)str_edit;
-	range = std::stof(str);
-	return range;
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	CString text;
+	GetDlgItem(IDC_EDIT_SELECT_AREA_MAX)->GetWindowTextW(text);
+	float value = (float)_ttof(text);
+	if (value > 0)
+		m_max_radius = value;
+
+	UpdateData(false);
 }
 
 //恢复默认设置
@@ -308,16 +279,27 @@ void CAlgorithmDlg::OnBnClickedButtonReset()
 	m_filter_size = 1;
 	m_combo_select_threshold.SetCurSel(0);
 
-	m_min_radius = 0.05f;
+	m_min_radius = 0.1f;
 	CString cstr;
 	cstr.Format(_T("%.2f"), m_min_radius);
 	CEdit * pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MIN);
 	pedit->SetWindowTextW(cstr);
 
-	m_max_radius = 50.00f;
+	m_max_radius = 10.0f;
 	cstr.Format(_T("%.2f"), m_max_radius);
 	pedit = (CEdit*)GetDlgItem(IDC_EDIT_SELECT_AREA_MAX);
 	pedit->SetWindowTextW(cstr);
+
+	m_nRankMethod = 1;
+	m_fRankValue1 = 15.0f;
+
+
+	m_fRankValue2 = 50.0f;
+
+	m_fRankValue3 = 100.0f;
+
+	UpdateData(FALSE);
+
 }
 
 void CAlgorithmDlg::OnBnClickedRadioArea()
@@ -461,7 +443,7 @@ void CAlgorithmDlg::OnEnKillfocusEditRadiusValue2()
 	GetDlgItem(IDC_EDIT_RADIUS_VALUE2)->GetWindowTextW(text);
 	float value = (float)_ttof(text);
 	if (value > 0)
-		m_fRankValue1 = value;
+		m_fRankValue2 = value;
 
 	UpdateData(false);
 }
@@ -477,7 +459,7 @@ void CAlgorithmDlg::OnEnKillfocusEditRadiusValue3()
 	GetDlgItem(IDC_EDIT_RADIUS_VALUE3)->GetWindowTextW(text);
 	float value = (float)_ttof(text);
 	if (value > 0)
-		m_fRankValue1 = value;
+		m_fRankValue3 = value;
 
 	UpdateData(false);
 }

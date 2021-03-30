@@ -23,7 +23,7 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄	
-	int m_iSystemState;                      //系统状态
+	int* m_pnSystemState;                      //系统状态
 	std::string m_DFT_img_path;
 	std::string m_save_path;
 	std::wstring m_wstr_batch;                 //批号
@@ -58,7 +58,7 @@ public:
 
 	CFont m_font;
 	std::vector<DeffectInfo> *m_pvDFT;         //  用于显示分布图
-	std::vector<DeffectInfo> m_vecDFT;         //  用于写入报表
+	//std::vector<DeffectInfo> m_vecDFT;         //  用于写入报表
 	float scale_x;
 	float scale_y;
 

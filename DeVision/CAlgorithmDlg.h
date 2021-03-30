@@ -30,24 +30,17 @@ public:
 	float m_fRankValue1;
 	float m_fRankValue2;
 	float m_fRankValue3;
-
+private:
 	LPCWSTR APPNAME = L"Algorithm";
 	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
 
-
-private:
 	void loadInitialParameters();
 	void saveParameters();
-
-	float GetSelectAreaValueMin();
-	float GetSelectAreaValueMax();
-
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	DECLARE_MESSAGE_MAP()
 
-public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	virtual void OnOK();
@@ -55,6 +48,10 @@ public:
 	CComboBox m_combo_global_threshold;
 	CComboBox m_combo_select_threshold;
 	afx_msg void OnClose();
+	afx_msg void OnEnKillfocusEditSelectAreaMin();
+	afx_msg void OnEnKillfocusEditSelectAreaMax();
+	afx_msg void OnCbnSelchangeComboGlobalThreshold();
+	afx_msg void OnCbnSelchangeComboSelectThreshold();
 	afx_msg void OnBnClickedButtonReset();
 	afx_msg void OnBnClickedRadioArea();
 	afx_msg void OnBnClickedRadioRadius();

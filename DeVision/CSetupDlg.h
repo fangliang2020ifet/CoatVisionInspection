@@ -26,24 +26,25 @@ protected:
 public:
 	HWND hMainWnd;                           //主窗口句柄
 
-	BOOL m_bSave_Parameter = FALSE;          //是否保存
-	float m_wnd1_range = 0.0f;
-	float m_wnd2_range = 0.0f;
-	float m_k_speed = 0.0f;                  //速度修正系数
-	int m_threadnum = 1;
-	BOOL m_bSaveRefImg = FALSE;
+	BOOL m_bSave_Parameter;          //是否保存
+	float m_wnd1_range;
+	float m_wnd2_range;
+	float m_k_speed;                  //速度修正系数
+	int m_threadnum;
+	BOOL m_bSaveRefImg;
 
-	std::string m_strDeffect_Path = "";
-	std::string m_strTable_Path = "";
+	std::string m_strDeffect_Path;
+	std::string m_strTable_Path;
 
 private:
+	LPCWSTR APPNAME = L"System";
+	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
+
 	BOOL ACCEPTED;
 	CString m_current_logged_name;
 
-	float GetWnd1DisplayRange();
-	float GetWnd2DisplayRange();
-	float GetKSpeed();
-	int GetThreadNumber();
+	void loadInitialParameters();
+	void saveParameters();
 
 	BOOL ConnectAccess();
 	_ConnectionPtr  m_pConnection;
@@ -64,4 +65,9 @@ public:
 	afx_msg void OnBnClickedButtonSelectDeffectPath();
 	afx_msg void OnBnClickedButtonTablePath();
 	afx_msg void OnBnClickedButtonSystemReset();
+	afx_msg void OnEnKillfocusEditWnd1Range();
+	afx_msg void OnEnKillfocusEditWnd2Range();
+	afx_msg void OnEnKillfocusEditKSpeed();
+	afx_msg void OnCbnSelchangeComboThreadnum();
+	afx_msg void OnBnClickedCheckSaveRef();
 };

@@ -29,6 +29,7 @@ IMPLEMENT_DYNAMIC(CTableDlg, CDialogEx)
 CTableDlg::CTableDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_TABLE, pParent)
 {
+	m_pnSystemState = nullptr;
 	m_pvDFT = NULL;
 	InitializeCriticalSection(&m_csvec);
 
@@ -134,7 +135,7 @@ void CTableDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	// TODO: 在此处添加消息处理程序代码
-	m_vecDFT.clear();
+	//m_vecDFT.clear();
 	m_bTableThreadAlive = false;
 
 }
@@ -1501,11 +1502,11 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 
 	//写入瑕疵列表 sheet1
 	EnterCriticalSection(&pThis->m_csvec);
-	for (int i = 0; i < (int)pThis->m_vecDFT.size(); i++)
+	for (int i = 0; i < (int)pThis->m_pvDFT->size(); i++)
 	{
 		//DefectType dft;
 		DeffectInfo dft;
-		dft = pThis->m_vecDFT.at(i);
+		dft = pThis->m_pvDFT->at(i);
 		for (int j = 1; j < 9; j++)
 		{
 			switch (j)
@@ -1598,7 +1599,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	range.put_WrapText(COleVariant((long)1));   //设置文本自动换行
 
 	//获取图表绘制的数据区域
-	int row_num = (int)pThis->m_vecDFT.size() + 7;
+	int row_num = (int)pThis->m_pvDFT->size() + 7;
 	CString cend;
 	cend.Format(_T("D%d"), row_num);
 	LPDISPATCH lpDispXY = sheet.get_Range(COleVariant(_T("C7")), COleVariant(cend));
@@ -1761,7 +1762,7 @@ UINT CTableDlg::SaveTableThreadDefault(LPVOID pParam)
 	App.Quit();          // 退出_Application
 	App.ReleaseDispatch();
 
-	pThis->m_vecDFT.clear();
+	//pThis->m_vecDFT.clear();
 
 	CString cstr = L"报表已保存: " + strExcelFile;
 	::SendMessage(pThis->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -2108,7 +2109,7 @@ void CTableDlg::OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
-	if (m_iSystemState == 2) return;
+	if (*m_pnSystemState == 2) return;
 
 	CString image_name;
 	int index = m_ListCtrlDetail.GetSelectionMark();

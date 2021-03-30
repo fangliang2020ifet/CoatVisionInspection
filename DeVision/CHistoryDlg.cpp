@@ -69,6 +69,8 @@ CHistoryDlg::CHistoryDlg(CWnd* pParent /*=nullptr*/)
 
 CHistoryDlg::~CHistoryDlg()
 {
+	m_bThreadAlive = false;
+
 }
 
 void CHistoryDlg::DoDataExchange(CDataExchange* pDX)

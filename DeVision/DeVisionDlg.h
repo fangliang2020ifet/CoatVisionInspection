@@ -41,21 +41,48 @@ public:
 #endif
 
 protected:
-	HWND hMainWnd;                           //主窗口句柄
-
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
-		// 生成的消息映射函数
+	// 生成的消息映射函数
 	DECLARE_MESSAGE_MAP()
 
+
 public:
-	bool m_bSaveRefImg;
+	HWND hMainWnd;                           //主窗口句柄	   
 
-	CAcquireImage   m_ImgAcq;               //图像获取
-	int m_nConnectedCameras = 0;                //已连接相机数
+	std::vector<std::wstring> m_vec_refpath;
+	std::vector<DeffectInfo> m_vecDftDisplay;            //x,y的单位已转为毫米/米
+
+	//离线， 在线， 运行， 停止， 暂停
+	enum { SYSTEM_STATE_OFFLINE = 0
+		, SYSTEM_STATE_ONLINE
+		, SYSTEM_STATE_RUN
+		, SYSTEM_STATE_STOP
+		, SYSTEM_STATE_PAUSE };
+	int m_system_state;                                  //系统状态
+	//A级， B级， C级， D级
+	enum { RANK_COMMON = 0
+		, RANK_GRADE1
+		, RANK_GRADE2
+		, RANK_GRADE3
+		, RANK_SERIOUS };
+	int m_rank[5] = { 0 };
+	enum { SCREEN_UNLOCK = 0, SCREEN_LOCK };
+	int m_screen_state;                                  //屏幕状态
+
+private:
+	//LPCWSTR APPNAME = L"System";
+	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
+
+	long start_time;
+	CString cstrlog;
+	CFont small_flag_font;                             //小字体
+	CFont loggle_font;
+	BOOL m_bFlicker = FALSE;                           //控件闪烁
+	CStatusBar     m_StatusBar;                        //状态栏
+	CAcquireImage   m_ImgAcq;                          //图像获取
 	CImageProcessing   *m_pImgProc[4];
-
-	CMyView* pView;                                   //全局瑕疵滚动显示区域
-	CDialog         *pDialog[4];                       //用来保存对话框对象指针
+	CMyView*        pView;                             //全局瑕疵滚动显示区域
+	CDialog*        pDialog[4];                        //用来保存对话框对象指针
 	CTabCtrl        m_tab;
 	CInspectDlg     m_inspectDlg;
 	CAnalysisDlg    m_analysisDlg;
@@ -63,6 +90,44 @@ public:
 	CHistoryDlg     m_historyDlg;
 	CCameraDlg      *m_pCamera;
 
+	CString m_logo_name;
+	bool m_bSaveRefImg;                                 // 保存参考图
+	bool m_bSwitchRoll;                                 //  切卷
+	int m_nConnectedCameras;                            //已连接相机数
+	int m_nTotalDeffects;
+	int m_nSeriousDeffects;
+	int m_nThreadNumbers;
+	int m_nNormalDistribution;
+	int m_nFIlterSize;
+	int m_nRankMethod;
+	float m_speed;                                     //当前车速
+	float m_fCurrentPosition;
+	float m_previous_position;
+	float m_wnd1_range;                                //全局瑕疵显示窗口显示范围：米
+	float m_wnd2_range;
+	float m_fKSpeed;
+	float m_fRadiusMin;
+	float m_fRadiusMax;
+	float m_fRankValue1;
+	float m_fRankValue2;
+	float m_fRankValue3;
+	std::string m_strDeffect_Path;                     //瑕疵图像路径
+	std::string m_strTable_Path;                       //报表路径
+	std::string m_strDeffectImgSavePath;
+
+	CEvent StopRefrush_Event;
+	HANDLE *m_phFinishProcessEvent[4];                 //处理完成事件
+	CRITICAL_SECTION m_csListDftDisplay;               //定义一个临界区
+	CWinThread *m_RefrushThread;
+	static UINT RefrushWnd(LPVOID pParam);
+
+	void loadInitialParameters();
+	void saveParameters();
+	void LoadRegConfig();
+	void ReadFromRegedit();
+	void WriteToRegedit();
+	void SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information);
+	void SaveImages(int index, int batch, unsigned &numbers);
 	void ExitProgram();
 	int m_CurSelTab;                              //标记当前选择的页面
 	void InitialTabDlg();                         //初始化 tab control
@@ -71,8 +136,8 @@ public:
 	void InitialImageAcquire();
 	void InitialStateBar();                       //初始化状态栏
 	void InitialBtnIcon();
-	BOOL InitialTotalDefect();                    //全部瑕疵显示区
-	void DelQueueFromSource();
+	bool InitialTotalDefect();                    //全部瑕疵显示区
+	void GetDftInfoFromImgProc();
 	int DevideDFTRank(int num);                   //定义产品等级
 	void CreateFlag(CDC &mDC, int x, int y, int kind);
 	void DrawPartial(int test);
@@ -80,12 +145,12 @@ public:
 	void UpdateScaleValue(float x, float y);       //更新刻度
 	void SetYScalePos(float position);
 	void SetXScalePos(float width);
-
 	void CreateWorkPath(std::string &path);
 	void DeleteHistoryImage();
 	void RemoveAll(std::wstring wst);
 	void UpdateSysStatus();
 	void UpdateSysColor();
+	void UpdateDFTinfo(DeffectInfo info);
 	float GetRunTime();
 	float UpdateCurrentInspectPosition();
 	void ReStartPrepare();
@@ -93,19 +158,7 @@ public:
 	void SwitchRoll();
 	void GenerateTableInfo();
 
-	long start_time;
-
-	CFont small_flag_font;                             //小字体
-	CFont loggle_font;
-	BOOL m_bFlicker = FALSE;                           //控件闪烁
-	CStatusBar     m_StatusBar;                        //状态栏
-
-	void TestLoadAndWrite();
-	BOOL test_clicked = FALSE;
-	int test_num = 0;
-
-private:
-	CString cstrlog;
+protected:
 	HICON m_hIcon;
 	HICON m_hOnlineIcon;
 	HICON m_hOfflineIcon;
@@ -119,66 +172,6 @@ private:
 	HICON m_hLockIcon;
 	HICON m_hUnlockIcon;
 	HICON m_hExitIcon;
-
-	int m_nThreadNumbers;
-	int m_nNormalDistribution;
-	int m_nFIlterSize;
-	float m_fRadiusMin;
-	float m_fRadiusMax;
-
-	bool m_bSwitchRoll;                             //  切卷
-
-	CEvent StopRefrush_Event;
-	CEvent RefrushThreadStopped_Event;
-	HANDLE *m_phFinishProcessEvent[4];              //处理完成事件
-
-	CRITICAL_SECTION m_csListDftDisplay;                  //定义一个临界区
-	CWinThread *m_RefrushThread;
-	static UINT RefrushWnd(LPVOID pParam);
-
-	CString m_logo_name;
-	CString m_cProduct_Model;                     //产品型号
-	CString m_cProduct_Width;                     //宽度
-	CString m_cOperator;                          //操作员
-	CString m_cProduct_Number;                    //生产批号
-
-	void LoadRegConfig();
-	void ReadFromRegedit();
-	void WriteToRegedit();
-	void SaveDeffectImage(int acquire_index, HObject ho_img, DeffectInfo information);
-	void SaveImages(int index, int batch, unsigned &numbers);
-
-public:
-	std::string m_strDeffect_Path;                             //工作路径
-	std::string m_strTable_Path;
-	std::string m_strDeffectImgSavePath;
-	std::vector<std::wstring> m_vec_refpath;
-
-	std::list<DeffectInfo> m_listDftInfo[4];                   //瑕疵信息
-	//std::list<HalconCpp::HObject> m_listDftImg[4];              //瑕疵图像队列
-	//std::vector<DefectType> m_vDFT;
-	std::vector<DeffectInfo> m_vecDftDisplay;            //x,y的单位已转为毫米/米
-
-	//离线， 在线， 运行， 停止， 暂停
-	enum { SYSTEM_STATE_OFFLINE = 0, SYSTEM_STATE_ONLINE, SYSTEM_STATE_RUN, SYSTEM_STATE_STOP, SYSTEM_STATE_PAUSE };
-	int m_system_state;                                  //系统状态
-	//A级， B级， C级， D级
-	enum { RANK_COMMON = 0, RANK_GRADE1, RANK_GRADE2, RANK_GRADE3, RANK_SERIOUS };
-	int m_rank[5] = { 0 };
-	enum { SCREEN_UNLOCK = 0, SCREEN_LOCK };
-	int m_screen_state;                                  //屏幕状态
-	float m_speed = 0.0f;                             //当前车速
-	float m_fCurrentPosition = 0.0f;
-	float m_previous_position = 0.0;
-	float m_wnd1_range = 0.0f;                   //全局瑕疵显示窗口显示范围：米
-	float m_wnd2_range = 0.0f;
-	//int total_number_def = 0;                             //当前检测到的瑕疵总数
-	int m_nTotalDeffects = 0;
-	//int serious_def_num = 0;                              //严重瑕疵个数
-	int m_nSeriousDeffects = 0;
-	float m_width;
-
-protected:
 	CEdit m_edisplay_range;
 	CEdit m_eselectwidth;
 	CEdit m_eselectlongth;

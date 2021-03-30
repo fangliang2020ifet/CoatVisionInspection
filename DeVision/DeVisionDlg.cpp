@@ -179,7 +179,11 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	HDevExportCpp::HalconInitAOP();      // Halcon 速度优化
+
 	hMainWnd = AfxGetMainWnd()->m_hWnd;
+
+	loadInitialParameters();
 
 	//禁止关闭按钮
 	GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
@@ -205,7 +209,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	InitialBtnIcon();
 
 	//注册表：加载默认设置
-	LoadRegConfig();
+	//LoadRegConfig();
 
 	//初始化全局瑕疵显示区, 设置显示范围
 	InitialTotalDefect();
@@ -213,6 +217,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	// 报表页面初始化
 	pView->m_pvecDFT = &m_vecDftDisplay;
 	m_tableDlg.m_pvDFT = &m_vecDftDisplay;
+	m_tableDlg.m_pnSystemState = &m_system_state;
 	m_tableDlg.m_pfCurPos = &m_fCurrentPosition;
 
 	//主界面信息刷新定时器
@@ -323,6 +328,126 @@ void CDeVisionDlg::OnDestroy()
 	// TODO: 在此处添加消息处理程序代码
 }
 
+// ini文件读取
+void CDeVisionDlg::loadInitialParameters()
+{
+	LPWSTR ReturnedString = new wchar_t[STRINGLENGTH];
+	CString ckeyname, cvalue;
+	std::string strvalue;
+
+	GetPrivateProfileStringW(L"System", L"DisplayWindow1", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_wnd1_range = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"System", L"DisplayWindow2", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_wnd2_range = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"System", L"SpeedK", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fKSpeed = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"System", L"ThreadNumber", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nThreadNumbers = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"System", L"SaveImage", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_bSaveRefImg = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"System", L"ImagePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strDeffect_Path = (CW2A)ReturnedString;
+
+	GetPrivateProfileStringW(L"System", L"TablePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strTable_Path = (CW2A)ReturnedString;
+
+	GetPrivateProfileStringW(L"Algorithm", L"NormalDistribution", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nNormalDistribution = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"FilterSize", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nFIlterSize = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RadiusMin", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fRadiusMin = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RadiusMax", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fRadiusMax = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RankMethod", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nRankMethod = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RankValue1", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fRankValue1 = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RankValue2", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fRankValue2 = std::stof(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"RankValue3", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_fRankValue3 = std::stof(strvalue);
+
+	delete[] ReturnedString;
+}
+
+void CDeVisionDlg::saveParameters()
+{
+	UpdateData(true);
+	CString cstrparam, ckeyname;
+
+	cstrparam.Format(_T("%.2f"), m_wnd1_range);
+	WritePrivateProfileStringW(L"System", L"DisplayWindow1", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_wnd2_range);
+	WritePrivateProfileStringW(L"System", L"DisplayWindow2", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fKSpeed);
+	WritePrivateProfileStringW(L"System", L"SpeedK", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nThreadNumbers);
+	WritePrivateProfileStringW(L"System", L"ThreadNumber", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_bSaveRefImg);
+	WritePrivateProfileStringW(L"System", L"SaveImage", cstrparam, FILEPATH);
+
+	cstrparam = (CA2W)m_strDeffect_Path.c_str();
+	WritePrivateProfileStringW(L"System", L"ImagePath", cstrparam, FILEPATH);
+
+	cstrparam = (CA2W)m_strTable_Path.c_str();
+	WritePrivateProfileStringW(L"System", L"TablePath", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nNormalDistribution);
+	WritePrivateProfileStringW(L"Algorithm", L"NormalDistribution", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nFIlterSize);
+	WritePrivateProfileStringW(L"Algorithm", L"FilterSize", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fRadiusMin);
+	WritePrivateProfileStringW(L"Algorithm", L"RadiusMin", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fRadiusMax);
+	WritePrivateProfileStringW(L"Algorithm", L"RadiusMax", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nRankMethod);
+	WritePrivateProfileStringW(L"Algorithm", L"RankMethod", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fRankValue1);
+	WritePrivateProfileStringW(L"Algorithm", L"RankValue1", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fRankValue2);
+	WritePrivateProfileStringW(L"Algorithm", L"RankValue2", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%.2f"), m_fRankValue3);
+	WritePrivateProfileStringW(L"Algorithm", L"RankValue3", cstrparam, FILEPATH);
+
+}
+
 //从注册表读取
 void CDeVisionDlg::LoadRegConfig()
 {
@@ -332,7 +457,7 @@ void CDeVisionDlg::LoadRegConfig()
 		//初次运行则进行默认设置
 		m_wnd1_range = 100.0f;
 		m_wnd2_range = 5.0f;
-		m_ImgAcq.m_k_speed = 491.52f;
+		m_fKSpeed = 764.0f;
 		m_nThreadNumbers = 1;
 		m_bSaveRefImg = false;
 		m_strDeffect_Path = "D:\\瑕疵检测数据记录\\2瑕疵图像记录";
@@ -347,12 +472,11 @@ void CDeVisionDlg::LoadRegConfig()
 	}
 }
 
-
 void CDeVisionDlg::ReadFromRegedit()
 {
 	m_wnd1_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd1 range", 0);
 	m_wnd2_range = (float)AfxGetApp()->GetProfileIntW(L"System Setup", L"wnd2 range", 0);
-	m_ImgAcq.m_k_speed = ((float)AfxGetApp()->GetProfileIntW(L"System Setup", L"speed revise", 0)) / 100.0f;
+	m_fKSpeed = ((float)AfxGetApp()->GetProfileIntW(L"System Setup", L"speed revise", 0)) / 100.0f;
 	m_nThreadNumbers = AfxGetApp()->GetProfileIntW(L"System Setup", L"parallel thread", 0);
 	m_bSaveRefImg = (bool)AfxGetApp()->GetProfileIntW(L"System Setup", L"save reference image", 0);
 	m_strDeffect_Path = (CW2A)AfxGetApp()->GetProfileStringW(L"System Setup", L"deffect path", _T("")).GetBuffer();
@@ -370,7 +494,7 @@ void CDeVisionDlg::WriteToRegedit()
 	//系统设置
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd1 range", (int)m_wnd1_range);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"wnd2 range", (int)m_wnd2_range);
-	AfxGetApp()->WriteProfileInt(L"System Setup", L"speed revise", (int)(m_ImgAcq.m_k_speed * 100));
+	AfxGetApp()->WriteProfileInt(L"System Setup", L"speed revise", (int)(m_fKSpeed * 100));
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"parallel thread", m_nThreadNumbers);
 	AfxGetApp()->WriteProfileInt(L"System Setup", L"save reference image", m_bSaveRefImg);
 	AfxGetApp()->WriteProfileStringW(L"System Setup", L"deffect path", (CA2W)m_strDeffect_Path.c_str());
@@ -455,20 +579,6 @@ float CDeVisionDlg::UpdateCurrentInspectPosition()
 	return pos;
 }
 
-
-void CDeVisionDlg::TestLoadAndWrite()
-{
-	test_num += 1;
-
-	HObject load, write;
-	HTuple hv_name = "D:\\test_image.bmp";
-	HalconCpp::ReadImage(&load, hv_name);
-
-	HTuple end = ".bmp";
-	HTuple save = (HTuple)m_strDeffect_Path.c_str() + (HTuple)test_num + end;
-	HalconCpp::WriteImage(load, "bmp", 0, save);
-}
-
 //TabControl 切换
 void CDeVisionDlg::OnTcnSelchangeTabDialog(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -536,7 +646,6 @@ void CDeVisionDlg::InitialTabDlg()
 	pDialog[3]->ShowWindow(SW_HIDE);
 	m_CurSelTab = 0;
 }
-
 
 void CDeVisionDlg::TabDlgResize()
 {
@@ -651,7 +760,7 @@ void CDeVisionDlg::OnSize(UINT nType, int cx, int cy)
 }
 
 //全局瑕疵显示区初始化
-BOOL CDeVisionDlg::InitialTotalDefect()
+bool CDeVisionDlg::InitialTotalDefect()
 {
 	//   3
 	CCreateContext pContext;
@@ -682,68 +791,7 @@ BOOL CDeVisionDlg::InitialTotalDefect()
 	ctext.Format(_T("%.2f"), m_wnd1_range);
 	m_edisplay_range.SetWindowTextW(ctext);
 
-	return TRUE;
-}
-
-//从瑕疵队列中取出
-void CDeVisionDlg::DelQueueFromSource()
-{
-	// 瑕疵显示范围，图像数量为单位
-	unsigned display_range = (int)(m_wnd1_range * 1000 / (IMAGE_HEIGHT * VERTICAL_PRECISION)); 
-	pView->m_unDisplayRangeIndex = display_range;
-	DeffectInfo info;
-	EnterCriticalSection(&m_csListDftDisplay);
-	for (int index = 0; index < m_nConnectedCameras; index++) {
-		if (!m_listDftInfo[index].empty()) {
-			//unsigned newest_image_index = m_listDftInfo[index][m_listDftInfo[index].size() - 1].image_index;
-			//std::vector<DeffectInfo>::reverse_iterator rit = m_listDftInfo[index].rbegin();
-			//for (; rit != m_listDftInfo[index].rend(); ++rit) {
-			for (int i = 0; i < (int)m_listDftInfo[index].size(); i++) {
-				info = m_listDftInfo[index].front();
-				m_listDftInfo[index].pop_front();
-				//把像素数据转换为毫米/米, 存入vector
-				info.x = (info.x + index * IMAGE_WIDTH) * HORIZON_PRECISION;
-				info.y = (info.y + (info.image_index - 1) * IMAGE_HEIGHT) * VERTICAL_PRECISION / 1000.0f;
-				info.area = info.area * HORIZON_PRECISION * VERTICAL_PRECISION;
-				m_vecDftDisplay.push_back(info);
-				m_nTotalDeffects += 1;
-				//判断是否是  D级 缺陷
-				if (info.rank == 3)
-					m_nSeriousDeffects += 1;
-
-				//瑕疵类型的  等级统计
-				switch (info.type)
-				{
-				case 0:
-					m_rank[0] += 1;
-					break;
-				case 1:
-					m_rank[1] += 1;
-					break;
-				case 2:
-					m_rank[2] += 1;
-					break;
-				case 3:
-					m_rank[3] += 1;
-					break;
-				case 4:
-					m_rank[4] += 1;
-					break;
-				}
-			}
-		}
-	}
-	LeaveCriticalSection(&m_csListDftDisplay);
-
-	m_inspectDlg.UpdateDFTinformation(m_nTotalDeffects, m_nSeriousDeffects
-		, m_rank[0], m_rank[1], m_rank[2], m_rank[3]);
-
-	// 柱状图页面
-	m_analysisDlg.m_dDftNumber1 = (double)m_rank[0];
-	m_analysisDlg.m_dDftNumber2 = (double)m_rank[1];
-	m_analysisDlg.m_dDftNumber3 = (double)m_rank[2];
-	m_analysisDlg.m_dDftNumber4 = (double)m_rank[3];
-
+	return true;
 }
 
 //划分当前薄膜的等级
@@ -994,7 +1042,6 @@ void CDeVisionDlg::UpdateSysStatus()
 #ifndef TESTMODEL
 		m_speed = m_ImgAcq.CalculateEncoderSpeed();
 #endif
-
 		if (m_speed > 0) {
 			CString cstr_speed;
 			cstr_speed.Format(L"当前速度：%.2f 米/分钟", m_speed);
@@ -1053,12 +1100,12 @@ void CDeVisionDlg::UpdateSysStatus()
 	switch (m_system_state)
 	{
 	case SYSTEM_STATE_OFFLINE:
-		cstr_statue.Format(L"相机离线");
+		cstr_statue.Format(L"相机断开");
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		m_sSystem_Statue.SetWindowTextW(cstr_statue);
 		break;
 	case SYSTEM_STATE_ONLINE:
-		cstr_statue.Format(L"相机在线");
+		cstr_statue.Format(L"相机连接");
 		m_StatusBar.SetPaneText(8, cstr_statue, 1);
 		m_sSystem_Statue.SetWindowTextW(cstr_statue);
 		break;
@@ -1090,6 +1137,37 @@ void CDeVisionDlg::UpdateSysColor()
 	pView->m_acolor[1] = m_inspectDlg.m_color2;
 	pView->m_acolor[2] = m_inspectDlg.m_color3;
 	pView->m_acolor[3] = m_inspectDlg.m_color4;
+}
+
+
+void CDeVisionDlg::UpdateDFTinfo(DeffectInfo info)
+{
+	m_nTotalDeffects += 1;
+	//判断是否是  D级 缺陷
+	if (info.rank == 3)
+		m_nSeriousDeffects += 1;
+
+	//瑕疵类型的  等级统计
+	switch (info.type)
+	{
+	case 0:
+		m_rank[0] += 1;
+		break;
+	case 1:
+		m_rank[1] += 1;
+		break;
+	case 2:
+		m_rank[2] += 1;
+		break;
+	case 3:
+		m_rank[3] += 1;
+		break;
+	case 4:
+		m_rank[4] += 1;
+		break;
+	}
+
+
 }
 
 //创建工作目录
@@ -1191,7 +1269,7 @@ void CDeVisionDlg::ReStartPrepare()
 	memset(m_rank, 0, sizeof(m_rank));
 
 	for (int i = 0; i < m_nConnectedCameras; i++) {
-		m_listDftInfo[i].clear();
+		//m_listDftInfo[i].clear();
 		m_pImgProc[i]->ClearThisClass();
 	}
 	m_vecDftDisplay.clear();
@@ -1275,8 +1353,13 @@ void CDeVisionDlg::SaveImages(int index, int batch, unsigned &numbers)
 		info = m_pImgProc[index]->m_listDftInfo.front();
 		m_pImgProc[index]->m_listDftInfo.pop_front();
 		SaveDeffectImage(index, img, info);
-		//将瑕疵信息导出
-		m_listDftInfo[index].push_back(info);
+
+		//把像素数据转换为毫米/米, 存入vector
+		info.x = (info.x + index * IMAGE_WIDTH) * HORIZON_PRECISION;
+		info.y = (info.y + (info.image_index - 1) * IMAGE_HEIGHT) * VERTICAL_PRECISION / 1000.0f;
+		info.area = info.area * HORIZON_PRECISION * VERTICAL_PRECISION;
+		m_vecDftDisplay.push_back(info);
+		UpdateDFTinfo(info);
 	}
 	numbers += imagenums;
 }
@@ -1285,47 +1368,14 @@ void CDeVisionDlg::SaveImages(int index, int batch, unsigned &numbers)
 void CDeVisionDlg::SwitchRoll()
 {
 	// 1.停止将图像存入 ImgProc
-	m_ImgAcq.m_bSystemPause = TRUE;
+	m_system_state = SYSTEM_STATE_PAUSE;
+	m_ImgAcq.m_bSystemPause = TRUE;	
 	// 2.将 ImgProc中的内容保存后清空，然后将 CDeVisionDlg 中的内容清空
 	DeffectInfo info;
 	unsigned int unums = 0;
 	for (int index = 0; index < m_nConnectedCameras; index++) {
 		int dft_img_num = (int)m_pImgProc[index]->m_listDftImg.size();
 		SaveImages(index, dft_img_num, unums);
-
-		for (int i = 0; i < (int)m_listDftInfo[index].size(); i++) {
-			info = m_listDftInfo[index].front();
-			m_listDftInfo[index].pop_front();
-			//把像素数据转换为毫米/米, 存入vector
-			info.x = (info.x + index * IMAGE_WIDTH) * HORIZON_PRECISION;
-			info.y = (info.y + (info.image_index - 1) * IMAGE_HEIGHT) * VERTICAL_PRECISION / 1000.0f;
-			info.area = info.area * HORIZON_PRECISION * VERTICAL_PRECISION;
-			m_vecDftDisplay.push_back(info);
-			m_nTotalDeffects += 1;
-			//判断是否是  D级 缺陷
-			if (info.rank == 3)
-				m_nSeriousDeffects += 1;
-
-			//瑕疵类型的  等级统计
-			switch (info.type)
-			{
-			case 0:
-				m_rank[0] += 1;
-				break;
-			case 1:
-				m_rank[1] += 1;
-				break;
-			case 2:
-				m_rank[2] += 1;
-				break;
-			case 3:
-				m_rank[3] += 1;
-				break;
-			case 4:
-				m_rank[4] += 1;
-				break;
-			}
-		}
 	}
 	// 3.生成报表
 
@@ -1350,6 +1400,7 @@ void CDeVisionDlg::SwitchRoll()
 
 	// 4. 清空信息,检测位置设为0，瑕疵信息清空，瑕疵数目清空, 控制变量复位
 	ReStartPrepare();
+	m_system_state = SYSTEM_STATE_RUN;
 	m_ImgAcq.m_bSystemPause = false;
 	m_bSwitchRoll = false;
 	m_inspectDlg.m_bTableSaving = false;
@@ -1364,7 +1415,6 @@ void CDeVisionDlg::GenerateTableInfo()
 	//报表保存路径
 	std::string table_path = m_strTable_Path + "\\";
 	m_tableDlg.m_save_path = table_path.c_str();
-	m_tableDlg.m_vecDFT = m_vecDftDisplay;
 	//本卷评级
 	m_tableDlg.m_product_rank = DevideDFTRank(m_nTotalDeffects);
 	//D级缺陷数目
@@ -1393,39 +1443,44 @@ void CDeVisionDlg::GenerateTableInfo()
 	m_tableDlg.GetDetectResult(m_rank[0], m_rank[1], m_rank[2], m_rank[3], m_rank[4]);
 }
 
-//界面刷新与保存
+//界面刷新与历史图像保存
 UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 {
 	CDeVisionDlg *pDlg = (CDeVisionDlg *)pParam;
-	DWORD dwStop = 0;
+	// 瑕疵显示范围，图像数量为单位
+	unsigned display_range = (int)(pDlg->m_wnd1_range * 1000 / (IMAGE_HEIGHT * VERTICAL_PRECISION));
+	pDlg->pView->m_unDisplayRangeIndex = display_range;
+
 	//保存的瑕疵图像数量
 	unsigned int save_index[4] = {0};
-
-	CString cstr = L"启动界面刷新...";
-	::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
+	DWORD dwStop = 0;
 	for (;;) {
-		//获取瑕疵信息数据,由ImgProc至当前类
-		pDlg->DelQueueFromSource();
+		for (int index = 0; index < pDlg->m_nConnectedCameras; index++) 
+			pDlg->SaveImages(index, 20, save_index[index]);
 
 		// 切卷
 		if (pDlg->m_bSwitchRoll) {
 			pDlg->SwitchRoll();
 		}
+		
+		pDlg->m_inspectDlg.UpdateDFTinformation(pDlg->m_nTotalDeffects, pDlg->m_nSeriousDeffects
+			, pDlg->m_rank[0], pDlg->m_rank[1], pDlg->m_rank[2], pDlg->m_rank[3]);
+
+		// 柱状图页面
+		pDlg->m_analysisDlg.m_dDftNumber1 = (double)pDlg->m_rank[0];
+		pDlg->m_analysisDlg.m_dDftNumber2 = (double)pDlg->m_rank[1];
+		pDlg->m_analysisDlg.m_dDftNumber3 = (double)pDlg->m_rank[2];
+		pDlg->m_analysisDlg.m_dDftNumber4 = (double)pDlg->m_rank[3];
 
 		//设置为 2s 刷新
 		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2313);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
-			for (int index = 0; index < pDlg->m_nConnectedCameras; index++) {
-				pDlg->SaveImages(index, 20, save_index[index]);
-			}			
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
 				pDlg->DrawPartial(5);
 				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_wnd1_range);
 				//更新系统状态信息
-				pDlg->m_tableDlg.m_iSystemState = pDlg->m_system_state;
 				CString cwidth;
 				cwidth.Format(_T("当前选择：***米"));
 				pDlg->m_etotal.SetWindowTextW(cwidth);
@@ -1449,7 +1504,6 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 				for (int index = 0; index < pDlg->m_nConnectedCameras; index++) {
 					auto size = pDlg->m_pImgProc[index]->m_listDftImg.size();
 					pDlg->SaveImages(index, (int)size, save_index[index]);
-					//pDlg->SaveImages(index, 20, save_index[index]);
 				}
 				//保存检测记录
 				EnterCriticalSection(&pDlg->m_csListDftDisplay);
@@ -1474,58 +1528,10 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 			break;
 		}
 	}
-	CString cstop = L"结束界面刷新";
-	::SendMessage(pDlg->hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstop, NULL);
-
 	return 0;
 }
 
-//******************************************************按钮*****************************//
-
-//选择  按钮
-void CDeVisionDlg::OnBnClickedButtonSelect()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CWaitCursor wait;
-
-	CString cstr = L"选择瑕疵，位置：";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-}
-
-//查找  按钮
-void CDeVisionDlg::OnBnClickedButtonFind()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	
-	CString cstr = L"已找到瑕疵数： 个";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-}
-
-//前一页  按钮
-void CDeVisionDlg::OnBnClickedButtonGoup()
-{
-	// TODO: 在此添加控件通知处理程序代码
-
-	CString cstr = L"向前翻页";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
-}
-
-//下一页  按钮
-void CDeVisionDlg::OnBnClickedButtonGodown()
-{
-	// TODO: 在此添加控件通知处理程序代码
-
-	CString cstr = L"向后翻页";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
-	CString warning = L"向后翻页";
-	::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
-
-	//PostMessage(WM_UPDATE_HISTORY, 0, 0);
-}
+//***************************************************控制按钮*****************************//
 
 //开始  按钮
 void CDeVisionDlg::OnBnClickedMfcbuttonStart()
@@ -1542,10 +1548,10 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 #endif
 		bool state = false;
 		for (int index = 0; index < m_nConnectedCameras; index++) {
-			state = m_pImgProc[index]->BeginProcess();
+			state = m_pImgProc[index]->BeginProcess(100);
 			if (!state) {
 				cstrlog.Format(_T("相机 #%d 处理线程初始化：失败，%d"), index + 1, GetLastError());
-				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
+				::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL); 
 				return;
 			}
 			else {
@@ -1556,7 +1562,6 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 
 		//启动主界面刷新线程
 		StopRefrush_Event.ResetEvent();
-		RefrushThreadStopped_Event.ResetEvent();
 		m_RefrushThread = AfxBeginThread(RefrushWnd, this);
 
 		m_inspectDlg.m_bSystemRunning = true;
@@ -1590,14 +1595,8 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 #ifndef TESTMODEL
 		m_ImgAcq.Freeze();
 #endif
-
 		for (int index = 0; index < m_nConnectedCameras; index++) {
-
-#ifdef TESTMODEL
 			m_pImgProc[index]->StopManageThread();
-#else
-			m_pImgProc[index]->StopCalculateThreads();
-#endif
 		}
 
 		//等待列表中的图像都处理完成, 之后结束处理线程
@@ -1634,12 +1633,12 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
-	bool state;
 	if (m_system_state == SYSTEM_STATE_OFFLINE) {
-
-#ifndef TESTMODEL
+#ifdef TESTMODEL
+		m_nConnectedCameras = 4;
+#else
 		//采集系统初始化
-		state = m_ImgAcq.CameraSystemInitial();
+		bool state = m_ImgAcq.CameraSystemInitial(100);
 		if (!state) {
 			cstrlog.Format(_T("图像采集系统初始化：失败，%d"), GetLastError());
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
@@ -1650,19 +1649,29 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 			::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
 		}
 		m_nConnectedCameras = m_ImgAcq.m_nCameraNum;
-#else
-		m_nConnectedCameras = 4;
 #endif
-
 		//启动图像处理线程
 		for (int index = 0; index < m_nConnectedCameras; index++) {
-			m_pImgProc[index] = new CImageProcessing(m_nThreadNumbers, m_nNormalDistribution,
-				m_nFIlterSize, m_fRadiusMin, m_fRadiusMax);
+			m_pImgProc[index] = new CImageProcessing();
 			m_ImgAcq.m_pProcessing[index] = m_pImgProc[index];
+			m_ImgAcq.m_k_speed = m_fKSpeed;
+			m_pImgProc[index]->m_pnSystemState = &m_system_state;
 			m_pImgProc[index]->m_threadnum = m_nThreadNumbers;
 			m_pImgProc[index]->SAVE_REFERENCE_IMAGE = m_bSaveRefImg;
+			m_pImgProc[index]->m_k_normal_distribution = m_nNormalDistribution;
+			m_pImgProc[index]->m_median_filter_size = m_nFIlterSize;
+			m_pImgProc[index]->m_fMin_Radius = m_fRadiusMin;
+			m_pImgProc[index]->m_fMax_Radius = m_fRadiusMax;
+			m_pImgProc[index]->m_nrankMethod = m_nRankMethod;
+			m_pImgProc[index]->m_frankValue1 = m_fRankValue1;
+			m_pImgProc[index]->m_frankValue2 = m_fRankValue2;
+			m_pImgProc[index]->m_frankValue3 = m_fRankValue3;
+			m_pImgProc[index]->m_strPath = m_strDeffect_Path;
 			m_phFinishProcessEvent[index] = &m_pImgProc[index]->m_hFinishedProcess;
 		}		
+
+		cstrlog.Format(_T("相机已连接"));
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
 		m_system_state = SYSTEM_STATE_ONLINE;
 		//m_button_online.SetIcon(m_hOnlineIcon);
 		m_button_online.SetIcon(m_hCameraInIcon);
@@ -1677,7 +1686,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		}
 
 		m_vecDftDisplay.clear();
-		cstrlog.Format(_T("当前模式：离线"));
+		cstrlog.Format(_T("相机离线"));
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstrlog, NULL);
 		m_system_state = SYSTEM_STATE_OFFLINE;
 		//m_button_online.SetIcon(m_hOfflineIcon);
@@ -1745,6 +1754,51 @@ void CDeVisionDlg::OnBnClickedButtonExit()
 	EndDialog(TRUE);
 }
 
+//选择  按钮
+void CDeVisionDlg::OnBnClickedButtonSelect()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CWaitCursor wait;
+
+	CString cstr = L"选择瑕疵，位置：";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+}
+
+//查找  按钮
+void CDeVisionDlg::OnBnClickedButtonFind()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	CString cstr = L"已找到瑕疵数： 个";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+}
+
+//前一页  按钮
+void CDeVisionDlg::OnBnClickedButtonGoup()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	CString cstr = L"向前翻页";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+}
+
+//下一页  按钮
+void CDeVisionDlg::OnBnClickedButtonGodown()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	CString cstr = L"向后翻页";
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	CString warning = L"向后翻页";
+	::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
+
+	//PostMessage(WM_UPDATE_HISTORY, 0, 0);
+}
+
 //*********************************************菜单****************************************//
 
 //系统：设置
@@ -1752,7 +1806,7 @@ void CDeVisionDlg::OnSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 		//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1764,27 +1818,18 @@ void CDeVisionDlg::OnSetup()
 #endif
 
 	CSetupDlg setup;
-	setup.m_wnd1_range = m_wnd1_range;
-	setup.m_wnd2_range = m_wnd2_range;
-	setup.m_k_speed = m_ImgAcq.m_k_speed;
-	setup.m_threadnum = m_nThreadNumbers;
-	setup.m_bSaveRefImg = m_bSaveRefImg;
-	setup.m_strDeffect_Path = m_strDeffect_Path;
-	setup.m_strTable_Path = m_strTable_Path;
 	setup.DoModal();
 	if (setup.m_bSave_Parameter) {
 		m_wnd1_range = setup.m_wnd1_range;
-		CString ctext;
-		ctext.Format(_T("%.2f"), m_wnd1_range);
-		m_edisplay_range.SetWindowTextW(ctext);
 		m_wnd2_range = setup.m_wnd2_range;
-
-		m_ImgAcq.m_k_speed = setup.m_k_speed;
-
+		m_fKSpeed = setup.m_k_speed;
 		m_nThreadNumbers = setup.m_threadnum;
 		m_bSaveRefImg = setup.m_bSaveRefImg;
 		m_strDeffect_Path = setup.m_strDeffect_Path;
-		m_strTable_Path = setup.m_strTable_Path;
+		m_strTable_Path = setup.m_strTable_Path;			   		 
+		CString ctext;
+		ctext.Format(_T("%.2f"), m_wnd1_range);
+		m_edisplay_range.SetWindowTextW(ctext);
 	}
 }
 
@@ -1792,8 +1837,10 @@ void CDeVisionDlg::OnSetup()
 void CDeVisionDlg::OnSave()
 {
 	// TODO: 在此添加命令处理程序代码
+	
 	//SaveUserInfo();
-	WriteToRegedit();
+	//WriteToRegedit();
+	saveParameters();
 
 	CString cstr = L"保存当前设置";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
@@ -1811,7 +1858,7 @@ void CDeVisionDlg::OnCameraSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 		//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1832,7 +1879,7 @@ void CDeVisionDlg::OnLedSetup()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 		//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1852,7 +1899,7 @@ void CDeVisionDlg::OnTrigger()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 		//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1880,7 +1927,7 @@ void CDeVisionDlg::OnProduct()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 	//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1917,7 +1964,7 @@ void CDeVisionDlg::OnDefectAnalysis()
 {
 	// TODO: 在此添加命令处理程序代码
 
-#ifdef TESTMODEL
+#ifndef TESTMODEL
 		//登录窗口
 	CLogin loginDlg;
 	loginDlg.DoModal();
@@ -1929,28 +1976,16 @@ void CDeVisionDlg::OnDefectAnalysis()
 #endif
 
 	CAlgorithmDlg algorithmDlg;
-	if (m_pImgProc[0] != NULL) {
-		algorithmDlg.m_normal_distribution = m_pImgProc[0]->m_k_normal_distribution;
-		algorithmDlg.m_filter_size = m_pImgProc[0]->m_median_filter_size;
-		algorithmDlg.m_min_radius = m_pImgProc[0]->m_fMin_Radius;
-		algorithmDlg.m_max_radius = m_pImgProc[0]->m_fMax_Radius;
-	}
 	algorithmDlg.DoModal();
 	if (algorithmDlg.m_bSave_Parameter) {
-		if (m_nConnectedCameras > 0) {
-			for (int index = 0; index < m_nConnectedCameras; index++) {
-				if (m_pImgProc[index] != NULL) {
-					m_pImgProc[index]->m_k_normal_distribution = algorithmDlg.m_normal_distribution;
-					m_pImgProc[index]->m_median_filter_size = algorithmDlg.m_filter_size;
-					m_pImgProc[index]->m_fMin_Radius = algorithmDlg.m_min_radius;
-					m_pImgProc[index]->m_fMax_Radius = algorithmDlg.m_max_radius;
-					m_pImgProc[index]->m_nrankMethod = algorithmDlg.m_nRankMethod;
-					m_pImgProc[index]->m_frankValue1 = algorithmDlg.m_fRankValue1;
-					m_pImgProc[index]->m_frankValue2 = algorithmDlg.m_fRankValue2;
-					m_pImgProc[index]->m_frankValue3 = algorithmDlg.m_fRankValue3;
-				}
-			}
-		}
+		m_nNormalDistribution = algorithmDlg.m_normal_distribution;
+		m_nFIlterSize = algorithmDlg.m_filter_size;
+		m_fRadiusMin = algorithmDlg.m_min_radius;
+		m_fRadiusMax = algorithmDlg.m_max_radius;
+		m_nRankMethod = algorithmDlg.m_nRankMethod;
+		m_fRankValue1 = algorithmDlg.m_fRankValue1;
+		m_fRankValue2 = algorithmDlg.m_fRankValue2;
+		m_fRankValue3 = algorithmDlg.m_fRankValue3;
 	}
 }
 
@@ -2055,7 +2090,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_LED_SETUP, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_TRIGGER, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_PRODUCT, MF_DISABLED);
 		}
 
@@ -2073,7 +2108,7 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 			pMenu->EnableMenuItem(ID_CAMERA_SETUP, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_LED_SETUP, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_TRIGGER, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
+			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
 		}
 
 		break;
@@ -2090,16 +2125,10 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 
 		m_tableDlg.m_open_inprogram.EnableWindow(false);
 		m_ImgAcq.m_bSystemPause = FALSE;
-		if (m_nConnectedCameras > 0) {
-			for (int index = 0; index < m_nConnectedCameras; index++) {
-				if (m_pImgProc[index] != NULL) m_pImgProc[index]->SYSTEM_PAUSE = FALSE;				
-			}
-		}
 
 		if (pMenu) {
 			pMenu->EnableMenuItem(ID_PRODUCT, MF_DISABLED);
 			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_DISABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_DISABLED);
 		}
 
 		break;
@@ -2111,11 +2140,6 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_BUTTON_EXIT)->EnableWindow(false);
 
 		m_ImgAcq.m_bSystemPause = TRUE;
-		if (m_nConnectedCameras > 0) {
-			for (int index = 0; index < m_nConnectedCameras; index++) {
-				if (m_pImgProc[index] != NULL) m_pImgProc[index]->SYSTEM_PAUSE = TRUE;
-			}
-		}
 		break;
 	case SYSTEM_STATE_STOP:
 		GetDlgItem(IDC_MFCBUTTON_START)->EnableWindow(true);
@@ -2130,16 +2154,9 @@ afx_msg LRESULT CDeVisionDlg::OnUpdateControls(WPARAM wParam, LPARAM lParam)
 		m_historyDlg.m_btn_next_page.EnableWindow(true);
 
 		m_ImgAcq.m_bSystemPause = FALSE;
-		if (m_nConnectedCameras > 0) {
-			for (int index = 0; index < m_nConnectedCameras; index++) {
-				if (m_pImgProc[index] != NULL) m_pImgProc[index]->SYSTEM_PAUSE = FALSE;
-			}
-		}
-
 		if (pMenu) {
 			pMenu->EnableMenuItem(ID_PRODUCT, MF_ENABLED);
 			pMenu->EnableMenuItem(ID_DEFFECT_TRADER, MF_ENABLED);
-			pMenu->EnableMenuItem(ID_DEFECT_ANALYSIS, MF_ENABLED);
 		}
 
 		break;
