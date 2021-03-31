@@ -50,7 +50,6 @@ public:
 	HBITMAP GetSrcBit(HDC hDC, LPRECT rEct);
 	bool SaveBMPToFile(HBITMAP hBitmap, LPSTR lpFileName);
 	bool SaveBitmapToFile(HBITMAP hBitmap, const char* name);
-	void SaveToExcel(std::vector<DefectType> vDFT);
 	void SaveToExcelUseDefault(CString &name);
 	void SaveScatterPlotUseDefault();
 	void FormatTableHead(CWorksheet &sheet, CRange &range, BOOL bhead);

@@ -673,166 +673,8 @@ BOOL CImageProcessing::GetSavePath(std::string &path)
 		return TRUE;
 }
 
-//分割后的瑕疵图像处理
-DefectType CImageProcessing::LocateDefectPosition(int camera_number, HObject ho_selectedregion,
-	HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image)
-{
-	DefectType dtype;   //保存检测到的瑕疵信息
-
-	HTuple hv_total_Row = 0;
-	HTuple hv_total_Column = 0;
-	HTuple hv_total_Radius = 0;
-	HTuple hv_total_Mean = 0;
-	{
-		HTuple end_val40 = hv_Number;
-		HTuple step_val40 = 1;
-		HObject ho_objectselected;
-		for (HTuple hv_i = 1; hv_i.Continue(end_val40, step_val40); hv_i += step_val40)
-		{
-			SelectObj(ho_selectedregion, &ho_objectselected, hv_i);
-
-			HTuple hv_row, hv_column, hv_radius;
-			HalconCpp::SmallestCircle(ho_objectselected, &hv_row, &hv_column, &hv_radius);
-			//区域内有多个瑕疵则需要对位置进行平均
-			hv_total_Row += hv_row;
-			hv_total_Column += hv_column;
-			hv_total_Radius += hv_radius;
-
-			//计算像素平均值
-			HTuple hv_mean, hv_deviation;
-			HalconCpp::Intensity(ho_objectselected, ho_image, &hv_mean, &hv_deviation);
-			hv_total_Mean += hv_mean;
-		}
-	}
-	HTuple hv_average_Row = hv_total_Row / hv_Number;
-	HTuple hv_average_Column = hv_total_Column / hv_Number;
-	HTuple hv_average_Radius = hv_total_Radius / hv_Number;
-	HTuple hv_average_Mean = hv_total_Mean / hv_Number;
-
-	//根据圆心度分类...
-	HTuple hv_circularity;
-	HalconCpp::Circularity(ho_selectedregion, &hv_circularity);
-	int circularity = hv_circularity.TupleInt();
-
-	//计算区域面积
-	HTuple hv_area, hv_row, hv_column;
-	HalconCpp::AreaCenter(ho_selectedregion, &hv_area, &hv_row, &hv_column);
-	dtype.area = hv_area.TupleInt();
-
-	//缺陷在大图中的实际坐标
-	if (0 != (hv_average_Row < 127))
-	{
-		hv_average_Row = 127;
-	}
-	else if (0 != (hv_average_Row > IMAGE_WIDTH - 127))
-	{
-		hv_average_Row = IMAGE_WIDTH - 127;
-	}
-	if (0 != (hv_average_Column < 127))
-	{
-		hv_average_Column = 127;
-	}
-	else if (0 != (hv_average_Column > IMAGE_HEIGHT - 127))
-	{
-		hv_average_Column = IMAGE_HEIGHT - 127;
-	}
-
-	//瑕疵信息写入
-	dtype.center_x = (hv_average_Column.TupleInt() + IMAGE_WIDTH * (camera_number - 1))*HORIZON_PRECISION;     //单位：毫米
-	//dtype.center_y = hv_average_Row.TupleInt();
-	dtype.area = 0.255f;
-	dtype.circle_radius = hv_average_Radius.TupleInt();
-	dtype.pixel_value = hv_average_Mean.TupleInt();
-	//计算绝对位置, 单位：米
-	dtype.absolute_position = hv_average_Row.TupleInt() * VERTICAL_PRECISION / 1000.0f;
-	//瑕疵分类
-	if (0 < dtype.pixel_value && dtype.pixel_value <= 92) {
-		if (dtype.area < 100) {
-			dtype.type = 0;
-		}
-		else
-			dtype.type = 2;
-	}
-	else if (92 < dtype.pixel_value && dtype.pixel_value <= 168) {
-		if (dtype.area < 100) {
-			dtype.type = 0;
-		}
-		else
-			dtype.type = 1;
-	}
-	else
-		dtype.type = 2;
-
-	//格式化文件名
-	char cpos[16];
-	sprintf_s(cpos, "%.3f", dtype.absolute_position);
-	//HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
-	HTuple hv_position = (HTuple)cpos;
-	char cX[16];
-	sprintf_s(cX, "%.3f", dtype.center_x);
-	HTuple hv_X = (HTuple)cX;
-	char cradius[16];
-	sprintf_s(cradius, "%.3f", dtype.circle_radius);
-	HTuple hv_radius = (HTuple)cradius;
-	char carea[16];
-	sprintf_s(carea, "%.3f", dtype.area);
-	HTuple hv_harea = (HTuple)carea;
-	HTuple hv_kind = (HTuple)dtype.type;
-
-	//保存瑕疵区域图片
-	HObject ho_rectangle, ho_ImageReduced, ho_ImageCroped;
-	HalconCpp::GenRectangle1(&ho_rectangle, hv_average_Row - 127, hv_average_Column - 127, hv_average_Row + 128, hv_average_Column + 128);
-
-	HalconCpp::ReduceDomain(ho_image, ho_rectangle, &ho_ImageReduced);
-	HalconCpp::CropDomain(ho_ImageReduced, &ho_ImageCroped);
-
-	//瑕疵图像的名称
-	HTuple hv_path = (HTuple)m_strPath.c_str();
-	HTuple hv_img_name = "P" + hv_position
-		+ "_X" + hv_X
-		+ "_R" + hv_radius
-		+ "_A" + hv_harea
-		+ "_K" + hv_kind;
-
-	SaveDefectImage(ho_ImageCroped, hv_path + hv_img_name);
-
-	//std::string file_name = hv_img_name.S();
-
-	//m_vFileName.push_back(file_name);
-
-
-	return dtype;
-}
-
-
-DefectType CImageProcessing::LocateDefectPosition(int camera_number, HObject ho_selectedregion)
-{
-	DefectType dtype;   //保存检测到的瑕疵信息
-
-
-	return dtype;
-}
-
 //瑕疵等级判定
-int CImageProcessing::RankDivide(DefectType dtype)
-{
-	int rank = 0;
-	float area = dtype.area / (HORIZON_PRECISION * VERTICAL_PRECISION);
-	if (area < 5.0f)
-		rank = 0;
-	else if (5.0f <= area && area < 20.0f)
-		rank = 1;
-	else if (20.0f <= area && area < 100.0f)
-		rank = 2;
-	else if (100.0f <= area && area < 500.0f)
-		rank = 3;
-	else
-		rank = 4;
-
-	return rank;
-}
-
-unsigned short int CImageProcessing::RankDivide(float area, float radius, float contlength)
+unsigned short int CImageProcessing::RankDivide(float area, unsigned radius, unsigned contlength)
 {
 	unsigned short int rank = 0;
 
@@ -850,18 +692,15 @@ unsigned short int CImageProcessing::RankDivide(float area, float radius, float 
 	case 2:
 		value = contlength;
 		break;
-	default:
-		value = area;
-		break;
 	}
 
-	if (value < 10.0f)
+	if (value < m_frankValue1)
 		rank = 0;
-	else if (10.0f <= value && value < 20.0f)
+	else if (m_frankValue1 <= value && value < m_frankValue2)
 		rank = 1;
-	else if (20.0f <= value && value < 50.0f)
+	else if (m_frankValue2 <= value && value < m_frankValue3)
 		rank = 2;
-	else if (50.0f <= value)
+	else if (m_frankValue3 <= value)
 		rank = 3;
 
 	return rank;
@@ -1021,261 +860,12 @@ void CImageProcessing::SaveDefectImage(HObject &ho_img, HTuple name)
 	return;
 }
 
-// 检测算法：2020.4.3 以前（分割成小图后检测）
-int CImageProcessing::DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
-{
-	// Local iconic variables
-	//HObject  ho_ImageMedian_ref, ho_Image_def;
-	HObject  ho_Region_defth, ho_ConnectedRegions_defth, ho_ImageReduced_def;
-	HObject  ho_ImagePart_def, ho_ImageMedian_def, ho_ImageReduced_ref;
-	HObject  ho_ImagePart_ref, ho_ImageAbsDiff, ho_ImageMedian_absdiff;
-	HObject  ho_Domain_ref, ho_Rectangle, ho_ImageReduced_defsmall;
-	HObject  ho_Region, ho_ConnectedRegions, ho_SelectedRegions;
-	HObject  ho_ObjectSelected, ho_Rectangle1, ho_ImageReduced1;
-	HObject  ho_ImagePart;
-
-	// Local control variables
-	HTuple  hv_Width_ref, hv_Height_ref, hv_Width_def, hv_Height_def;
-	HTuple  hv_Row_origin_def, hv_Column_origin_def, hv_Row_end_def, hv_Column_end_def;
-	HTuple  hv_Mean_ref, hv_Deviation_ref, hv_Min_ref;
-	HTuple  hv_Max_ref, hv_Range_ref, hv_row_scale, hv_column_scale;
-	HTuple  hv_rownum, hv_colnum, hv_Mean_small_abs_diff, hv_Deviation_small_abs_diff;
-	HTuple  hv_between_mean, hv_Min_defsmall, hv_Max_defsmall, hv_Range_defsmall, hv_Number;
-
-	GetImageSize(hi_ref, &hv_Width_ref, &hv_Height_ref);
-
-	HalconCpp::Threshold(hi_img, &ho_Region_defth, 1, 255);
-	HalconCpp::Connection(ho_Region_defth, &ho_ConnectedRegions_defth);
-	SmallestRectangle1(ho_ConnectedRegions_defth, &hv_Row_origin_def, &hv_Column_origin_def,
-		&hv_Row_end_def, &hv_Column_end_def);
-	ReduceDomain(hi_img, ho_ConnectedRegions_defth, &ho_ImageReduced_def);
-	CropDomain(ho_ImageReduced_def, &ho_ImagePart_def);
-	MedianImage(ho_ImagePart_def, &ho_ImageMedian_def, "circle", 1, "mirrored");
-	GetImageSize(ho_ImageMedian_def, &hv_Width_def, &hv_Height_def);
-
-	//判断待检图像是否有黑边
-	if (0 != (HTuple(hv_Width_ref != hv_Width_def).TupleOr(hv_Height_ref != hv_Height_def))) {
-		ReduceDomain(hi_ref, ho_ConnectedRegions_defth, &ho_ImageReduced_ref);
-		CropDomain(ho_ImageReduced_ref, &ho_ImagePart_ref);
-		AbsDiffImage(ho_ImageMedian_def, ho_ImagePart_ref, &ho_ImageAbsDiff, 5);
-		MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-	}
-	else {
-		//参考图像减去待检测图像，结果取绝对值
-		//可利用放大倍数设置检测的精度和等级
-		AbsDiffImage(ho_ImageMedian_def, hi_ref, &ho_ImageAbsDiff, 5);
-		MedianImage(ho_ImageAbsDiff, &ho_ImageMedian_absdiff, "square", 2, "mirrored");
-	}
-
-	//参考图像像素平均值
-	GetDomain(hi_ref, &ho_Domain_ref);
-	Intensity(ho_Domain_ref, hi_ref, &hv_Mean_ref, &hv_Deviation_ref);
-	//差值图像的像素最大值
-	//MinMaxGray(ho_Domain_ref, ho_ImageMedian_absdiff, 0, &hv_Min_ref, &hv_Max_ref, &hv_Range_ref);
-
-	//判断是整除还是取模
-	hv_row_scale = hv_Height_def / 256;
-	if (0 != ((hv_Height_def % 256) != 0))
-	{
-		hv_row_scale += 1;
-	}
-	hv_column_scale = hv_Width_def / 256;
-	if (0 != ((hv_Width_def % 256) != 0))
-	{
-		hv_column_scale += 1;
-	}
-
-	// vector 暂存瑕疵位置信息，排序后放入队列
-	//std::vector<DefectType> vdef;
-	HTuple end_val41 = hv_row_scale - 1;
-	HTuple step_val41 = 1;
-	for (hv_rownum = 0; hv_rownum.Continue(end_val41, step_val41); hv_rownum += step_val41)
-	{
-		HTuple end_val42 = hv_column_scale - 1;
-		HTuple step_val42 = 1;
-		for (hv_colnum = 0; hv_colnum.Continue(end_val42, step_val42); hv_colnum += step_val42)
-		{
-			//重定义图像的定义域，分切图像
-			GenRectangle1(&ho_Rectangle, (hv_rownum * 256) + hv_Row_origin_def, (hv_colnum * 256) + hv_Column_origin_def,
-				((hv_rownum + 1) * 256) + hv_Row_origin_def, ((hv_colnum + 1) * 256) + hv_Column_origin_def);
-
-			ReduceDomain(ho_ImageMedian_absdiff, ho_Rectangle, &ho_ImageReduced_defsmall);
-			//帧相减后的图像在缩减区域的像素平均值
-			//Intensity(ho_Rectangle, ho_ImageReduced_defsmall, &hv_Mean_small_abs_diff, &hv_Deviation_small_abs_diff);
-			//hv_between_mean = (hv_Mean_ref - hv_Mean_small_abs_diff).TupleAbs();
-			//求区域内像素的最大最小值
-			//reduce_domain (ImageAbsDiff, Rectangle, ImageReduced3)
-			//MinMaxGray(ho_Rectangle, ho_ImageReduced_defsmall, 25, &hv_Min_defsmall, &hv_Max_defsmall, &hv_Range_defsmall);
-			//分切后的图像动态阈值化
-			//Threshold (ImageReduced_defsmall, Region, 0.8*max([min([255,Mean * 1.2]), min([255,Mean_small_abs_diff * 1.2])]), 255)
-
-			Threshold(ho_ImageReduced_defsmall, &ho_Region, ((hv_Mean_ref*0.5).TupleConcat(255)).TupleMin(), 255);
-
-			//连接区域
-			HalconCpp::Connection(ho_Region, &ho_ConnectedRegions);
-			//选择ROI
-			SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "contlength", "and", 5, 999999);
-
-			//对单张小图进行处理, 计算ROI数量
-			CountObj(ho_SelectedRegions, &hv_Number);
-			if (hv_Number != 0) {
-
-				//保存瑕疵图片
-				DefectType temp_def = LocateDefectPosition(cameraNO, ho_SelectedRegions,
-					hv_Number, hv_Column_origin_def, ho_ImagePart_def);
-				//保存瑕疵信息
-				vDFT.push_back(temp_def);
-			}
-		}
-	}
-
-	return 0;
-}
-
-// 检测算法：2020.4.5（直接对大图进行检测）
-int CImageProcessing::DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT)
-{
-	// Local iconic variables
-	HObject  ho_Image_ref, ho_Image_def;
-	HObject  ho_ImageGauss1, ho_ImageAbsDiff1, ho_Regions, ho_ConnectedRegions, ho_ImageResult;;
-	HObject  ho_SelectedRegions, ho_ObjectSelected, ho_Rectangle;
-	HObject  ho_ImageReduced, ho_ImagePart;
-
-	// Local control variables
-	//HTuple  hv_Width_ref, hv_Height_ref;
-	HTuple  hv_Width, hv_Height, hv_Min, hv_Max, hv_Range, hv_Number;
-	HTuple  hv_i, hv_Row, hv_Column, hv_Radius;
-	//HTuple  hv_ThreadID;
-
-	//读取参考图像
-	ho_Image_ref = hi_ref;
-	//GetImageSize(ho_Image_ref, &hv_Width_ref, &hv_Height_ref);
-	//GaussFilter(ho_Image_ref, &ho_ImageGauss, 5);
-	//读取待检测图像
-	ho_Image_def = hi_img;
-	GetImageSize(ho_Image_def, &hv_Width, &hv_Height);
-	//GaussFilter(ho_Image_def, &ho_ImageGauss1, 5);
-	HalconCpp::MedianImage(ho_Image_def, &ho_ImageGauss1, "square", m_median_filter_size, "mirrored");
-
-	//待检图 - 参考图
-	AbsDiffImage(ho_ImageGauss1, ho_Image_ref, &ho_ImageAbsDiff1, 1);
-
-	//自动阈值输入必须是是单通道图像，会有多阈值分割，Sigma用于对灰度直方图进行高斯平滑，决定了平滑的程度（分割细致程度），
-	//当sigma很大时，灰度直方图基本会被平滑为只剩下一个波峰，而分割是根据平滑后直方图的波谷来进行的，Sigma小，分割的越细致
-	//AutoThreshold(ho_ImageAbsDiff1, &ho_Regions, 3);
-
-	//用一个矩形掩膜计算像素点的灰度范围
-	GrayRangeRect(ho_ImageAbsDiff1, &ho_ImageResult, 10, 10);
-	MinMaxGray(ho_ImageResult, ho_ImageResult, 0, &hv_Min, &hv_Max, &hv_Range);
-	Threshold(ho_ImageResult, &ho_Regions, (HTuple(5.55).TupleConcat(hv_Max*0.8)).TupleMax(), 255);
-	//Threshold(ho_ImageResult, &ho_Regions, 200, 255);
-
-	HalconCpp::Connection(ho_Regions, &ho_ConnectedRegions);
-	//区域选择参数：1.轮廓周长(pixel)  2.最大内接圆半径(pixel)
-	SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, (HTuple("contlength").Append("inner_radius")),
-		"and", (HTuple(5).Append(1)), (HTuple(32768).Append(2048)));
-	CountObj(ho_SelectedRegions, &hv_Number);
-	if (0 != hv_Number)
-	{
-		{
-			HTuple end_val19 = hv_Number;
-			HTuple step_val19 = 1;
-			for (hv_i = 1; hv_i.Continue(end_val19, step_val19); hv_i += step_val19)
-			{
-				SelectObj(ho_SelectedRegions, &ho_ObjectSelected, hv_i);
-				SmallestCircle(ho_ObjectSelected, &hv_Row, &hv_Column, &hv_Radius);
-				//当所选的区域的外接圆半径大于2048，即区域范围大于图像的三分之二时，默认跳过
-				// min([hv_width, hv_height]) / 3
-				if (0 != (hv_Radius > ((hv_Width.TupleConcat(hv_Height)).TupleMin()) / 3))
-				{
-					continue;
-				}
-				if (0 != (hv_Row < 127))
-				{
-					hv_Row = 127;
-				}
-				else if (0 != (hv_Row > (hv_Width - 127)))
-				{
-					hv_Row = hv_Width - 127;
-				}
-				if (0 != (hv_Column < 127))
-				{
-					hv_Column = 127;
-				}
-				else if (0 != (hv_Column > (hv_Height - 127)))
-				{
-					hv_Column = hv_Height - 127;
-				}
-				GenRectangle1(&ho_Rectangle, hv_Row - 127, hv_Column - 127, hv_Row + 128, hv_Column + 128);
-				ReduceDomain(ho_Image_def, ho_Rectangle, &ho_ImageReduced);
-				CropDomain(ho_ImageReduced, &ho_ImagePart);
-
-				//计算像素平均值
-				HTuple hv_mean, hv_deviation;
-				HalconCpp::Intensity(ho_ObjectSelected, ho_ImagePart, &hv_mean, &hv_deviation);
-
-				//保存检测到的瑕疵信息
-				DefectType dtype;
-				dtype.center_x = (hv_Column.TupleInt() + IMAGE_WIDTH * (cameraNO - 1))*HORIZON_PRECISION;     //单位：毫米
-				dtype.area = 0.255f;
-				dtype.circle_radius = hv_Radius.TupleInt();
-				dtype.pixel_value = hv_mean.TupleInt();
-				dtype.absolute_position = hv_Row.TupleInt() * VERTICAL_PRECISION / 1000.0f;   //单位：米
-				//瑕疵分类
-				if (0 < dtype.pixel_value && dtype.pixel_value <= 92) {
-					if (dtype.area < 100) {
-						dtype.type = 0;
-					}
-					else
-						dtype.type = 2;
-				}
-				else if (92 < dtype.pixel_value && dtype.pixel_value <= 168) {
-					if (dtype.area < 100) {
-						dtype.type = 0;
-					}
-					else
-						dtype.type = 1;
-				}
-				else
-					dtype.type = 2;
-
-				//格式化文件名
-				char cpos[16];
-				sprintf_s(cpos, "%.3f", dtype.absolute_position);
-				//HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
-				HTuple hv_position = (HTuple)cpos;
-				char cX[16];
-				sprintf_s(cX, "%.3f", dtype.center_x);
-				HTuple hv_X = (HTuple)cX;
-				char cradius[16];
-				sprintf_s(cradius, "%.3f", dtype.circle_radius);
-				HTuple hv_radius = (HTuple)cradius;
-				char carea[16];
-				sprintf_s(carea, "%.3f", dtype.area);
-				HTuple hv_harea = (HTuple)carea;
-				HTuple hv_kind = (HTuple)dtype.type;
-
-				//保存瑕疵信息
-				vDFT.push_back(dtype);
-
-				//瑕疵图像的名称
-				HTuple hv_path = (HTuple)m_strPath.c_str();
-				HTuple hv_img_name = hv_path + "P" + hv_position
-					+ "_X" + hv_X
-					+ "_R" + hv_radius
-					+ "_A" + hv_harea
-					+ "_K" + hv_kind;
-				SaveDefectImage(ho_ImagePart, hv_img_name);
-
-			}
-		}
-	}
-	return 0;
-}
-
 //检测算法：一种基于多目机器视觉的光学薄膜瑕疵检测系统
-int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std::vector<DeffectInfo> &vecDftInfo,
-	std::vector<HalconCpp::HObject> &vecDftImg)
+int CImageProcessing::StandDeviationAlgorithm(
+	HImage hi_img
+	, HTuple hv_SVM
+	, std::vector<DeffectInfo> &vecDftInfo
+	, std::vector<HalconCpp::HObject> &vecDftImg)
 {
 	HObject  ho_Image, ho_ImageAverage, ho_ImageDeviation, ho_ImageMedianDFT;
 	HObject  ho_ImageSub1, ho_ImageSub2, ho_ImageAddSub, ho_ImageResult;
@@ -1285,8 +875,9 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std:
 	HTuple   hv_Width, hv_Height, hv_Number;
 	HTuple   hv_i, hv_Area, hv_Row, hv_Column, hv_RowCircle, hv_ColumnCircle, hv_Radius, hv_Contlength;
 
-	//ho_Image = hi_img;
-	HalconCpp::CopyImage(hi_img, &ho_Image);
+	ho_Image = hi_img;
+	//HalconCpp::CopyImage(hi_img, &ho_Image);
+
 	//是否需要切边
 	if (m_nCutBorderStatue > 0) {
 		// m_nCutBorder = 1为左切边， m_nCutBorder = 2为右切边
@@ -1295,11 +886,6 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std:
 		HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
 		ho_Image = ho_ImagePart;
 	}
-
-
-//#ifdef TESTMODEL
-//	AddNoise(ho_Image);
-//#endif
 
 	ho_ImageAverage = m_hi_average;
 	ho_ImageDeviation = m_hi_deviation;
@@ -1320,243 +906,92 @@ int CImageProcessing::StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std:
 		return 0;
 
 	//膨胀,腐蚀,用于减少region的数量
-	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 64);
-	HalconCpp::ErosionCircle(ho_RegionDilation, &ho_RegionErosion, 64);
+	HalconCpp::DilationCircle(ho_Region, &ho_RegionDilation, 63.5);
+	HalconCpp::ErosionCircle(ho_RegionDilation, &ho_RegionErosion, 61.5);
 	HalconCpp::Connection(ho_RegionErosion, &ho_ConnectedRegions);
-	int min_select = (int)std::pow(2 * m_fMin_Radius / HORIZON_PRECISION, 2);
-	int max_select = (int)std::pow(2 * m_fMax_Radius / HORIZON_PRECISION, 2);
-	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",	min_select,	max_select);
+	// m_fMin_Radius 与 m_fMax_Radius均为直径
+	int min_select = (int)std::pow(m_fMin_Radius / HORIZON_PRECISION, 2);
+	int max_select = (int)std::pow(m_fMax_Radius / HORIZON_PRECISION, 2);
+	HalconCpp::SelectShape(ho_ConnectedRegions, &ho_SelectedRegions, "area", "and",	min_select + 1,	max_select + 1);
 	HalconCpp::CountObj(ho_SelectedRegions, &hv_Number);
-	//TRACE("DFT in current image = %d", hv_Number[0].I());
-	//CString cstr;
-	//cstr.Format(_T("DFT in current image = %d"), hv_Number[0].I());
-	//::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+	if (hv_Number == 0)
+		return 0;
+	else if (hv_Number >= 20) {
+		//当单张图像中选择的区域超过 20 个，则报警
+		CString cstr;
+		cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"), m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f);
+		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+	}
 
-	if (0 != hv_Number){
-		//当单张图像中选择的区域超过 64 个，则认为此图计算失败
-		if (hv_Number > 128) {
-			CString cstr;
-			cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"),	m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION / 1000.0f);
-			::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
-			return -1;
+	//对区域进行排序
+	HObject ho_SortedRegion;
+	HalconCpp::SortRegion(ho_SelectedRegions, &ho_SortedRegion, "lower_left", "true", "column");
+	for (hv_i = 1; hv_i.Continue(hv_Number, 1); hv_i += 1) {
+		HalconCpp::SelectObj(ho_SortedRegion, &ho_ObjectSelected, hv_i);
+		HalconCpp::AreaCenter(ho_ObjectSelected, &hv_Area, &hv_Row, &hv_Column);
+		HTuple hv_X = hv_Column;
+		HTuple hv_Y = hv_Row;
+		//最小外接圆
+		HalconCpp::SmallestCircle(ho_ObjectSelected, &hv_RowCircle, &hv_ColumnCircle, &hv_Radius);
+		//默认如果选择的区域大于图像尺寸的一半，则视为无效区域
+		if (hv_Radius >= 2048)
+			continue;
+		//区域周长
+		HalconCpp::Contlength(ho_ObjectSelected, &hv_Contlength);
+		//计算像素平均值
+		HTuple hv_mean, hv_deviation;
+		HalconCpp::Intensity(ho_ObjectSelected, ho_Image, &hv_mean, &hv_deviation);
+		//当所选的区域的面积大于256*256=65536，即区域范围大于瑕疵图像的尺寸时，保存整个区域
+		if (hv_Area > 65535) {
+			HTuple hv_x1, hv_y1, hv_x2, hv_y2;
+			hv_x1 = hv_Column - hv_Radius;
+			hv_y1 = hv_Row - hv_Radius;
+			hv_x2 = hv_Column + hv_Radius;
+			hv_y2 = hv_Row + hv_Radius;
+			if (hv_x1 < 0)
+				hv_x1 = 0;
+			if (hv_y1 < 0)
+				hv_y1 = 0;
+			if (hv_x2 > hv_Width)
+				hv_x2 = hv_Width;
+			if (hv_y2 > hv_Height)
+				hv_y2 = hv_Height;
+			HalconCpp::GenRectangle1(&ho_Rectangle, hv_y1, hv_x1, hv_y2, hv_x2);
+			HalconCpp::ReduceDomain(ho_Image, ho_Rectangle, &ho_ImageReduced);
+			HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
 		}
-
-		std::vector<SelectRegion> vSelect;
-		HTuple end_val19 = hv_Number;
-		HTuple step_val19 = 1;
-		for (hv_i = 1; hv_i.Continue(end_val19, step_val19); hv_i += step_val19){
-			HalconCpp::SelectObj(ho_SelectedRegions, &ho_ObjectSelected, hv_i);
-			//考虑是否要替换为AreaCenterGray()算子
-			HalconCpp::AreaCenter(ho_ObjectSelected, &hv_Area, &hv_Row, &hv_Column);
-			//最小外接圆
-			HalconCpp::SmallestCircle(ho_ObjectSelected, &hv_RowCircle, &hv_ColumnCircle, &hv_Radius);
-			//默认如果选择的区域大于图像尺寸的一半，则视为无效区域
-			if (hv_Radius > 2048)
-				continue;
-			//区域周长
-			HalconCpp::Contlength(ho_ObjectSelected, &hv_Contlength);
-			//计算像素平均值
-			HTuple hv_mean, hv_deviation;
-			HalconCpp::Intensity(ho_ObjectSelected, ho_Image, &hv_mean, &hv_deviation);
-
-			SelectRegion region;
-			region.index = hv_i.TupleInt();
-			region.hv_Row_Center = hv_Row;
-			region.hv_Column_Center = hv_Column;
-			region.area = (float)hv_Area.D();
-			region.radius = (float)hv_Radius.D();
-			region.contlength = (float)hv_Contlength.D();
-			region.pixelvalue = (float)hv_mean;
-			vSelect.push_back(region);
-		}
-
-		//反向迭代器，保存瑕疵图像及信息
-		std::vector<SelectRegion>::reverse_iterator rit;
-		for (rit = vSelect.rbegin(); rit != vSelect.rend(); rit++){
-			SelectRegion region;
-			region = *rit;
-			if (region.area == 0.0f)
-				continue;
-			else {
-				//当所选的区域的面积大于256*256=65536，即区域范围大于瑕疵图像的尺寸时，保存其实际图像
-				if (region.area >= 65536.0f){
-					//直接保存整个区域
-					HTuple hv_x1, hv_y1, hv_x2, hv_y2;
-					hv_x1 = region.hv_Column_Center - (HTuple)region.radius;
-					hv_y1 = region.hv_Row_Center - (HTuple)region.radius;
-					hv_x2 = region.hv_Column_Center + (HTuple)region.radius;
-					hv_y2 = region.hv_Row_Center + (HTuple)region.radius;
-					if (hv_x1 < 0)
-						hv_x1 = 0;
-					if (hv_y1 < 0)
-						hv_y1 = 0;
-					if (hv_x2 > hv_Width)
-						hv_x2 = hv_Width;
-					if (hv_y2 > hv_Height)
-						hv_y2 = hv_Height;
-					HalconCpp::GenRectangle1(&ho_Rectangle, hv_y1, hv_x1, hv_y2, hv_x2);
-					HalconCpp::ReduceDomain(ho_Image, ho_Rectangle, &ho_ImageReduced);
-					HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-				}
-				else {
-					if (0 != (region.hv_Row_Center < 127)){
-						region.hv_Row_Center = 127;
-					}
-					else if (0 != (region.hv_Row_Center > (hv_Height - 127))){
-						region.hv_Row_Center = hv_Height - 127;
-					}
-					if (0 != (region.hv_Column_Center < 127)){
-						region.hv_Column_Center = 127;
-					}
-					else if (0 != (region.hv_Column_Center > (hv_Width - 127))){
-						region.hv_Column_Center = hv_Width - 127;
-					}
-					GenRectangle1(&ho_Rectangle, region.hv_Row_Center - 127, region.hv_Column_Center - 127,
-						region.hv_Row_Center + 128, region.hv_Column_Center + 128);
-					HalconCpp::ReduceDomain(ho_Image, ho_Rectangle, &ho_ImageReduced);
-					HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
-				}
-
-				//瑕疵信息处理
-				DeffectInfo dftInfo;
-				dftInfo.type = (unsigned short)ClassifyRegionsWithSVM(hv_SVM, ho_ImagePart);
-				//dftInfo.type = ImageClassification(region.radius);
-				dftInfo.x = (float)region.hv_Column_Center.D();
-				dftInfo.y = (float)region.hv_Row_Center.D();
-				dftInfo.area = region.area;
-				dftInfo.radius = (unsigned short)region.radius;
-				dftInfo.contlength = (unsigned short)region.contlength;
-				dftInfo.rank = RankDivide(region.area, region.radius, region.contlength);    //  等级
-				vecDftInfo.push_back(dftInfo);
-				vecDftImg.push_back(ho_ImagePart);
-
-				//DefectType dtype;
-				//dtype.type = ImageClassification(ho_ImagePart);
-				//dtype.center_x = (float)region.hv_Column_Center.D();
-				////dtype.absolute_position = m_current_position + (float)region.hv_Row_Center.D() * VERTICAL_PRECISION / 1000.0f;
-				//dtype.absolute_position = (produced_num * IMAGE_HEIGHT + (float)region.hv_Row_Center.D()) * VERTICAL_PRECISION / 1000.0f;
-				//dtype.area = region.area * HORIZON_PRECISION * VERTICAL_PRECISION;
-				//dtype.circle_radius = region.radius * HORIZON_PRECISION;
-				//dtype.contlength = region.contlength * HORIZON_PRECISION;
-				//dtype.pixel_value = (int)region.pixelvalue;
-				//int rank = RankDivide(dtype);
-				//dtype.rank = rank;
-				////保存瑕疵信息
-				//vDFT.push_back(dtype);
-
-				////图像保存，格式化文件名
-				//HTuple hv_path = (HTuple)m_strPath.c_str();
-				//char cpos[16];
-				//sprintf_s(cpos, "%.3f", dtype.absolute_position);
-				////HTuple hv_position = (HTuple)(std::to_string(dtype.absolute_position).c_str());
-				//HTuple hv_position = (HTuple)cpos;
-				//char cX[16];
-				//sprintf_s(cX, "%.3f", dtype.center_x);
-				//HTuple hv_X = (HTuple)cX;
-				//char cradius[16];
-				//sprintf_s(cradius, "%.3f", dtype.circle_radius);
-				//HTuple hv_radius = (HTuple)cradius;
-				//char carea[16];
-				//sprintf_s(carea, "%.3f", dtype.area);
-				//HTuple hv_harea = (HTuple)carea;
-				//HTuple hv_kind = (HTuple)dtype.type;
-				//HTuple hv_img_name = hv_path + "P" + hv_position
-				//	+ "_X" + hv_X
-				//	+ "_R" + hv_radius
-				//	+ "_A" + hv_harea
-				//	+ "_K" + hv_kind;
-				//SaveDefectImage(ho_ImagePart, hv_img_name);
-
+		else {
+			if (0 != (hv_Row < 127)) {
+				hv_Row = 127;
 			}
+			else if (0 != (hv_Row > (hv_Height - 127))) {
+				hv_Row = hv_Height - 127;
+			}
+			if (0 != (hv_Column < 127)) {
+			}
+			else if (0 != (hv_Column > (hv_Width - 127))) {
+				hv_Column = hv_Width - 127;
+			}
+			HalconCpp::GenRectangle1(&ho_Rectangle, hv_Row - 127, hv_Column - 127, hv_Row + 128, hv_Column + 128);
+			HalconCpp::ReduceDomain(ho_Image, ho_Rectangle, &ho_ImageReduced);
+			HalconCpp::CropDomain(ho_ImageReduced, &ho_ImagePart);
 		}
+		// 保存瑕疵图像
+		vecDftImg.push_back(ho_ImagePart);
+		// 保存瑕疵信息
+		DeffectInfo dftInfo;
+		dftInfo.type = (unsigned short)ClassifyRegionsWithSVM(hv_SVM, ho_ImagePart);  //  分类
+		dftInfo.x = (float)hv_X[0].D();
+		dftInfo.y = (float)hv_Y[0].D();
+		dftInfo.area = (float)hv_Area[0].D();
+		dftInfo.radius = (unsigned short)hv_Radius[0].D() * 2;    // 直径
+		dftInfo.contlength = (unsigned short)hv_Contlength[0].D();
+		dftInfo.rank = RankDivide(dftInfo.area, dftInfo.radius, dftInfo.contlength);    //  等级
+		dftInfo.pixel_value = (unsigned short)hv_mean.D();
+		vecDftInfo.push_back(dftInfo);
 	}
 
 	return 0;
-}
-
-// 检测算法：2021.2.26
-// step 1
-void CImageProcessing::GetOutDeviationArea(HImage hiImg, HObject &hoSelectedArea)
-{
-	//assert(m_hi_average);
-	//assert(m_hi_deviation);
-
-	HTuple hvWidth, hvHeight;
-	HalconCpp::GetImageSize(hiImg, &hvWidth, &hvHeight);
-	HObject hoImgMedianDFT;
-	HalconCpp::MedianImage(hiImg, &hoImgMedianDFT, "square", m_median_filter_size, "mirrored");
-	//HalconCpp::MedianRect(ho_Image, &ho_ImageMedianDFT, 1, 11);
-
-	//参考文献：一种基于多目机器视觉的光学薄膜瑕疵检测系统
-	//如果相减后像素值小于零，其结果图中会被置0；同理，如果像素值大于255，也会被截断使其最大值为255
-	//交换位置相减后再相加，相当于异或
-	HObject hoImgSub1, hoImgSub2, hoImgAddSub;
-	HalconCpp::SubImage(hoImgMedianDFT, m_hi_average, &hoImgSub1, 1, 0);
-	HalconCpp::SubImage(m_hi_average, hoImgMedianDFT, &hoImgSub2, 1, 0);
-	HalconCpp::AddImage(hoImgSub1, hoImgSub2, &hoImgAddSub, 0.5, 0);
-	HObject hoImgResult;
-	HalconCpp::SubImage(hoImgAddSub, m_hi_deviation, &hoImgResult, 1, 0);
-	HObject hoRegion;
-	HalconCpp::Threshold(hoImgResult, &hoRegion, 1, 255);
-
-	//膨胀,腐蚀,用于减少region的数量
-	HObject hoRegionDilation, hoRegionErosion, hoConnectedRegion;
-	HalconCpp::DilationCircle(hoRegion, &hoRegionDilation, 64);
-	HalconCpp::ErosionCircle(hoRegionDilation, &hoRegionErosion, 64);
-	HalconCpp::Connection(hoRegionErosion, &hoConnectedRegion);
-
-	int min_select = (int)std::pow(2 * m_fMin_Radius / HORIZON_PRECISION, 2);
-	int max_select = (int)std::pow(2 * m_fMax_Radius / HORIZON_PRECISION, 2);
-	HalconCpp::SelectShape(hoConnectedRegion, &hoSelectedArea, "area", "and",	min_select,	max_select);
-
-}
-
-// step 2
-void CImageProcessing::SplitAndMeasureDeffect(HObject selectArea)
-{
-	//assert(selectArea);
-	HTuple hvCounts;
-	HalconCpp::CountObj(selectArea, &hvCounts);
-	if (hvCounts == 0)
-		return;
-
-	//当单张图像中选择的区域超过 64 个，则认为此图计算失败
-	if (hvCounts > 64) {
-		CString cstr;
-		cstr.Format(_T("超出检测阈值,位置%.3f米,请检查膜面是否正常"), m_unImageIndex * IMAGE_HEIGHT * VERTICAL_PRECISION);
-		::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
-		return;
-	}
-
-	std::vector<SelectRegion> vSelect;
-	HObject hvCurrentSelected;
-	HTuple hvArea, hvRow, hvColumn;
-	HTuple hvCircleRow, hvCircleColumn, hvRadius, hvContlength;
-	for (HTuple hv_i = 1; hv_i.Continue(hvCounts, 1); hv_i += 1) {
-		HalconCpp::SelectObj(selectArea, &hvCurrentSelected, hv_i);
-		//考虑是否要替换为AreaCenterGray()算子
-		HalconCpp::AreaCenter(hvCurrentSelected, &hvArea, &hvRow, &hvColumn);
-		//最小外接圆
-		HalconCpp::SmallestCircle(hvCurrentSelected, &hvCircleRow, &hvCircleColumn, &hvRadius);
-		//默认如果选择的区域大于图像尺寸的一半，则视为无效区域
-		if (hvRadius > 2048)
-			continue;
-		//区域周长
-		HalconCpp::Contlength(hvCurrentSelected, &hvContlength);
-		//计算像素平均值
-		//HTuple hv_mean, hv_deviation;
-		//HalconCpp::Intensity(hvCurrentSelected, ho_Image, &hv_mean, &hv_deviation);
-
-		SelectRegion region;
-		region.index = hv_i.TupleInt();
-		region.hv_Row_Center = hvRow;
-		region.hv_Column_Center = hvColumn;
-		region.area = (float)hvArea.D();
-		region.radius = (float)hvRadius.D();
-		region.contlength = (float)hvContlength.D();
-		region.pixelvalue = 0.0f;
-		vSelect.push_back(region);
-	}
 }
 
 // add noise
@@ -1620,7 +1055,6 @@ void CImageProcessing::AddNoise(HObject imgIn, HObject &imgOut)
 	}
 	imgOut = hoImg;
 }
-
 
 //管理线程
 UINT CImageProcessing::ManageThread(LPVOID pParam)
@@ -2178,7 +1612,7 @@ void CImageProcessing::stdImageCalculate(int index)
 			Sleep(50);
 			continue;
 		}
-		int list_size = (int)m_listAcquiredImage.size();
+		//int list_size = (int)m_listAcquiredImage.size();
 		hi_acquire.Clear();
 		hi_acquire = m_listAcquiredImage.front();
 		m_listAcquiredImage.pop_front();
@@ -2190,11 +1624,13 @@ void CImageProcessing::stdImageCalculate(int index)
 		//瑕疵检测算法
 		if (!hi_acquire.IsInitialized()) {
 			CString cstr;
-			cstr.Format(_T("图像未被初始化:thread = %d, size = %d"), index + 1, list_size);
+			cstr.Format(_T("图像未被初始化:thread = %d"), index + 1);
 			::SendMessage(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
 			continue;
 		}
 		StandDeviationAlgorithm(hi_acquire, hv_SVMHandle, vec_dft_info, vec_dft_img);
+		if (vec_dft_img.empty())
+			continue;
 
 		//瑕疵信息和图像存入队列
 		DeffectInfo tempInfo;

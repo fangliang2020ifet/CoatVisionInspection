@@ -13,21 +13,6 @@
 #include "ImportHalconCpp.h"
 
 
-struct DefectType
-{
-	int rank = 0;                     //瑕疵等级
-	int type = 0;                     //瑕疵分类/类型
-	float center_x = 0;               //水平位置(毫米)
-	float absolute_position = 0.0f;   //纵向位置(米)
-	float area = 0.0f;                //面积
-	float contlength = 5.0f;          //周长
-	float circle_radius = 1.0f;       //外接圆直径
-	int pixel_value = 128;            //像素平均灰度值
-	bool operator < (const DefectType& def) const {
-		return absolute_position < def.absolute_position;
-	}
-};
-
 typedef struct DeffectInfo 
 {
 	unsigned short int rank = 0;          //瑕疵等级
@@ -41,18 +26,6 @@ typedef struct DeffectInfo
 	unsigned short int pixel_value = 0;   //像素平均灰度值
 
 }DeffectInfo;
-
-struct SelectRegion
-{
-	//单位均为像素
-	int index;
-	HTuple hv_Row_Center;
-	HTuple hv_Column_Center;
-	float area;
-	float radius;
-	float contlength;
-	float pixelvalue;
-};
 
 
 class CImageProcessing
@@ -152,12 +125,6 @@ private:
 			ImageCalculate3, ImageCalculate4, ImageCalculate5 };
 	BOOL m_bThreadAlive[5] = { 0 };
 	CRITICAL_SECTION m_csCalculateThread;
-	//CRITICAL_SECTION m_csDefImgList1;
-	//CRITICAL_SECTION m_csDefImgList2;
-	//CRITICAL_SECTION m_csDefImgList3;
-	//CRITICAL_SECTION m_csDefImgList4;
-	//CRITICAL_SECTION m_csDefImgList5;
-	//std::mutex mtx;
 	CMutex mutex;
 
 	// TestModel
@@ -179,24 +146,14 @@ private:
 	BOOL GetSavePath(std::string &path);
 	BOOL GenerateReferenceImage(HImage &hi_average, HImage &hi_deviation);
 	void SaveReferenceImage(const char* filename);
-	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion,
-		HTuple hv_Number, HTuple hv_colunm_origin, HObject ho_image);
-	DefectType LocateDefectPosition(int camera_number, HObject ho_selectedregion);
-	int  RankDivide(DefectType dtype);
-	unsigned short int RankDivide(float area, float radius, float contlength);
+	unsigned short int RankDivide(float area, unsigned radius, unsigned contlength);
 
 	void InitialClassify(const char * svm_file_name, HTuple &hv_SVMHandle);
 	int ClassifyRegionsWithSVM(HTuple hv_SVMHandle, HObject src);
 	void CalculateFeatures(HObject img, HObject region, HTuple &features);
-	
-	int DetectAlgorithem(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
-	int DetectAlgorithemSimple(int cameraNO, HImage hi_ref, HImage hi_img, std::vector<DefectType> &vDFT);
 	int StandDeviationAlgorithm(HImage hi_img, HTuple hv_SVM, std::vector<DeffectInfo> &vecDftInfo, std::vector<HalconCpp::HObject> &vecDftImg);
-	void GetOutDeviationArea(HImage hiImg, HObject &hoSelectedArea);
-	void SplitAndMeasureDeffect(HObject selectArea);
 	void AddNoise(HObject &hoImg);
 	void AddNoise(HObject imgIn, HObject &imgOut);
-
 
 	std::thread* thdManageThread;
 	std::thread* thdCalculateThread[5];
