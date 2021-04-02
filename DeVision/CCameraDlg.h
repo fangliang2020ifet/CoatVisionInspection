@@ -31,8 +31,8 @@ public:
 	DCB GetUartConfigDCB(void);
 	HANDLE hRxThread;	// receive thread HANDLE
 	TextBank DataRx, DataTx;
-	void OnChangeEditTxData(CStringA strtmp);
-	int AsyncSend(const CStringA& dataStr) {
+	void OnChangeEditTxData(CString strtmp);
+	int AsyncSend(const CString& dataStr) {
 		return mUart.UnblockSend(dataStr);
 	}
 	int AsyncRead(CString& dataStr) {

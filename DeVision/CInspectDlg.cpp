@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CInspectDlg, CDialogEx)
 CInspectDlg::CInspectDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_INSPECT, pParent)
 {
-	m_bSystemRunning = false;
+	m_pnSystemState = nullptr;
 	m_bTableSaving = false;
 
 	for (int i = 0; i < 4; i++) { m_bDeffectDisplay[i] = TRUE; }
@@ -119,7 +119,7 @@ BOOL CInspectDlg::OnInitDialog()
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 
 	m_listWarning.SetHorizontalExtent(1000);
-	CString cwarning = L"***********************报警信息***********************";
+	CString cwarning = L"***********************警告信息***********************";
 	m_listWarning.AddString(cwarning);
 	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
@@ -247,25 +247,8 @@ void CInspectDlg::UpdateDFTinformation(size_t total_num, int great_dft_num, int 
 
 }
 
-void CInspectDlg::RecordWarning(const std::wstring& str)
-{
-	CString cstr_log;
-	CString strSpace, strNextLine, strTime;
-	strSpace.Format(_T("%s"), _T("  "));
-	strNextLine.Format(_T("%s"), _T("\r\n"));
 
-	CTime tm; tm = CTime::GetCurrentTime();
-	strTime = tm.Format("%X:");
-	cstr_log += strTime;
-	cstr_log += strSpace;
-	cstr_log += str.c_str();
-	cstr_log += strNextLine;
-
-	m_listWarning.AddString(cstr_log);
-	m_listWarning.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
-}
-
-void CInspectDlg::RecordWarning(int test, CString cstr)
+void CInspectDlg::RecordWarning(CString cstr)
 {
 	CString clog, ctime;
 	CTime tm; tm = CTime::GetCurrentTime();
@@ -275,26 +258,18 @@ void CInspectDlg::RecordWarning(int test, CString cstr)
 	m_listWarning.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
-void CInspectDlg::RecordLogList(const std::wstring& str)
+
+void CInspectDlg::clearWarning()
 {
-	CString cstr_log;
-	CString strSpace, strNextLine, strTime;
-	strSpace.Format(_T("%s"), _T("  "));
-	strNextLine.Format(_T("%s"), _T("\r\n"));
+	m_listWarning.ResetContent();
 
-	CTime tm; tm = CTime::GetCurrentTime();
-	strTime = tm.Format("%X:");
-	cstr_log += strTime;
-	cstr_log += strSpace;
-	cstr_log += str.c_str();
-	cstr_log += strNextLine;
-
-	m_listLog.AddString(cstr_log);
-	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
+	CString cwarning = L"***********************警告信息***********************";
+	m_listWarning.AddString(cwarning);
 
 }
 
-void CInspectDlg::RecordLogList(int test, CString cstr)
+
+void CInspectDlg::RecordLogList(CString cstr)
 {
 	CString clog, ctime;
 	CTime tm; tm = CTime::GetCurrentTime();
@@ -302,6 +277,15 @@ void CInspectDlg::RecordLogList(int test, CString cstr)
 	clog.Format(L"\r\n");
 	m_listLog.AddString(ctime + cstr + clog);
 	m_listLog.PostMessageW(WM_VSCROLL, SB_BOTTOM, 0);
+}
+
+
+void CInspectDlg::clearLogging()
+{
+	m_listLog.ResetContent();
+
+	CString clog = L"***********************操作记录***********************";
+	m_listLog.AddString(clog);
 }
 
 // 切卷
@@ -336,8 +320,8 @@ void CInspectDlg::OnBnClickedButtonInfoChange()
 		m_cstrName = productinfo.m_cstrName;
 		m_cstrSchedule = productinfo.m_cstrSchedule;
 		m_cstrAddition = productinfo.m_cstrAddition;
-
-		if (m_bSystemRunning) {
+		// SYSTEM_STATE_RUN          SYSTEM_STATE_PAUSE
+		if (*m_pnSystemState == 2 || *m_pnSystemState == 4) {
 			m_bTableSaving = true;
 			//::SendMessage(hMainWnd, WM_SWITCHROLL, 0, 0);
 			::SendNotifyMessageW(hMainWnd, WM_SWITCHROLL, 0, 0);

@@ -12,6 +12,7 @@
 #include <cmath>
 
 #include "CLogin.h"
+#include "CAlarm.h"
 #include "CAcquireImage.h"
 #include "CImageProcessing.h"
 #include "CInspectDlg.h"
@@ -72,13 +73,14 @@ public:
 private:
 	//LPCWSTR APPNAME = L"System";
 	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
-
+	int m_nAlarmCode;
 	long start_time;
 	CString cstrlog;
 	CFont small_flag_font;                             //小字体
 	CFont loggle_font;
 	BOOL m_bFlicker = FALSE;                           //控件闪烁
 	CStatusBar     m_StatusBar;                        //状态栏
+	CAlarm          m_Alarm;                           //报警
 	CAcquireImage   m_ImgAcq;                          //图像获取
 	CImageProcessing   *m_pImgProc[4];
 	CMyView*        pView;                             //全局瑕疵滚动显示区域
@@ -100,6 +102,10 @@ private:
 	int m_nNormalDistribution;
 	int m_nFIlterSize;
 	int m_nRankMethod;
+	int m_nAlarmA;
+	int m_nAlarmB;
+	int m_nAlarmC;
+	int m_nAlarmD;
 	float m_speed;                                     //当前车速
 	float m_fCurrentPosition;
 	float m_previous_position;
@@ -114,8 +120,9 @@ private:
 	std::string m_strDeffect_Path;                     //瑕疵图像路径
 	std::string m_strTable_Path;                       //报表路径
 	std::string m_strDeffectImgSavePath;
+	std::string m_strAlarmCOM;
 
-	CEvent StopRefrush_Event;
+	CEvent eventStopRefrushWnd;
 	HANDLE *m_phFinishProcessEvent[4];                 //处理完成事件
 	CRITICAL_SECTION m_csListDftDisplay;               //定义一个临界区
 	CWinThread *m_RefrushThread;
@@ -137,7 +144,6 @@ private:
 	void InitialStateBar();                       //初始化状态栏
 	void InitialBtnIcon();
 	bool InitialTotalDefect();                    //全部瑕疵显示区
-	void GetDftInfoFromImgProc();
 	int DevideDFTRank(int num);                   //定义产品等级
 	void CreateFlag(CDC &mDC, int x, int y, int kind);
 	void DrawPartial(int test);
@@ -233,4 +239,6 @@ protected:
 	afx_msg LRESULT OnUpdateMainwnd(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSwitchRoll(WPARAM wParam, LPARAM lParam);
 
+public:
+	afx_msg void OnEnKillfocusEditSelectwidth();
 };

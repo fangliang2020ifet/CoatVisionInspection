@@ -1053,6 +1053,7 @@ void CTableDlg::BeginSaveTable()
 	//使用默认模板另存为
 	//SaveToExcelUseDefault(m_current_excel_name);
 
+	TableSaved_Event.ResetEvent();
 	if (!(m_SaveTable = AfxBeginThread(SaveTableThreadDefault, this))) {
 		CString cstr = L"报表保存失败,保存线程创建失败";
 		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
@@ -1818,7 +1819,7 @@ void CTableDlg::OnNMDblclkListDetail(NMHDR *pNMHDR, LRESULT *pResult)
 		sprintf_s(cX, "%.3f", dtype.x);
 		HTuple hv_X = (HTuple)cX;
 		char cradius[16];
-		sprintf_s(cradius, "%.3f", (float)dtype.radius);
+		sprintf_s(cradius, "%.3f", dtype.radius * HORIZON_PRECISION);
 		HTuple hv_radius = (HTuple)cradius;
 		char carea[16];
 		sprintf_s(carea, "%.3f", dtype.area);
@@ -1894,6 +1895,3 @@ void CTableDlg::ShowBitmap(CWnd *pWnd, CString BmpName)
 	dcBmp.DeleteDC();                      //删除CreateCompatibleDC得到的图片DC  
 
 }
-
-
-

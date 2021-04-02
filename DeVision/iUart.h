@@ -50,7 +50,7 @@ public:
 	CString ReadCString(void);
 
 	int UnblockRead(CString &dataStr);
-	int UnblockSend(const CStringA &dataStr);
+	int UnblockSend(const CString &dataStr);
 
 	void SetParentHWND(HWND pParent, HWND pTopParent)
 	{

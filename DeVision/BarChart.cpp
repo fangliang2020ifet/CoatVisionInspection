@@ -2063,7 +2063,7 @@ BOOL CBarChart::CChartDatabase::Prepare(ULONG ulODBCVer)
 
 	// Set the App's ODBC Version
 	m_sqlRet = SQLSetEnvAttr(m_hOdbcEnv, SQL_ATTR_ODBC_VERSION,
-		(SQLPOINTER)ulODBCVer, SQL_IS_INTEGER);
+		&ulODBCVer, SQL_IS_INTEGER);
 	if (m_sqlRet != SQL_SUCCESS && m_sqlRet != SQL_SUCCESS_WITH_INFO)
 	{
 		m_szError = _T("Error in Setting ODBC Version.");

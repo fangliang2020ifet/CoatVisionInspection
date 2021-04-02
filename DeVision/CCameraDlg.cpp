@@ -360,7 +360,7 @@ DCB CCameraDlg::GetUartConfigDCB(void)
 	return configDCB;
 }
 
-void CCameraDlg::OnChangeEditTxData(CStringA strtmp)
+void CCameraDlg::OnChangeEditTxData(CString strtmp)
 {
 	//CString strtmp;
 
@@ -420,7 +420,7 @@ void CCameraDlg::OnBnClickedButton3()
 	if (isOpened)
 	{
 		std::string str = "SH#";
-		CStringA cstrtmp(str.c_str());
+		CString cstrtmp(str.c_str());
 		OnChangeEditTxData(cstrtmp);
 
 		CString cstr = L"光源设置为常亮";
@@ -435,7 +435,7 @@ void CCameraDlg::OnBnClickedButton4()
 	if (isOpened)
 	{
 		std::string str = "SL#";
-		CStringA cstrtmp(str.c_str());
+		CString cstrtmp(str.c_str());
 		OnChangeEditTxData(cstrtmp);
 
 		CString cstr = L"光源设置为常灭";
@@ -462,7 +462,7 @@ void CCameraDlg::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 			else
 				str1 = "SB00" + positionstr;
 			std::string strtmp = str1 + "#";
-			CStringA cstrtmp(strtmp.c_str());
+			CString cstrtmp(strtmp.c_str());
 			//CString cstrtmp;
 
 			OnChangeEditTxData(cstrtmp);
@@ -476,7 +476,7 @@ void CCameraDlg::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 			else
 				str1 = "SB0" + positionstr;
 			std::string strtmp = str1 + "#";
-			CStringA cstrtmp(strtmp.c_str());
+			CString cstrtmp(strtmp.c_str());
 			OnChangeEditTxData(cstrtmp);
 		}
 

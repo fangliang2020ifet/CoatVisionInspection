@@ -198,6 +198,7 @@
   <ItemGroup>
     <ClInclude Include="BarChart.h" />
     <ClInclude Include="CAcquireImage.h" />
+    <ClInclude Include="CAlarm.h" />
     <ClInclude Include="CAlgorithmDlg.h" />
     <ClInclude Include="CAnalysisDlg.h" />
     <ClInclude Include="CApplication.h" />
@@ -252,6 +253,7 @@
   <ItemGroup>
     <ClCompile Include="BarChart.cpp" />
     <ClCompile Include="CAcquireImage.cpp" />
+    <ClCompile Include="CAlarm.cpp" />
     <ClCompile Include="CAlgorithmDlg.cpp" />
     <ClCompile Include="CAnalysisDlg.cpp" />
     <ClCompile Include="CCameraDlg.cpp" />

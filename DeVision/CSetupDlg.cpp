@@ -23,6 +23,7 @@ CSetupDlg::CSetupDlg(CWnd* pParent /*=nullptr*/)
 	m_bSaveRefImg = false;
 	m_strDeffect_Path = "";
 	m_strTable_Path = "";
+	m_strUartCOM = "";
 }
 
 CSetupDlg::~CSetupDlg()
@@ -34,6 +35,7 @@ void CSetupDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_THREADNUM, m_combo_threadnum);
 	DDX_Control(pDX, IDC_CHECK_SAVE_REF, m_save_reference_image);
+	DDX_Control(pDX, IDC_COMBO_ALARM, m_comboAlarm);
 }
 
 
@@ -51,6 +53,7 @@ BEGIN_MESSAGE_MAP(CSetupDlg, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_EDIT_K_SPEED, &CSetupDlg::OnEnKillfocusEditKSpeed)
 	ON_CBN_SELCHANGE(IDC_COMBO_THREADNUM, &CSetupDlg::OnCbnSelchangeComboThreadnum)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_REF, &CSetupDlg::OnBnClickedCheckSaveRef)
+	ON_CBN_SELCHANGE(IDC_COMBO_ALARM, &CSetupDlg::OnCbnSelchangeComboAlarm)
 END_MESSAGE_MAP()
 
 
@@ -87,6 +90,16 @@ BOOL CSetupDlg::OnInitDialog()
 	SetDlgItemText(IDC_EDIT_DEFFECT_PATH, path);
 	path = (CA2W)m_strTable_Path.c_str();
 	SetDlgItemText(IDC_EDIT_TABLE_PATH, path);
+
+	CString ctext;
+	int select_index = 0;
+	for (int i = 0; i < 9; i++) {
+		ctext.Format(_T("COM%d"), i + 1);
+		m_comboAlarm.AddString(ctext);
+		if (!ctext.CompareNoCase((CA2W)m_strUartCOM.c_str()))
+			select_index = i;
+	}
+	m_comboAlarm.SetCurSel(select_index);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -159,6 +172,9 @@ void CSetupDlg::loadInitialParameters()
 	GetPrivateProfileStringW(APPNAME, L"TablePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
 	m_strTable_Path = (CW2A)ReturnedString;
 
+	GetPrivateProfileStringW(APPNAME, L"UartCOM", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strUartCOM = (CW2A)ReturnedString;
+
 	delete[] ReturnedString;
 }
 
@@ -188,6 +204,9 @@ void CSetupDlg::saveParameters()
 
 	cstrparam = (CA2W)m_strTable_Path.c_str();
 	WritePrivateProfileStringW(APPNAME, L"TablePath", cstrparam, FILEPATH);
+
+	cstrparam = (CA2W)m_strUartCOM.c_str();
+	WritePrivateProfileStringW(APPNAME, L"UartCOM", cstrparam, FILEPATH);
 
 }
 
@@ -597,6 +616,7 @@ void CSetupDlg::OnBnClickedButtonSystemReset()
 	CString table_path(m_strTable_Path.c_str());
 	pedit->SetWindowTextW(table_path);
 
+
 }
 
 
@@ -666,4 +686,18 @@ void CSetupDlg::OnBnClickedCheckSaveRef()
 	else if (state == 1)
 		m_bSaveRefImg = true;
 
+}
+
+// 报警灯 com 口选择
+void CSetupDlg::OnCbnSelchangeComboAlarm()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+
+	int index = m_comboAlarm.GetCurSel();
+	CString cstr;
+	m_comboAlarm.GetLBText(index, cstr);
+	m_strUartCOM = (CW2A)cstr.GetBuffer();
+
+	UpdateData(false);
 }

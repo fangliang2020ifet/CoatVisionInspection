@@ -49,6 +49,8 @@ END_MESSAGE_MAP()
 CDeVisionDlg::CDeVisionDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DEVISION_DIALOG, pParent)
 {
+	m_nAlarmCode = 0;
+
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_hOnlineIcon = AfxGetApp()->LoadIcon(IDI_ICON_ONLINE);
 	m_hOfflineIcon = AfxGetApp()->LoadIcon(IDI_ICON_OFFLINE);
@@ -62,6 +64,7 @@ CDeVisionDlg::CDeVisionDlg(CWnd* pParent /*=nullptr*/)
 	m_hLockIcon = AfxGetApp()->LoadIcon(IDI_ICON_LOCK);
 	m_hUnlockIcon = AfxGetApp()->LoadIcon(IDI_ICON_UNLOCK);
 	m_hExitIcon = AfxGetApp()->LoadIconW(IDI_ICON_EXIT);
+
 
 	m_system_state = SYSTEM_STATE_OFFLINE;
 	m_screen_state = SCREEN_UNLOCK;
@@ -145,6 +148,7 @@ BEGIN_MESSAGE_MAP(CDeVisionDlg, CDialogEx)
 	ON_MESSAGE(WM_UPDATE_HISTORY, &CDeVisionDlg::OnUpdateHistory)
 	ON_MESSAGE(WM_UPDATE_MAINWND, &CDeVisionDlg::OnUpdateMainwnd)
 	ON_MESSAGE(WM_SWITCHROLL, &CDeVisionDlg::OnSwitchRoll)
+	ON_EN_KILLFOCUS(IDC_EDIT_SELECTWIDTH, &CDeVisionDlg::OnEnKillfocusEditSelectwidth)
 END_MESSAGE_MAP()
 
 // CDeVisionDlg 消息处理程序
@@ -179,6 +183,7 @@ BOOL CDeVisionDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+
 	HDevExportCpp::HalconInitAOP();      // Halcon 速度优化
 
 	hMainWnd = AfxGetMainWnd()->m_hWnd;
@@ -208,9 +213,6 @@ BOOL CDeVisionDlg::OnInitDialog()
 	//按钮图标初始化
 	InitialBtnIcon();
 
-	//注册表：加载默认设置
-	//LoadRegConfig();
-
 	//初始化全局瑕疵显示区, 设置显示范围
 	InitialTotalDefect();
 
@@ -219,22 +221,37 @@ BOOL CDeVisionDlg::OnInitDialog()
 	m_tableDlg.m_pvDFT = &m_vecDftDisplay;
 	m_tableDlg.m_pnSystemState = &m_system_state;
 	m_tableDlg.m_pfCurPos = &m_fCurrentPosition;
+	m_inspectDlg.m_pnSystemState = &m_system_state;
 
 	//主界面信息刷新定时器
 	SetTimer(1, 1000, 0);
+
+	CString cstr = L"程序已启动，当前登录用户:  " + m_logo_name;
+	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	// 报警模块初始化
+	m_Alarm.m_cstrCOM = m_strAlarmCOM.c_str();
+	if (m_Alarm.OpenUart()) {
+		CString cstr = L"报警器连接成功";
+		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	}
+	else {
+		CString cstr = L"报警器连接失败";
+		::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&cstr, NULL);
+	}
 
 	InitialImageAcquire();
 
 	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 
-	CString cstr = L"程序已启动，当前登录用户:  " + m_logo_name;
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
 //退出
 void CDeVisionDlg::ExitProgram()
 {
+	m_Alarm.closeUart();
+
 	//停止界面刷新
 	KillTimer(1);
 
@@ -361,6 +378,9 @@ void CDeVisionDlg::loadInitialParameters()
 	GetPrivateProfileStringW(L"System", L"TablePath", L"", ReturnedString, STRINGLENGTH, FILEPATH);
 	m_strTable_Path = (CW2A)ReturnedString;
 
+	GetPrivateProfileStringW(L"System", L"UartCOM", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	m_strAlarmCOM = (CW2A)ReturnedString;
+
 	GetPrivateProfileStringW(L"Algorithm", L"NormalDistribution", L"", ReturnedString, STRINGLENGTH, FILEPATH);
 	strvalue = (CW2A)ReturnedString;
 	m_nNormalDistribution = std::stoi(strvalue);
@@ -393,6 +413,23 @@ void CDeVisionDlg::loadInitialParameters()
 	strvalue = (CW2A)ReturnedString;
 	m_fRankValue3 = std::stof(strvalue);
 
+	GetPrivateProfileStringW(L"Algorithm", L"AlarmA", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmA = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"AlarmB", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmB = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"AlarmC", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmC = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(L"Algorithm", L"AlarmD", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmD = std::stoi(strvalue);
+
+
 	delete[] ReturnedString;
 }
 
@@ -421,6 +458,9 @@ void CDeVisionDlg::saveParameters()
 
 	cstrparam = (CA2W)m_strTable_Path.c_str();
 	WritePrivateProfileStringW(L"System", L"TablePath", cstrparam, FILEPATH);
+
+	cstrparam = (CA2W)m_strAlarmCOM.c_str();
+	WritePrivateProfileStringW(L"System", L"UartCOM", cstrparam, FILEPATH);
 
 	cstrparam.Format(_T("%d"), m_nNormalDistribution);
 	WritePrivateProfileStringW(L"Algorithm", L"NormalDistribution", cstrparam, FILEPATH);
@@ -1143,7 +1183,7 @@ void CDeVisionDlg::UpdateSysColor()
 void CDeVisionDlg::UpdateDFTinfo(DeffectInfo info)
 {
 	m_nTotalDeffects += 1;
-	//判断是否是  D级 缺陷
+	//判断是否是  D级 缺陷 
 	if (info.rank == 3)
 		m_nSeriousDeffects += 1;
 
@@ -1167,6 +1207,26 @@ void CDeVisionDlg::UpdateDFTinfo(DeffectInfo info)
 		break;
 	}
 
+	// 判断是否需要报警
+	switch (info.rank)
+	{
+	case 0:
+		if (m_nAlarmA == 1)
+			m_Alarm.signalAlarm();
+		break;
+	case 1:
+		if(m_nAlarmB == 1)
+			m_Alarm.signalAlarm();
+		break;
+	case 2:
+		if(m_nAlarmC == 1)
+			m_Alarm.signalAlarm();
+		break;
+	case 3:
+		if(m_nAlarmD == 1)
+			m_Alarm.signalAlarm();
+		break;
+	}
 
 }
 
@@ -1298,9 +1358,9 @@ void CDeVisionDlg::AutoStop()
 			return;
 #endif
 		//等待列表中的图像都处理完成, 之后结束处理线程
-		StopRefrush_Event.SetEvent();
+		eventStopRefrushWnd.SetEvent();
 
-		m_tableDlg.TableSaved_Event.ResetEvent();
+		//m_tableDlg.TableSaved_Event.ResetEvent();
 	}
 
 	CString cstr = L"保护性停机";
@@ -1472,11 +1532,11 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		pDlg->m_analysisDlg.m_dDftNumber3 = (double)pDlg->m_rank[2];
 		pDlg->m_analysisDlg.m_dDftNumber4 = (double)pDlg->m_rank[3];
 
-		//设置为 2s 刷新
-		dwStop = WaitForSingleObject(pDlg->StopRefrush_Event, 2313);
+		dwStop = WaitForSingleObject(pDlg->eventStopRefrushWnd, 2013);
 		switch (dwStop)
 		{
 		case WAIT_TIMEOUT: {
+			//设置为 2s 刷新
 			if (pDlg->m_system_state != SYSTEM_STATE_PAUSE) {
 				pDlg->DrawPartial(5);
 				pDlg->pView->UpdateScreen(pDlg->small_flag_font, pDlg->m_wnd1_range);
@@ -1489,33 +1549,28 @@ UINT CDeVisionDlg::RefrushWnd(LPVOID pParam)
 		}
 		case WAIT_FAILED:
 			return -1;
-		case WAIT_OBJECT_0: {
+		case WAIT_OBJECT_0: {//停止检测
 			//显示等待界面
 			CLoad  wndLoad;
 			wndLoad.Create(IDB_BITMAP_WAIT0);
 			wndLoad.UpdateWindow();
 			HWND hwnd = wndLoad.GetSafeHwnd();
 			::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-			// 等待所有相机的处理线程都结束
-			int nIndex = WaitForMultipleObjects(pDlg->m_nConnectedCameras, *pDlg->m_phFinishProcessEvent, TRUE, INFINITE);
-			// 等待所有事件发生
-			int count = pDlg->m_nConnectedCameras - 1;
-			if (WAIT_OBJECT_0 + count <= nIndex <= WAIT_OBJECT_0 + count - 1) {
-				for (int index = 0; index < pDlg->m_nConnectedCameras; index++) {
-					auto size = pDlg->m_pImgProc[index]->m_listDftImg.size();
-					pDlg->SaveImages(index, (int)size, save_index[index]);
-				}
-				//保存检测记录
-				EnterCriticalSection(&pDlg->m_csListDftDisplay);
-				pDlg->GenerateTableInfo();
-				pDlg->m_tableDlg.BeginSaveTable();
-				LeaveCriticalSection(&pDlg->m_csListDftDisplay);
+			// 等待所有事件发生: 所有事件都已发生函数才返回, 所有相机的处理线程都结束
+			WaitForMultipleObjects(pDlg->m_nConnectedCameras, *pDlg->m_phFinishProcessEvent, TRUE, INFINITE);
+			for (int index = 0; index < pDlg->m_nConnectedCameras; index++) {
+				auto size = pDlg->m_pImgProc[index]->m_listDftImg.size();
+				pDlg->SaveImages(index, (int)size, save_index[index]);
 			}
+
+			EnterCriticalSection(&pDlg->m_csListDftDisplay);
+			pDlg->GenerateTableInfo();
+			pDlg->m_tableDlg.BeginSaveTable();
+			LeaveCriticalSection(&pDlg->m_csListDftDisplay);
 
 			// 等待报表保存
 			WaitForSingleObject(pDlg->m_tableDlg.TableSaved_Event, INFINITE);
 			pDlg->m_system_state = SYSTEM_STATE_STOP;
-
 			//关闭等待界面
 			wndLoad.DestroyWindow();
 			CString cstr = L"检测数据保存成功";
@@ -1560,14 +1615,14 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStart()
 			}
 		}
 
-		//启动主界面刷新线程
-		StopRefrush_Event.ResetEvent();
+		//创建界面刷新线程
+		eventStopRefrushWnd.ResetEvent();
 		m_RefrushThread = AfxBeginThread(RefrushWnd, this);
 
-		m_inspectDlg.m_bSystemRunning = true;
 		//启动历史页面刷新
 		m_historyDlg.m_pages = 0;
 
+		m_Alarm.signalRun();
 		CString cstr = L"启动检测...";
 		::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 	}
@@ -1595,17 +1650,15 @@ void CDeVisionDlg::OnBnClickedMfcbuttonStop()
 #ifndef TESTMODEL
 		m_ImgAcq.Freeze();
 #endif
+		//停止界面刷新线程
+		eventStopRefrushWnd.SetEvent();
+		//停止处理线程
 		for (int index = 0; index < m_nConnectedCameras; index++) {
 			m_pImgProc[index]->StopManageThread();
 		}
-
-		//等待列表中的图像都处理完成, 之后结束处理线程
-		StopRefrush_Event.SetEvent();
-
-		m_inspectDlg.m_bSystemRunning = false;
-		m_tableDlg.TableSaved_Event.ResetEvent();
 	}
 
+	m_Alarm.signalStop();
 	CString cstr = L"停止检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
@@ -1622,6 +1675,7 @@ void CDeVisionDlg::OnBnClickedMfcbuttonPause()
 	if (m_system_state != SYSTEM_STATE_PAUSE)
 		m_system_state = SYSTEM_STATE_PAUSE;
 
+	m_Alarm.signalPause();
 	CString cstr = L"暂停检测";
 	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
 
@@ -1693,6 +1747,9 @@ void CDeVisionDlg::OnBnClickedMfcbuttonOnline()
 		m_button_online.SetIcon(m_hCameraOutIcon);
 	}
 
+	if (m_Alarm.getUartState())
+		m_Alarm.clearAlarm();
+
 	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 }
 
@@ -1754,49 +1811,73 @@ void CDeVisionDlg::OnBnClickedButtonExit()
 	EndDialog(TRUE);
 }
 
-//选择  按钮
+//报警清除  按钮
 void CDeVisionDlg::OnBnClickedButtonSelect()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	CWaitCursor wait;
-
-	CString cstr = L"选择瑕疵，位置：";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-
+	if (m_Alarm.getUartState())
+		m_Alarm.clearAlarm();
+   
 }
 
-//查找  按钮
+//刷新  按钮
 void CDeVisionDlg::OnBnClickedButtonFind()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	CString cstr = L"已找到瑕疵数： 个";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	//if(m_Alarm.getUartState())
+	//	m_Alarm.sendControlSignal(m_nAlarmCode);
+	//else {
+	//	CString cstr = L"报警串口打开失败";
+	//	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);	
+	//}
+
 }
 
-//前一页  按钮
+//清除操作记录  按钮
 void CDeVisionDlg::OnBnClickedButtonGoup()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	CString cstr = L"向前翻页";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	m_inspectDlg.clearLogging();
 
-	PostMessage(WM_UPDATE_CONTROLS, 0, 0);
+	//CString cstr = L"向前翻页";
+	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	//PostMessage(WM_UPDATE_CONTROLS, 0, 0);
 }
 
-//下一页  按钮
+//清除警告记录  按钮
 void CDeVisionDlg::OnBnClickedButtonGodown()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	CString cstr = L"向后翻页";
-	::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	m_inspectDlg.clearWarning();
 
-	CString warning = L"向后翻页";
-	::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
+	//CString cstr = L"向后翻页";
+	//::SendNotifyMessageW(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+
+	//CString warning = L"向后翻页";
+	//::SendNotifyMessageW(hMainWnd, WM_WARNING_MSG, (WPARAM)&warning, NULL);
 
 	//PostMessage(WM_UPDATE_HISTORY, 0, 0);
+}
+
+
+void CDeVisionDlg::OnEnKillfocusEditSelectwidth()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+
+	CString text;
+	GetDlgItem(IDC_EDIT_SELECTWIDTH)->GetWindowTextW(text);
+	int value = _ttoi(text);
+	//int value = std::strtol((CW2A)text.GetBuffer(), NULL, 16);
+	if (value > 0)
+		m_nAlarmCode = value;
+
+	UpdateData(false);
 }
 
 //*********************************************菜单****************************************//
@@ -1826,7 +1907,8 @@ void CDeVisionDlg::OnSetup()
 		m_nThreadNumbers = setup.m_threadnum;
 		m_bSaveRefImg = setup.m_bSaveRefImg;
 		m_strDeffect_Path = setup.m_strDeffect_Path;
-		m_strTable_Path = setup.m_strTable_Path;			   		 
+		m_strTable_Path = setup.m_strTable_Path;
+		m_strAlarmCOM = setup.m_strUartCOM.c_str();
 		CString ctext;
 		ctext.Format(_T("%.2f"), m_wnd1_range);
 		m_edisplay_range.SetWindowTextW(ctext);
@@ -1986,6 +2068,10 @@ void CDeVisionDlg::OnDefectAnalysis()
 		m_fRankValue1 = algorithmDlg.m_fRankValue1;
 		m_fRankValue2 = algorithmDlg.m_fRankValue2;
 		m_fRankValue3 = algorithmDlg.m_fRankValue3;
+		m_nAlarmA = algorithmDlg.m_nAlarmA;
+		m_nAlarmB = algorithmDlg.m_nAlarmB;
+		m_nAlarmC = algorithmDlg.m_nAlarmC;
+		m_nAlarmD = algorithmDlg.m_nAlarmD;
 	}
 }
 
@@ -2043,7 +2129,7 @@ void CDeVisionDlg::OnAbout()
 afx_msg LRESULT CDeVisionDlg::OnLoggingMsg(WPARAM wParam, LPARAM lParam)
 {
 	CString *strMsg = (CString*)wParam;
-	m_inspectDlg.RecordLogList(0, *strMsg);
+	m_inspectDlg.RecordLogList(*strMsg);
 	Win::log(CW2A(*strMsg));
 
 	return 0;
@@ -2053,7 +2139,7 @@ afx_msg LRESULT CDeVisionDlg::OnLoggingMsg(WPARAM wParam, LPARAM lParam)
 afx_msg LRESULT CDeVisionDlg::OnWarningMsg(WPARAM wParam, LPARAM lParam)
 {
 	CString *strMsg = (CString*)wParam;
-	m_inspectDlg.RecordWarning(0, *strMsg);
+	m_inspectDlg.RecordWarning(*strMsg);
 
 	CString warning;
 	warning.Format(_T("ERROR: "));

@@ -44,6 +44,9 @@ CImageProcessing::~CImageProcessing()
 
 void CImageProcessing::ClearThisClass()
 {
+	m_hi_average.Clear();
+	m_hi_deviation.Clear();
+
 	m_unImageIndex = 1;
 	m_nTotalListNumber = 1;
 
@@ -191,7 +194,7 @@ void CImageProcessing::StopCalculateThreads()
 	//if (hv_GPU_Handle.Length() > 0)
 	//	HalconCpp::DeactivateComputeDevice(hv_GPU_Handle);
 
-	m_listAcquiredImage.clear();
+	//m_listAcquiredImage.clear();
 }
 
 void CImageProcessing::RestartProcess()
@@ -687,10 +690,10 @@ unsigned short int CImageProcessing::RankDivide(float area, unsigned radius, uns
 		value = area;
 		break;
 	case 1:
-		value = radius;
+		value = (float)radius;
 		break;
 	case 2:
-		value = contlength;
+		value = (float)contlength;
 		break;
 	}
 
@@ -1554,31 +1557,30 @@ void CImageProcessing::stdManageThread()
 	m_modelFileName = (CA2W)model_filename.c_str();
 	m_nTotalListNumber = 0;
 	bool bresult = false;
-	while (1) {
+	while (!bresult) {
 		if (ImgListMutex.try_lock()) {
 			bresult = GenerateReferenceImage(m_hi_average, m_hi_deviation);
 			ImgListMutex.unlock();
 		}
 		else
 			Sleep(200);
-			
-		if (bresult) {
-			if (SAVE_REFERENCE_IMAGE) {
-				//std::string filename = "D:\\DetectRecords\\ReferenceImage.png";
-				//SaveReferenceImage(filename.c_str());
-				CString cstr = L"参考图像已保存";
-				::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			}
-			m_unImageIndex += 4;
-
-			CString cstr = L"检测算法初始化完成";
-			::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-			::SendMessage(hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
-			break;
-		}
 	}
+	m_unImageIndex += 4;
+
+	if (SAVE_REFERENCE_IMAGE) {
+		//std::string filename = "D:\\DetectRecords\\ReferenceImage.png";
+		//SaveReferenceImage(filename.c_str());
+		CString cstr = L"参考图像已保存";
+		::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	}
+
+	CString cstr;
+	cstr.Format(_T("检测算法初始化完成"));
+	::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+	::SendMessage(hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
 }
 
+// index 为线程序号： 0,1,2,3,4
 void CImageProcessing::stdImageCalculate(int index)
 {
 	run_calculate[index] = true;
@@ -1612,7 +1614,6 @@ void CImageProcessing::stdImageCalculate(int index)
 			Sleep(50);
 			continue;
 		}
-		//int list_size = (int)m_listAcquiredImage.size();
 		hi_acquire.Clear();
 		hi_acquire = m_listAcquiredImage.front();
 		m_listAcquiredImage.pop_front();
@@ -1647,21 +1648,59 @@ void CImageProcessing::stdImageCalculate(int index)
 	}
 		   
 	run_calculate[index] = false;
-	//通过第一个线程判断所有计算线程均已结束
-	if (index == 0) {
-		for (;;) {
-			if (IsThreadsAlive(100))
-				Sleep(133);
-			else {
+	switch (index + 1)
+	{
+	case 1: {
+		//通过第一个线程判断所有计算线程均已结束
+		if (m_threadnum > 1) {
+			DWORD dwStop = WaitForSingleObject(CalculateThread_2_StoppedEvent, INFINITE);
+			if (dwStop == WAIT_OBJECT_0)
 				SetEvent(m_hFinishedProcess);
-				CString cstr = L"计算线程已结束";
-				::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
-				::SendMessage(hMainWnd, WM_UPDATE_CONTROLS, NULL, NULL);
-				break;
-			}
 		}
+		else
+			SetEvent(m_hFinishedProcess);
+		CString cstr = L"图像处理线程已结束";
+		::SendMessage(hMainWnd, WM_LOGGING_MSG, (WPARAM)&cstr, NULL);
+		break;
 	}
+	case 2: {
+		if (m_threadnum > 2) {
+			DWORD dwStop = WaitForSingleObject(CalculateThread_3_StoppedEvent, INFINITE);
+			if (dwStop == WAIT_OBJECT_0)
+				CalculateThread_2_StoppedEvent.SetEvent();
+		}
+		else
+			CalculateThread_2_StoppedEvent.SetEvent();
+		break;
+	}
+	case 3: {
+		if (m_threadnum > 3) {
+			DWORD dwStop = WaitForSingleObject(CalculateThread_4_StoppedEvent, INFINITE);
+			if (dwStop == WAIT_OBJECT_0)
+				CalculateThread_3_StoppedEvent.SetEvent();
+		}
+		else
+			CalculateThread_3_StoppedEvent.SetEvent();
+		break;
+	}
+	case 4: {
+		if (m_threadnum > 4) {
+			DWORD dwStop = WaitForSingleObject(CalculateThread_5_StoppedEvent, INFINITE);
+			if(dwStop == WAIT_OBJECT_0)
+				CalculateThread_4_StoppedEvent.SetEvent();
+		}
+		else
+			CalculateThread_4_StoppedEvent.SetEvent();
+		break;
+	}
+	case 5:
+		CalculateThread_5_StoppedEvent.SetEvent();
+		break;
+	}
+
+	return;
 }
+
 
 void CImageProcessing::stdRunLoad()
 {

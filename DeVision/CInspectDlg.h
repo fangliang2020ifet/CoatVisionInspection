@@ -25,8 +25,8 @@ public:
 
 public:
 	HWND hMainWnd;                           //主窗口句柄
+	int* m_pnSystemState;                      //系统状态
 
-	bool m_bSystemRunning;
 	CImageExWnd		m_ImageWnd[4];
 	bool m_bTableSaving;                      // 切卷：报表保存中
 	CFont m_font;
@@ -42,10 +42,10 @@ public:
 	CString m_cstrSchedule;
 	CString m_cstrAddition;
 
-	void RecordWarning(const std::wstring& str);   //记录报警信息
-	void RecordWarning(int test, CString cstr);
-	void RecordLogList(const std::wstring& str);   //记录日志
-	void RecordLogList(int test, CString cstr);
+	void RecordWarning(CString cstr);
+	void clearWarning();
+	void RecordLogList(CString cstr);
+	void clearLogging();
 	void UpdateDFTinformation(size_t total_num, int great_dft_num, int num1, int num2, int num3, int num4);
 	void ResetBatchInformation();
 	void SetBatchInfoControlItem();

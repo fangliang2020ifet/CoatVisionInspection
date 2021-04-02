@@ -411,6 +411,11 @@
 #define IDC_STATIC_COATTING             1312
 #define IDC_EDIT_NO_INDEX               1314
 #define IDC_EDIT_SCHEDULE               1316
+#define IDC_COMBO_ALARM                 1317
+#define IDC_CHECK_ALARM_A               1318
+#define IDC_CHECK_ALARM_B               1319
+#define IDC_CHECK_ALARM_C               1320
+#define IDC_CHECK_ALARM_D               1321
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773
@@ -465,7 +470,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        195
 #define _APS_NEXT_COMMAND_VALUE         32818
-#define _APS_NEXT_CONTROL_VALUE         1317
+#define _APS_NEXT_CONTROL_VALUE         1322
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

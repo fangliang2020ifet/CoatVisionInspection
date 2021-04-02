@@ -35,6 +35,7 @@ public:
 
 	std::string m_strDeffect_Path;
 	std::string m_strTable_Path;
+	std::string m_strUartCOM;
 
 private:
 	LPCWSTR APPNAME = L"System";
@@ -70,4 +71,6 @@ public:
 	afx_msg void OnEnKillfocusEditKSpeed();
 	afx_msg void OnCbnSelchangeComboThreadnum();
 	afx_msg void OnBnClickedCheckSaveRef();
+	afx_msg void OnCbnSelchangeComboAlarm();
+	CComboBox m_comboAlarm;
 };

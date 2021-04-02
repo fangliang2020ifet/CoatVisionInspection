@@ -13,10 +13,14 @@ IMPLEMENT_DYNAMIC(CAlgorithmDlg, CDialogEx)
 CAlgorithmDlg::CAlgorithmDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_ALGORITHM, pParent)
 	, m_nRankMethod(0)
+	, m_nAlarmA(0)
+	, m_nAlarmB(0)
+	, m_nAlarmC(0)
+	, m_nAlarmD(0)
 {
-	m_fRankValue1 = 10.0f;
-	m_fRankValue2 = 20.0f;
-	m_fRankValue3 = 50.0f;
+	m_fRankValue1 = 1.0f;
+	m_fRankValue2 = 5.0f;
+	m_fRankValue3 = 10.0f;
 }
 
 CAlgorithmDlg::~CAlgorithmDlg()
@@ -29,6 +33,10 @@ void CAlgorithmDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_GLOBAL_THRESHOLD, m_combo_global_threshold);
 	DDX_Control(pDX, IDC_COMBO_SELECT_THRESHOLD, m_combo_select_threshold);
 	DDX_Radio(pDX, IDC_RADIO_AREA, m_nRankMethod);
+	DDX_Check(pDX, IDC_CHECK_ALARM_A, m_nAlarmA);
+	DDX_Check(pDX, IDC_CHECK_ALARM_B, m_nAlarmB);
+	DDX_Check(pDX, IDC_CHECK_ALARM_C, m_nAlarmC);
+	DDX_Check(pDX, IDC_CHECK_ALARM_D, m_nAlarmD);
 }
 
 BEGIN_MESSAGE_MAP(CAlgorithmDlg, CDialogEx)
@@ -109,6 +117,7 @@ BOOL CAlgorithmDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_RADIUS_VALUE3)->SetWindowText(ctext);
 	GetDlgItem(IDC_STATIC_CONT_VALUE3)->SetWindowText(ctext);
 
+
 	UpdateData(false);
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -185,6 +194,21 @@ void CAlgorithmDlg::loadInitialParameters()
 	strvalue = (CW2A)ReturnedString;
 	m_fRankValue3 = std::stof(strvalue);
 
+	GetPrivateProfileStringW(APPNAME, L"AlarmA", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmA = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"AlarmB", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmB = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"AlarmC", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmC = std::stoi(strvalue);
+
+	GetPrivateProfileStringW(APPNAME, L"AlarmD", L"", ReturnedString, STRINGLENGTH, FILEPATH);
+	strvalue = (CW2A)ReturnedString;
+	m_nAlarmD = std::stoi(strvalue);
 
 	delete[] ReturnedString;
 }
@@ -218,6 +242,18 @@ void CAlgorithmDlg::saveParameters()
 
 	cstrparam.Format(_T("%.2f"), m_fRankValue3);
 	WritePrivateProfileStringW(APPNAME, L"RankValue3", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nAlarmA);
+	WritePrivateProfileStringW(APPNAME, L"AlarmA", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nAlarmB);
+	WritePrivateProfileStringW(APPNAME, L"AlarmB", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nAlarmC);
+	WritePrivateProfileStringW(APPNAME, L"AlarmC", cstrparam, FILEPATH);
+
+	cstrparam.Format(_T("%d"), m_nAlarmD);
+	WritePrivateProfileStringW(APPNAME, L"AlarmD", cstrparam, FILEPATH);
 }
 
 

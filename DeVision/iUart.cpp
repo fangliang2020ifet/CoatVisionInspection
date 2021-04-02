@@ -13,7 +13,8 @@ iUart::~iUart()
 
 
 // 以文件方式打开串口
-bool iUart::OpenCom(bool isBlockMode){
+bool iUart::OpenCom(bool isBlockMode)
+{
 	HANDLE hCom;
 
 	// 打开10以上的串口
@@ -340,7 +341,7 @@ int iUart::UnblockRead(CString &dataStr)
 	return dwBytesRead;
 }
 
-int iUart::UnblockSend(const CStringA &dataStr)
+int iUart::UnblockSend(const CString &dataStr)
 {
 	BOOL bWriteStatus;
 	COMSTAT ComStat;

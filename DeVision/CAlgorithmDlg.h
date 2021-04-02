@@ -30,6 +30,11 @@ public:
 	float m_fRankValue1;
 	float m_fRankValue2;
 	float m_fRankValue3;
+	int m_nAlarmA;
+	int m_nAlarmB;
+	int m_nAlarmC;
+	int m_nAlarmD;
+
 private:
 	LPCWSTR APPNAME = L"Algorithm";
 	LPCWSTR FILEPATH = L"inis\\SystemInfo.ini";
