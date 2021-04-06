@@ -44,8 +44,6 @@ CImageProcessing::~CImageProcessing()
 
 void CImageProcessing::ClearThisClass()
 {
-	m_hi_average.Clear();
-	m_hi_deviation.Clear();
 
 	m_unImageIndex = 1;
 	m_nTotalListNumber = 1;
@@ -146,6 +144,8 @@ BOOL CImageProcessing::BeginProcess(int std)
 	}
 
 	//创建管理线程
+	m_hi_average.Clear();
+	m_hi_deviation.Clear();
 	m_unImageIndex = 0;
 	if (thdManageThread != NULL)
 		thdManageThread = NULL;
